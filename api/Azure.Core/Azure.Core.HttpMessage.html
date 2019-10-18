@@ -1,0 +1,465 @@
+﻿<!DOCTYPE html>
+<!--[if IE]><![endif]-->
+<html>
+  
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Class HttpMessage
+   | Azure SDK for Net </title>
+    <meta name="viewport" content="width=device-width">
+    <meta name="title" content="Class HttpMessage
+   | Azure SDK for Net ">
+    <meta name="generator" content="docfx 2.43.2.0">
+    
+    <link rel="shortcut icon" href="../../favicon.ico">
+    <link rel="stylesheet" href="../../styles/docfx.vendor.css">
+    <link rel="stylesheet" href="../../styles/docfx.css">
+    <link rel="stylesheet" href="../../styles/main.css">
+    <meta property="docfx:navrel" content="../../toc.html">
+    <meta property="docfx:tocrel" content="../toc.html">
+    
+    <meta property="docfx:rel" content="../../">
+    <meta property="docfx:newtab" content="true">
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      <header>
+        
+        <nav id="autocollapse" class="navbar navbar-inverse ng-scope" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              
+              <a class="navbar-brand" href="../../index.html">
+                <img id="logo" class="svg" src="../../logo.svg" alt="">
+              </a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar">
+              <form class="navbar-form navbar-right" role="search" id="search">
+                <div class="form-group">
+                  <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+                </div>
+              </form>
+            </div>
+          </div>
+        </nav>
+        
+        <div class="subnav navbar navbar-default">
+          <div class="container hide-when-search" id="breadcrumb">
+            <ul class="breadcrumb">
+              <li></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      <div class="container body-content">
+        
+        <div id="search-results">
+          <div class="search-list"></div>
+          <div class="sr-items">
+            <p><i class="glyphicon glyphicon-refresh index-loading"></i></p>
+          </div>
+          <ul id="pagination"></ul>
+        </div>
+      </div>
+      <div role="main" class="container body-content hide-when-search">
+        
+        <div class="sidenav hide-when-search">
+          <a class="btn toc-toggle collapse" data-toggle="collapse" href="#sidetoggle" aria-expanded="false" aria-controls="sidetoggle">Show / Hide Table of Contents</a>
+          <div class="sidetoggle collapse" id="sidetoggle">
+            <div id="sidetoc"></div>
+          </div>
+        </div>
+        <div class="article row grid-right">
+          <div class="col-md-10">
+            <article class="content wrap" id="_content" data-uid="Azure.Core.HttpMessage">
+  
+  
+  <h1 id="Azure_Core_HttpMessage" data-uid="Azure.Core.HttpMessage" class="text-break">Class HttpMessage
+  </h1>
+  <div class="markdown level0 summary"><p>Represents a context flowing through the <a class="xref" href="../Azure.Core.Pipeline/Azure.Core.Pipeline.HttpPipeline.html">HttpPipeline</a>.</p>
+</div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="inheritance">
+    <h5>Inheritance</h5>
+    <div class="level0"><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.object">Object</a></div>
+    <div class="level1"><span class="xref">HttpMessage</span></div>
+  </div>
+  <div classs="implements">
+    <h5>Implements</h5>
+    <div><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.idisposable">IDisposable</a></div>
+  </div>
+  <h6><strong>Namespace</strong>: <a class="xref" href="../Azure.Core.html">Azure.Core</a></h6>
+  <h6><strong>Assembly</strong>: Azure.Core.dll</h6>
+  <h5 id="Azure_Core_HttpMessage_syntax">Syntax</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public sealed class HttpMessage : IDisposable</code></pre>
+  </div>
+  <h3 id="constructors">Constructors
+  </h3>
+  
+  
+  <a id="Azure_Core_HttpMessage__ctor_" data-uid="Azure.Core.HttpMessage.#ctor*"></a>
+  <h4 id="Azure_Core_HttpMessage__ctor_Azure_Core_Request_Azure_Core_ResponseClassifier_" data-uid="Azure.Core.HttpMessage.#ctor(Azure.Core.Request,Azure.Core.ResponseClassifier)">HttpMessage(Request, ResponseClassifier)</h4>
+  <div class="markdown level1 summary"><p>Creates a new instance of <a class="xref" href="Azure.Core.HttpMessage.html">HttpMessage</a>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public HttpMessage (Azure.Core.Request request, Azure.Core.ResponseClassifier responseClassifier);</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="Azure.Core.Request.html">Request</a></td>
+        <td><span class="parametername">request</span></td>
+        <td><p>The request.</p>
+</td>
+      </tr>
+      <tr>
+        <td><a class="xref" href="Azure.Core.ResponseClassifier.html">ResponseClassifier</a></td>
+        <td><span class="parametername">responseClassifier</span></td>
+        <td><p>The response classifier.</p>
+</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="properties">Properties
+  </h3>
+  
+  
+  <a id="Azure_Core_HttpMessage_BufferResponse_" data-uid="Azure.Core.HttpMessage.BufferResponse*"></a>
+  <h4 id="Azure_Core_HttpMessage_BufferResponse" data-uid="Azure.Core.HttpMessage.BufferResponse">BufferResponse</h4>
+  <div class="markdown level1 summary"><p>Gets or sets the value indicating if response would be buffered as part of the pipeline. Defaults to true.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool BufferResponse { get; set; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.boolean">Boolean</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_CancellationToken_" data-uid="Azure.Core.HttpMessage.CancellationToken*"></a>
+  <h4 id="Azure_Core_HttpMessage_CancellationToken" data-uid="Azure.Core.HttpMessage.CancellationToken">CancellationToken</h4>
+  <div class="markdown level1 summary"><p>The <a class="xref" href="Azure.Core.HttpMessage.html#Azure_Core_HttpMessage_ResponseClassifier">ResponseClassifier</a> instance to use for response classification during pipeline invocation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public System.Threading.CancellationToken CancellationToken { get; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_HasResponse_" data-uid="Azure.Core.HttpMessage.HasResponse*"></a>
+  <h4 id="Azure_Core_HttpMessage_HasResponse" data-uid="Azure.Core.HttpMessage.HasResponse">HasResponse</h4>
+  <div class="markdown level1 summary"><p>Gets the value indicating if the response is set on this message.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool HasResponse { get; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.boolean">Boolean</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_Request_" data-uid="Azure.Core.HttpMessage.Request*"></a>
+  <h4 id="Azure_Core_HttpMessage_Request" data-uid="Azure.Core.HttpMessage.Request">Request</h4>
+  <div class="markdown level1 summary"><p>Gets the <a class="xref" href="Azure.Core.HttpMessage.html#Azure_Core_HttpMessage_Request">Request</a> associated with this message.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Azure.Core.Request Request { get; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="Azure.Core.Request.html">Request</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_Response_" data-uid="Azure.Core.HttpMessage.Response*"></a>
+  <h4 id="Azure_Core_HttpMessage_Response" data-uid="Azure.Core.HttpMessage.Response">Response</h4>
+  <div class="markdown level1 summary"><p>Gets the <a class="xref" href="Azure.Core.HttpMessage.html#Azure_Core_HttpMessage_Response">Response</a> associated with this message. Throws an exception if it wasn't set yet.
+To avoid the exception use <a class="xref" href="Azure.Core.HttpMessage.html#Azure_Core_HttpMessage_HasResponse">HasResponse</a> property to check.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Azure.Response Response { get; set; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="../Azure/Azure.Response.html">Response</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_ResponseClassifier_" data-uid="Azure.Core.HttpMessage.ResponseClassifier*"></a>
+  <h4 id="Azure_Core_HttpMessage_ResponseClassifier" data-uid="Azure.Core.HttpMessage.ResponseClassifier">ResponseClassifier</h4>
+  <div class="markdown level1 summary"><p>The <a class="xref" href="Azure.Core.HttpMessage.html#Azure_Core_HttpMessage_ResponseClassifier">ResponseClassifier</a> instance to use for response classification during pipeline invocation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Azure.Core.ResponseClassifier ResponseClassifier { get; }</code></pre>
+  </div>
+  <h5 class="propertyValue">Property Value</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="Azure.Core.ResponseClassifier.html">ResponseClassifier</a></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="methods">Methods
+  </h3>
+  
+  
+  <a id="Azure_Core_HttpMessage_Dispose_" data-uid="Azure.Core.HttpMessage.Dispose*"></a>
+  <h4 id="Azure_Core_HttpMessage_Dispose" data-uid="Azure.Core.HttpMessage.Dispose">Dispose()</h4>
+  <div class="markdown level1 summary"><p>Disposes the request and response.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Dispose ();</code></pre>
+  </div>
+  
+  
+  <a id="Azure_Core_HttpMessage_ExtractResponseContent_" data-uid="Azure.Core.HttpMessage.ExtractResponseContent*"></a>
+  <h4 id="Azure_Core_HttpMessage_ExtractResponseContent" data-uid="Azure.Core.HttpMessage.ExtractResponseContent">ExtractResponseContent()</h4>
+  <div class="markdown level1 summary"><p>Returns the response content stream and releases it ownership to the caller. After calling this methods using <a class="xref" href="../Azure/Azure.Response.html#Azure_Response_ContentStream">ContentStream</a> would result in exception.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public System.IO.Stream ExtractResponseContent ();</code></pre>
+  </div>
+  <h5 class="returns">Returns</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.io.stream">Stream</a></td>
+        <td><p>The content stream or null if response didn't have any.</p>
+</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_SetProperty_" data-uid="Azure.Core.HttpMessage.SetProperty*"></a>
+  <h4 id="Azure_Core_HttpMessage_SetProperty_System_String_System_Object_" data-uid="Azure.Core.HttpMessage.SetProperty(System.String,System.Object)">SetProperty(String, Object)</h4>
+  <div class="markdown level1 summary"><p>Sets a property that modifies the pipeline behavior. Please refer to individual policies documentation on what properties it supports.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetProperty (string name, object value);</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.string">String</a></td>
+        <td><span class="parametername">name</span></td>
+        <td><p>The property name.</p>
+</td>
+      </tr>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.object">Object</a></td>
+        <td><span class="parametername">value</span></td>
+        <td><p>The property value.</p>
+</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  
+  <a id="Azure_Core_HttpMessage_TryGetProperty_" data-uid="Azure.Core.HttpMessage.TryGetProperty*"></a>
+  <h4 id="Azure_Core_HttpMessage_TryGetProperty_System_String_System_Object__" data-uid="Azure.Core.HttpMessage.TryGetProperty(System.String,System.Object@)">TryGetProperty(String, Object)</h4>
+  <div class="markdown level1 summary"><p>Gets a property that modifies the pipeline behavior. Please refer to individual policies documentation on what properties it supports.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+  <h5 class="decalaration">Declaration</h5>
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool TryGetProperty (string name, out object value);</code></pre>
+  </div>
+  <h5 class="parameters">Parameters</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.string">String</a></td>
+        <td><span class="parametername">name</span></td>
+        <td><p>The property name.</p>
+</td>
+      </tr>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.object">Object</a></td>
+        <td><span class="parametername">value</span></td>
+        <td><p>The property value.</p>
+</td>
+      </tr>
+    </tbody>
+  </table>
+  <h5 class="returns">Returns</h5>
+  <table class="table table-bordered table-striped table-condensed">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a class="xref" href="https://docs.microsoft.com/dotnet/api/system.boolean">Boolean</a></td>
+        <td><pre><code>true</code></pre> if property exists, otherwise. <pre><code>false</code></pre>.
+</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3 id="implements">Implements</h3>
+  <div>
+      <a class="xref" href="https://docs.microsoft.com/dotnet/api/system.idisposable">System.IDisposable</a>
+  </div>
+</article>
+          </div>
+          
+          <div class="hidden-sm col-md-2" role="complementary">
+            <div class="sideaffix">
+              <div class="contribution">
+                <ul class="nav">
+                </ul>
+              </div>
+              <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" id="affix">
+              <!-- <p><a class="back-to-top" href="#top">Back to top</a><p> -->
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <footer>
+        <div class="grad-bottom"></div>
+        <div class="footer">
+          <div class="container">
+            <span class="pull-right">
+              <a href="#top">Back to top</a>
+            </span>
+            Azure SDK for Net
+            
+          </div>
+        </div>
+      </footer>
+    </div>
+    
+    <script type="text/javascript" src="../../styles/docfx.vendor.js"></script>
+    <script type="text/javascript" src="../../styles/docfx.js"></script>
+    <script type="text/javascript" src="../../styles/main.js"></script>
+  </body>
+</html>
