@@ -97,7 +97,25 @@ namespace Azure.Messaging.EventHubs
         ///   a given partition; intended to perform delegated operations.
         /// </summary>
         ///
-        private ConcurrentDictionary<string, TransportProducer> PartitionProducers { get; } = new ConcurrentDictionary<string, TransportProducer>();
+        internal ConcurrentDictionary<string, (TransportProducer Producer, DateTimeOffset LastActiveDate)> PartitionProducers { get; } = new ConcurrentDictionary<string, (TransportProducer producer, DateTimeOffset LastActiveDate)>();
+
+        /// <summary>
+        ///   The maximum amount of time since a <see cref="TransportProducer"/> has been used before it will be disposed.
+        /// </summary>
+        ///
+        public virtual TimeSpan InactiveProducerExpiration { get; internal set; }
+
+        /// <summary>
+        ///   A <see cref="CancellationTokenSource"/> instance to signal the request to cancel the current running task.
+        /// </summary>
+        ///
+        private CancellationTokenSource CleanupLoopTaskTokenSource { get; set; }
+
+        /// <summary>
+        ///   The running task responsible for closing inactive <see cref="TransportProducer" /> instances.
+        /// </summary>
+        ///
+        protected Task TransportProducerCleanupTask { get; private set; }
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="EventHubProducerClient"/> class.
@@ -114,7 +132,7 @@ namespace Azure.Messaging.EventHubs
         ///   Event Hub will result in a connection string that contains the name.
         /// </remarks>
         ///
-        public EventHubProducerClient(string connectionString) : this(connectionString, null, null)
+        public EventHubProducerClient(string connectionString) : this(connectionString, null, null, null)
         {
         }
 
@@ -153,7 +171,7 @@ namespace Azure.Messaging.EventHubs
         /// </remarks>
         ///
         public EventHubProducerClient(string connectionString,
-                                      string eventHubName) : this(connectionString, eventHubName, null)
+                                      string eventHubName) : this(connectionString, eventHubName, null, null)
         {
         }
 
@@ -164,6 +182,7 @@ namespace Azure.Messaging.EventHubs
         /// <param name="connectionString">The connection string to use for connecting to the Event Hubs namespace; it is expected that the Event Hub name and SAS token are contained in this connection string.</param>
         /// <param name="eventHubName">The name of the specific Event Hub to associate the producer with.</param>
         /// <param name="clientOptions">A set of options to apply when configuring the producer.</param>
+        /// <param name="inactiveProducerExpirationInSeconds">The number of seconds a partition specific TransportProducer can be inactive before being disposed.</param>
         ///
         /// <remarks>
         ///   If the connection string is copied from the Event Hub itself, it will contain the name of the desired Event Hub,
@@ -173,7 +192,8 @@ namespace Azure.Messaging.EventHubs
         ///
         public EventHubProducerClient(string connectionString,
                                       string eventHubName,
-                                      EventHubProducerClientOptions clientOptions)
+                                      EventHubProducerClientOptions clientOptions,
+                                      int? inactiveProducerExpirationInSeconds = null)
         {
             Argument.AssertNotNullOrEmpty(connectionString, nameof(connectionString));
             clientOptions = clientOptions?.Clone() ?? new EventHubProducerClientOptions();
@@ -182,6 +202,7 @@ namespace Azure.Messaging.EventHubs
             Connection = new EventHubConnection(connectionString, eventHubName, clientOptions.ConnectionOptions);
             RetryPolicy = clientOptions.RetryOptions.ToRetryPolicy();
             EventHubProducer = Connection.CreateTransportProducer(null, RetryPolicy);
+            InitializeCleanupTimer(inactiveProducerExpirationInSeconds);
         }
 
         /// <summary>
@@ -192,11 +213,13 @@ namespace Azure.Messaging.EventHubs
         /// <param name="eventHubName">The name of the specific Event Hub to associated the producer with.</param>
         /// <param name="credential">The Azure managed identity credential to use for authorization.  Access controls may be specified by the Event Hubs namespace or the requested Event Hub, depending on Azure configuration.</param>
         /// <param name="clientOptions">A set of options to apply when configuring the producer.</param>
+        /// <param name="inactiveProducerExpirationInSeconds">The number of seconds a partition specific TransportProducer can be inactive before being disposed.</param>
         ///
         public EventHubProducerClient(string fullyQualifiedNamespace,
                                       string eventHubName,
                                       TokenCredential credential,
-                                      EventHubProducerClientOptions clientOptions = default)
+                                      EventHubProducerClientOptions clientOptions = default,
+                                      int? inactiveProducerExpirationInSeconds = null)
         {
             Argument.AssertNotNullOrEmpty(fullyQualifiedNamespace, nameof(fullyQualifiedNamespace));
             Argument.AssertNotNullOrEmpty(fullyQualifiedNamespace, nameof(fullyQualifiedNamespace));
@@ -209,6 +232,7 @@ namespace Azure.Messaging.EventHubs
             Connection = new EventHubConnection(fullyQualifiedNamespace, eventHubName, credential, clientOptions.ConnectionOptions);
             RetryPolicy = clientOptions.RetryOptions.ToRetryPolicy();
             EventHubProducer = Connection.CreateTransportProducer(null, RetryPolicy);
+            InitializeCleanupTimer(inactiveProducerExpirationInSeconds);
         }
 
         /// <summary>
@@ -217,9 +241,11 @@ namespace Azure.Messaging.EventHubs
         ///
         /// <param name="connection">The <see cref="EventHubConnection" /> connection to use for communication with the Event Hubs service.</param>
         /// <param name="clientOptions">A set of options to apply when configuring the producer.</param>
+        /// <param name="inactiveProducerExpirationInSeconds">The number of seconds a partition specific TransportProducer can be inactive before being disposed.</param>
         ///
         public EventHubProducerClient(EventHubConnection connection,
-                                      EventHubProducerClientOptions clientOptions = default)
+                                      EventHubProducerClientOptions clientOptions = default,
+                                      int? inactiveProducerExpirationInSeconds = null)
         {
             Argument.AssertNotNull(connection, nameof(connection));
             clientOptions = clientOptions?.Clone() ?? new EventHubProducerClientOptions();
@@ -228,6 +254,7 @@ namespace Azure.Messaging.EventHubs
             Connection = connection;
             RetryPolicy = clientOptions.RetryOptions.ToRetryPolicy();
             EventHubProducer = Connection.CreateTransportProducer(null, RetryPolicy);
+            InitializeCleanupTimer(inactiveProducerExpirationInSeconds);
         }
 
         /// <summary>
@@ -236,6 +263,7 @@ namespace Azure.Messaging.EventHubs
         ///
         /// <param name="connection">The connection to use as the basis for delegation of client-type operations.</param>
         /// <param name="transportProducer">The transport producer instance to use as the basis for service communication.</param>
+        /// <param name="inactiveProducerExpirationInSeconds">The number of seconds a partition specific TransportProducer can be inactive before being disposed.</param>
         ///
         /// <remarks>
         ///   This constructor is intended to be used internally for functional
@@ -243,7 +271,8 @@ namespace Azure.Messaging.EventHubs
         /// </remarks>
         ///
         internal EventHubProducerClient(EventHubConnection connection,
-                                        TransportProducer transportProducer)
+                                        TransportProducer transportProducer,
+                                        int? inactiveProducerExpirationInSeconds = null)
         {
             Argument.AssertNotNull(connection, nameof(connection));
             Argument.AssertNotNull(transportProducer, nameof(transportProducer));
@@ -251,6 +280,7 @@ namespace Azure.Messaging.EventHubs
             OwnsConnection = false;
             Connection = connection;
             EventHubProducer = transportProducer;
+            InitializeCleanupTimer(inactiveProducerExpirationInSeconds);
         }
 
         /// <summary>
@@ -405,7 +435,7 @@ namespace Azure.Messaging.EventHubs
             // partition requires a dedicated client, use (or create) that client if a partition was specified.  Otherwise
             // the default gateway producer can be used to request automatic routing from the Event Hubs service gateway.
 
-            TransportProducer activeProducer;
+            TransportProducer activeProducer = null;
 
             if (string.IsNullOrEmpty(options.PartitionId))
             {
@@ -417,9 +447,16 @@ namespace Azure.Messaging.EventHubs
                 // race condition where a transport producer may be created after the client has been closed; in this case
                 // the transport producer will be force-closed with the associated connection or, worst case, will close once
                 // its idle timeout period elapses.
-
-                Argument.AssertNotClosed(IsClosed, nameof(EventHubProducerClient));
-                activeProducer = PartitionProducers.GetOrAdd(options.PartitionId, id => Connection.CreateTransportProducer(id, RetryPolicy));
+                bool updatedLastActive = false;
+                int retryCount = 0;
+                while (!updatedLastActive && retryCount < 3)
+                {
+                    Argument.AssertNotClosed(IsClosed, nameof(EventHubProducerClient));
+                    var producerWithLastActive = PartitionProducers.GetOrAdd(options.PartitionId, id => (Connection.CreateTransportProducer(id, RetryPolicy), DateTime.UtcNow));
+                    updatedLastActive = PartitionProducers.TryUpdate(options.PartitionId, (producerWithLastActive.Producer, DateTime.UtcNow), producerWithLastActive);
+                    activeProducer = producerWithLastActive.Producer;
+                    retryCount++;
+                }
             }
 
             using DiagnosticScope scope = CreateDiagnosticScope();
@@ -476,7 +513,9 @@ namespace Azure.Messaging.EventHubs
                 // its idle timeout period elapses.
 
                 Argument.AssertNotClosed(IsClosed, nameof(EventHubProducerClient));
-                activeProducer = PartitionProducers.GetOrAdd(eventBatch.SendOptions.PartitionId, id => Connection.CreateTransportProducer(id, RetryPolicy));
+                var producerWithLastActive = PartitionProducers.GetOrAdd(eventBatch.SendOptions.PartitionId, id => (Connection.CreateTransportProducer(id, RetryPolicy), DateTime.UtcNow));
+                PartitionProducers.TryUpdate(eventBatch.SendOptions.PartitionId, (producerWithLastActive.Producer, DateTime.UtcNow), producerWithLastActive);
+                activeProducer = producerWithLastActive.Producer;
             }
 
             using DiagnosticScope scope = CreateDiagnosticScope();
@@ -560,15 +599,9 @@ namespace Azure.Messaging.EventHubs
             {
                 await EventHubProducer.CloseAsync(cancellationToken).ConfigureAwait(false);
 
-                var pendingCloses = new List<Task>();
-
-                foreach (var producer in PartitionProducers.Values)
-                {
-                    pendingCloses.Add(producer.CloseAsync(CancellationToken.None));
-                }
-
-                PartitionProducers.Clear();
-                await Task.WhenAll(pendingCloses).ConfigureAwait(false);
+                CleanupLoopTaskTokenSource.Cancel();
+                await TransportProducerCleanupTask.ConfigureAwait(false);
+                await CloseProducers(PartitionProducers.Values.Select(_ => _.Producer)).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -690,6 +723,79 @@ namespace Azure.Messaging.EventHubs
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, Resources.CannotSendWithPartitionIdAndPartitionKey, partitionId));
             }
+        }
+
+        /// <summary>
+        /// Initializes the <see cref="TransportCleanupLoop"/>.
+        /// </summary>
+        private void InitializeCleanupTimer(int? inactiveProducerExpirationInSeconds)
+        {
+            CleanupLoopTaskTokenSource?.Cancel();
+            CleanupLoopTaskTokenSource = new CancellationTokenSource();
+
+            InactiveProducerExpiration = TimeSpan.FromMilliseconds(inactiveProducerExpirationInSeconds ?? 30000);
+
+            TransportProducerCleanupTask = TransportCleanupLoop();
+        }
+
+        /// <summary>
+        /// Periodically calls <see cref="CleanupExpiredTransportProducers"/> until canceled.
+        /// </summary>
+        private async Task TransportCleanupLoop()
+        {
+            while (!CleanupLoopTaskTokenSource.IsCancellationRequested)
+            {
+                await CleanupExpiredTransportProducers().ConfigureAwait(false);
+                try
+                {
+                    await Task.Delay(InactiveProducerExpiration, CleanupLoopTaskTokenSource.Token).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+
+            }
+
+        }
+
+        internal async Task CleanupExpiredTransportProducers()
+        {
+            var utcNow = DateTime.UtcNow;
+            var inactiveProducers = new List<TransportProducer>();
+            foreach (var partitionId in PartitionProducers.Keys)
+            {
+                if (PartitionProducers.TryGetValue(partitionId, out var producerWithLastActive))
+                {
+                    if (utcNow > producerWithLastActive.LastActiveDate.Add(InactiveProducerExpiration))
+                    {
+                        if (PartitionProducers.TryRemove(partitionId, out producerWithLastActive))
+                        {
+                            inactiveProducers.Add(producerWithLastActive.Producer);
+                        }
+                    }
+                }
+            }
+            try
+            {
+                // In case there was a race between the latest sender and the expiration, give any
+                // existing sends for this expired connection to complete;
+                await Task.Delay(100).ConfigureAwait(false);
+                await CloseProducers(inactiveProducers).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                //TODO: Log
+            }
+        }
+
+        /// <summary>
+        /// Closes all specified <see cref="TransportProducer"/>.
+        /// </summary>
+        private async Task CloseProducers(IEnumerable<TransportProducer> producers)
+        {
+            var pendingCloses = producers.Select(producer => producer.CloseAsync(CancellationToken.None));
+            await Task.WhenAll(pendingCloses).ConfigureAwait(false);
         }
     }
 }

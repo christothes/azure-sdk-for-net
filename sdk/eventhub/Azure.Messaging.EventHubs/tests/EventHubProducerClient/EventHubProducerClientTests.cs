@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Messaging.EventHubs.Authorization;
 using Azure.Messaging.EventHubs.Core;
+using Azure.Messaging.EventHubs.Errors;
 using Azure.Messaging.EventHubs.Metadata;
 using Moq;
 using NUnit.Framework;
@@ -575,8 +576,8 @@ namespace Azure.Messaging.EventHubs.Tests
             var mockSecondBatch = new EventDataBatch(new MockTransportBatch(), new SendEventOptions { PartitionId = "2" });
             var producer = new EventHubProducerClient(new MockConnection(() => transportProducer));
 
-            try { await producer.SendAsync(mockFirstBatch); } catch {}
-            try { await producer.SendAsync(mockSecondBatch); } catch {}
+            try { await producer.SendAsync(mockFirstBatch); } catch { }
+            try { await producer.SendAsync(mockSecondBatch); } catch { }
 
             await producer.CloseAsync();
 
@@ -594,14 +595,14 @@ namespace Azure.Messaging.EventHubs.Tests
         {
             var mockTransportProducer = new Mock<TransportProducer>();
             var mockConnection = new MockConnection(() => mockTransportProducer.Object);
-            var mockBatch = new EventDataBatch(new MockTransportBatch(), new SendEventOptions { PartitionId = "1" });;
+            var mockBatch = new EventDataBatch(new MockTransportBatch(), new SendEventOptions { PartitionId = "1" }); ;
             var producer = new EventHubProducerClient(mockConnection);
 
             mockTransportProducer
                 .Setup(producer => producer.CloseAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.FromException(new InvalidCastException()));
 
-            try { await producer.SendAsync(mockBatch); } catch {}
+            try { await producer.SendAsync(mockBatch); } catch { }
 
             Assert.That(async () => await producer.CloseAsync(), Throws.InstanceOf<InvalidCastException>());
         }
@@ -639,6 +640,119 @@ namespace Azure.Messaging.EventHubs.Tests
             Assert.That(connection.IsClosed, Is.False);
         }
 
+        [Test]
+        public async Task InactiveTransportProducersAreDisposedAfterInactivityTimeout()
+        {
+            var transportProducer = new ObservableTransportProducerMock();
+            var connection = new MockConnection(() => transportProducer);
+            var producer = new EventHubProducerClient(connection);
+            const string partition1 = "1";
+            const string partition2 = "2";
+
+            await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = partition1 }).ConfigureAwait(false);
+            await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = partition2 }).ConfigureAwait(false);
+
+            // The PartitionProducers should contain a TransportProducer for the specified partitions
+            Assert.IsTrue(producer.PartitionProducers.ContainsKey(partition1));
+            Assert.IsTrue(producer.PartitionProducers.ContainsKey(partition2));
+
+            // set the inactivity timer to very aggressively remove inactive TransportProducers and Cleanup expired producers immediately
+            producer.InactiveProducerExpiration = TimeSpan.FromMilliseconds(0);
+            await producer.CleanupExpiredTransportProducers().ConfigureAwait(false);
+            await WaitStabilization(producer);
+
+            // The PartitionProducers should now be empty as
+            Assert.AreEqual(0, producer.PartitionProducers.Keys.Count);
+
+            await producer.CloseAsync();
+        }
+
+        [Test]
+        public async Task InactiveTransportProducersAreDisposedAfterInactivityTimeoutAndHandlesConcurrentSends()
+        {
+            var transportProducer = new ObservableTransportProducerMock();
+            var connection = new MockConnection(() =>
+            {
+                var producer = new ObservableTransportProducerMock();
+                return producer;
+            });
+            // set the inactivity timer to very aggressively remove inactive TransportProducers and Cleanup expired producers immediately
+            var producer = new EventHubProducerClient(connection, inactiveProducerExpirationInSeconds: 2);
+            var cancellationSource = new CancellationTokenSource();
+
+            // aggressively send new events to the producer
+            var sendLoopTask = Task.Run(async () =>
+            {
+                while (!cancellationSource.Token.IsCancellationRequested)
+                {
+                    await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = "1" });
+                    await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = "2" });
+                    await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = "3" });
+                    await producer.SendAsync(new[] { new EventData(new byte[] { 0x22 }) }, new SendEventOptions { PartitionId = "4" });
+                    await Task.Delay(1);
+                }
+            }, cancellationSource.Token);
+
+            // Let the producer run for a few cycles
+            await WaitStabilization(producer);
+
+            // cancel the send loop task
+            cancellationSource.Cancel();
+            await sendLoopTask;
+
+            // Let the producer cleanup inactive Producers
+            await WaitStabilization(producer);
+
+            // The PartitionProducers should now be empty as
+            Assert.AreEqual(0, producer.PartitionProducers.Keys.Count);
+
+            await producer.CloseAsync();
+        }
+
+        private async Task WaitStabilization(EventHubProducerClient producer, double timeoutInMs = 2000)
+        {
+            var stabilizedStatusAchieved = false;
+            var consecutiveStabilizedStatus = 0;
+            int previousResult = 0;
+
+            CancellationToken timeoutToken = (new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutInMs))).Token;
+            try
+            {
+                while (!stabilizedStatusAchieved)
+                {
+                    // Remember to filter expired ownership.
+                    var currentResult = producer.PartitionProducers.Keys.Count;
+
+                    if (previousResult == currentResult)
+                    {
+                        ++consecutiveStabilizedStatus;
+                    }
+                    else
+                    {
+                        consecutiveStabilizedStatus = 1;
+                    }
+
+                    previousResult = currentResult;
+
+                    if (consecutiveStabilizedStatus < 5)
+                    {
+                        // Wait a load balance update cycle before the next verification.  Give up if the whole process takes more than the timeout.
+                        await Task.Delay(50, timeoutToken);
+                    }
+                    else
+                    {
+                        // We'll consider the load stabilized only if its status doesn't change after n verifications.
+
+                        stabilizedStatusAchieved = true;
+                    }
+                }
+            }
+            catch
+            {
+                return;
+            }
+        }
+
         /// <summary>
         ///   Retrieves the Connection for the producer using its private accessor.
         /// </summary>
@@ -671,16 +785,31 @@ namespace Azure.Messaging.EventHubs.Tests
             public EventDataBatch SendBatchCalledWith;
             public CreateBatchOptions CreateBatchCalledWith;
 
+            public string Id { get; }
+
+            public ObservableTransportProducerMock()
+            {
+                Id = Guid.NewGuid().ToString();
+            }
+
             public override Task SendAsync(IEnumerable<EventData> events,
                                            SendEventOptions sendOptions,
                                            CancellationToken cancellationToken)
             {
+                if (WasCloseCalled)
+                {
+                    throw new EventHubsClientClosedException(nameof(ObservableTransportProducerMock), "SendAsync called after Close");
+                }
                 SendCalledWith = (events, sendOptions);
                 return Task.CompletedTask;
             }
             public override Task SendAsync(EventDataBatch batch,
                                            CancellationToken cancellationToken)
             {
+                if (WasCloseCalled)
+                {
+                    throw new EventHubsClientClosedException(nameof(ObservableTransportProducerMock), "SendAsync called after Close");
+                }
                 SendBatchCalledWith = batch;
                 return Task.CompletedTask;
             }
