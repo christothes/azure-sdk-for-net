@@ -15,11 +15,12 @@ namespace Azure.Data.Tables.Sas
     public class TableSasBuilder
     {
 
-        public TableSasBuilder(string tableName)
+        public TableSasBuilder(string tableName, DateTimeOffset expiry)
         {
             Argument.AssertNotNullOrEmpty(tableName, nameof(tableName));
 
             TableName = tableName;
+            ExpiresOn = expiry;
         }
         /// <summary>
         /// The storage service version to use to authenticate requests made
@@ -135,10 +136,9 @@ namespace Azure.Data.Tables.Sas
         /// The storage account's <see cref="TablesSharedKeyCredential"/>.
         /// </param>
         /// <returns>
-        /// The <see cref="SasQueryParameters"/> used for authenticating
-        /// requests.
+        /// A URL encoded query string representing the SAS.
         /// </returns>
-        public TableSasQueryParameters ToSasQueryParameters(TablesSharedKeyCredential sharedKeyCredential)
+        public string Sign(TablesSharedKeyCredential sharedKeyCredential)
         {
             sharedKeyCredential = sharedKeyCredential ?? throw Errors.ArgumentNull(nameof(sharedKeyCredential));
 
@@ -175,7 +175,7 @@ namespace Azure.Data.Tables.Sas
                 resource: null,
                 permissions: Permissions,
                 signature: signature);
-            return p;
+            return p.ToString();
         }
 
         /// <summary>
