@@ -11,9 +11,17 @@ namespace Azure.Core.Tests
         [Test]
         public void StringRoundtrips()
         {
-            var s = "tag";
-            var eTag = new ETag(s);
-            Assert.AreSame(s, eTag.ToString());
+            var nakedETag = "tag";
+            var eTag = new ETag(nakedETag);
+            Assert.AreSame(nakedETag, eTag.ToFormattedString());
+
+            var weakEtag = "W/\"weakETag\"";
+            eTag = new ETag(weakEtag);
+            Assert.AreSame(weakEtag, eTag.ToFormattedString());
+
+            var formattedETag = "\"formatted\"";
+            eTag = new ETag(formattedETag);
+            Assert.AreSame(formattedETag, eTag.ToFormattedString());
         }
 
         [Test]
@@ -83,20 +91,15 @@ namespace Azure.Core.Tests
             Assert.Throws<ArgumentException>(() => ETag.Parse("lalala"));
         }
 
-        [Test]
-        public void ThrowsForParseWeakEtag()
-        {
-            Assert.Throws<NotSupportedException>(() => ETag.Parse("W/\"lalala\""));
-        }
-
         [Theory]
         [TestCase("*", "*")]
-        [TestCase("\"A\"", "A")]
-        [TestCase("\"\"", "")]
+        [TestCase("\"A\"", "\"A\"")]
+        [TestCase("\"\"", "\"\"")]
+        [TestCase("W/\"weakETag\"", "W/\"weakETag\"")]
         public void ParsesEtag(string value, string expectedValue)
         {
             ETag tag = ETag.Parse(value);
-            Assert.AreEqual(expectedValue, tag.ToString());
+            Assert.AreEqual(expectedValue, tag.ToFormattedString());
         }
     }
 }

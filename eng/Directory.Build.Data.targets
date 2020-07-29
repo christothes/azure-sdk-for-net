@@ -80,6 +80,17 @@
     </AdditionalFiles>
   </ItemGroup>
 
+  <!-- Add Banned Api Analyzers -->
+  <ItemGroup Condition="'$(EnableBannedApiAnalyzers)' == 'true'"  >
+    <AdditionalFiles Include="$(RepoEngPath)\BannedSymbols.txt">
+      <Visible>false</Visible>
+    </AdditionalFiles>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <!-- Enable SourceLink  -->
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />

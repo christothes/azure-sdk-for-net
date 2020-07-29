@@ -1,0 +1,1 @@
+M:Azure.ETag.ToString;Please use ToFormattedString instead.
