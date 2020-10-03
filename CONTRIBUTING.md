@@ -15,7 +15,7 @@
 
 ## GENERAL THINGS TO KNOW:
 
-**Client Libraries** are sdks used to interact with azure resources at application run time while **Management Libraries** are those used to manage (create/modify/delete) Azure resources.
+**Client Libraries** are sdks used to interact with azure resources at application run time while **Management Libraries** are those used to manage (create/modify/delete) Azure resources..
 
 **Build Repo :** To build all Client and Management libraries together. Invoke `dotnet build build.proj` from the root of the repo.<br/>To scope to a single service supply a scope property e.g. `dotnet build build.proj /p:Scope=servicebus`. This will build both client and management projects in the specified service. If using msbuild you must run restore first. See below for how to build the [client](#client-libraries) or [management](#management-libraries) libraries independently.
 
