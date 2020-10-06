@@ -14,22 +14,40 @@ namespace Azure.Learn.AppConfig.Models
     {
         internal static Error DeserializeError(JsonElement element)
         {
-            string code = default;
-            string message = default;
+            Optional<string> type = default;
+            Optional<string> title = default;
+            Optional<string> name = default;
+            Optional<string> detail = default;
+            Optional<int> status = default;
             foreach (var property in element.EnumerateObject())
             {
-                if (property.NameEquals("code"))
+                if (property.NameEquals("type"))
                 {
-                    code = property.Value.GetString();
+                    type = property.Value.GetString();
                     continue;
                 }
-                if (property.NameEquals("message"))
+                if (property.NameEquals("title"))
                 {
-                    message = property.Value.GetString();
+                    title = property.Value.GetString();
+                    continue;
+                }
+                if (property.NameEquals("name"))
+                {
+                    name = property.Value.GetString();
+                    continue;
+                }
+                if (property.NameEquals("detail"))
+                {
+                    detail = property.Value.GetString();
+                    continue;
+                }
+                if (property.NameEquals("status"))
+                {
+                    status = property.Value.GetInt32();
                     continue;
                 }
             }
-            return new Error(code, message);
+            return new Error(type.Value, title.Value, name.Value, detail.Value, Optional.ToNullable(status));
         }
     }
 }

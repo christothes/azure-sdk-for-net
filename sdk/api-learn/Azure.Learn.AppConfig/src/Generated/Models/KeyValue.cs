@@ -6,6 +6,8 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
+using Azure.Core;
 
 namespace Azure.Learn.AppConfig.Models
 {
@@ -13,26 +15,40 @@ namespace Azure.Learn.AppConfig.Models
     public partial class KeyValue
     {
         /// <summary> Initializes a new instance of KeyValue. </summary>
-        internal KeyValue()
+        public KeyValue()
         {
+            Tags = new ChangeTrackingDictionary<string, string>();
         }
 
         /// <summary> Initializes a new instance of KeyValue. </summary>
         /// <param name="key"> . </param>
+        /// <param name="label"> . </param>
         /// <param name="contentType"> . </param>
         /// <param name="value"> . </param>
         /// <param name="lastModified"> . </param>
-        internal KeyValue(string key, string contentType, string value, DateTimeOffset? lastModified)
+        /// <param name="tags"> Dictionary of &lt;string&gt;. </param>
+        /// <param name="locked"> . </param>
+        /// <param name="etag"> . </param>
+        internal KeyValue(string key, string label, string contentType, string value, DateTimeOffset? lastModified, IDictionary<string, string> tags, bool? locked, string etag)
         {
             Key = key;
+            Label = label;
             ContentType = contentType;
             Value = value;
             LastModified = lastModified;
+            Tags = tags;
+            Locked = locked;
+            Etag = etag;
         }
 
-        public string Key { get; }
-        public string ContentType { get; }
-        public string Value { get; }
-        public DateTimeOffset? LastModified { get; }
+        public string Key { get; set; }
+        public string Label { get; set; }
+        public string ContentType { get; set; }
+        public string Value { get; set; }
+        public DateTimeOffset? LastModified { get; set; }
+        /// <summary> Dictionary of &lt;string&gt;. </summary>
+        public IDictionary<string, string> Tags { get; }
+        public bool? Locked { get; set; }
+        public string Etag { get; set; }
     }
 }

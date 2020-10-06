@@ -29,8 +29,11 @@ namespace Azure.Learn.AppConfig
 #pragma warning disable CA1801 // Parameter is never used
         public ConfigurationClient(Uri endpoint, TokenCredential credential, ConfigurationClientOptions options)
         {
-            Argument.AsertNotNull()
-            _endpoint = endpoint;
+            Argument.AssertNotNull(endpoint, nameof(endpoint));
+            Argument.AssertNotNull(credential, nameof(credential));
+            Argument.AssertNotNull(options, nameof(options));
+
+            _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 
             // Add the authentication policy to our builder.
             _pipeline = HttpPipelineBuilder.Build(options, new BearerTokenAuthenticationPolicy(credential, GetDefaultScope(endpoint)));

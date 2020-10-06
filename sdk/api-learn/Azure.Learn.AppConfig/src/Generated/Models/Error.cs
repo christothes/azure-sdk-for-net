@@ -5,33 +5,40 @@
 
 #nullable disable
 
-using System;
-
 namespace Azure.Learn.AppConfig.Models
 {
-    /// <summary> The Error. </summary>
+    /// <summary> Azure App Configuration error object. </summary>
     internal partial class Error
     {
         /// <summary> Initializes a new instance of Error. </summary>
-        /// <param name="code"> . </param>
-        /// <param name="message"> . </param>
-        /// <exception cref="ArgumentNullException"> <paramref name="code"/> or <paramref name="message"/> is null. </exception>
-        internal Error(string code, string message)
+        internal Error()
         {
-            if (code == null)
-            {
-                throw new ArgumentNullException(nameof(code));
-            }
-            if (message == null)
-            {
-                throw new ArgumentNullException(nameof(message));
-            }
-
-            Code = code;
-            Message = message;
         }
 
-        public string Code { get; }
-        public string Message { get; }
+        /// <summary> Initializes a new instance of Error. </summary>
+        /// <param name="type"> The type of the error. </param>
+        /// <param name="title"> A brief summary of the error. </param>
+        /// <param name="name"> The name of the parameter that resulted in the error. </param>
+        /// <param name="detail"> A detailed description of the error. </param>
+        /// <param name="status"> The HTTP status code that the error maps to. </param>
+        internal Error(string type, string title, string name, string detail, int? status)
+        {
+            Type = type;
+            Title = title;
+            Name = name;
+            Detail = detail;
+            Status = status;
+        }
+
+        /// <summary> The type of the error. </summary>
+        public string Type { get; }
+        /// <summary> A brief summary of the error. </summary>
+        public string Title { get; }
+        /// <summary> The name of the parameter that resulted in the error. </summary>
+        public string Name { get; }
+        /// <summary> A detailed description of the error. </summary>
+        public string Detail { get; }
+        /// <summary> The HTTP status code that the error maps to. </summary>
+        public int? Status { get; }
     }
 }

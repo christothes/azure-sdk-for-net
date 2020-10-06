@@ -6,24 +6,86 @@
 #nullable disable
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using Azure.Core;
 
 namespace Azure.Learn.AppConfig.Models
 {
-    public partial class KeyValue
+    public partial class KeyValue : IUtf8JsonSerializable
     {
+        void IUtf8JsonSerializable.Write(Utf8JsonWriter writer)
+        {
+            writer.WriteStartObject();
+            if (Optional.IsDefined(Key))
+            {
+                writer.WritePropertyName("key");
+                writer.WriteStringValue(Key);
+            }
+            if (Optional.IsDefined(Label))
+            {
+                writer.WritePropertyName("label");
+                writer.WriteStringValue(Label);
+            }
+            if (Optional.IsDefined(ContentType))
+            {
+                writer.WritePropertyName("content_type");
+                writer.WriteStringValue(ContentType);
+            }
+            if (Optional.IsDefined(Value))
+            {
+                writer.WritePropertyName("value");
+                writer.WriteStringValue(Value);
+            }
+            if (Optional.IsDefined(LastModified))
+            {
+                writer.WritePropertyName("last_modified");
+                writer.WriteStringValue(LastModified.Value, "O");
+            }
+            if (Optional.IsCollectionDefined(Tags))
+            {
+                writer.WritePropertyName("tags");
+                writer.WriteStartObject();
+                foreach (var item in Tags)
+                {
+                    writer.WritePropertyName(item.Key);
+                    writer.WriteStringValue(item.Value);
+                }
+                writer.WriteEndObject();
+            }
+            if (Optional.IsDefined(Locked))
+            {
+                writer.WritePropertyName("locked");
+                writer.WriteBooleanValue(Locked.Value);
+            }
+            if (Optional.IsDefined(Etag))
+            {
+                writer.WritePropertyName("etag");
+                writer.WriteStringValue(Etag);
+            }
+            writer.WriteEndObject();
+        }
+
         internal static KeyValue DeserializeKeyValue(JsonElement element)
         {
             Optional<string> key = default;
+            Optional<string> label = default;
             Optional<string> contentType = default;
             Optional<string> value = default;
             Optional<DateTimeOffset> lastModified = default;
+            Optional<IDictionary<string, string>> tags = default;
+            Optional<bool> locked = default;
+            Optional<string> etag = default;
             foreach (var property in element.EnumerateObject())
             {
                 if (property.NameEquals("key"))
                 {
                     key = property.Value.GetString();
+                    continue;
+                }
+                if (property.NameEquals("label"))
+                {
+                    label = property.Value.GetString();
                     continue;
                 }
                 if (property.NameEquals("content_type"))
@@ -41,8 +103,28 @@ namespace Azure.Learn.AppConfig.Models
                     lastModified = property.Value.GetDateTimeOffset("O");
                     continue;
                 }
+                if (property.NameEquals("tags"))
+                {
+                    Dictionary<string, string> dictionary = new Dictionary<string, string>();
+                    foreach (var property0 in property.Value.EnumerateObject())
+                    {
+                        dictionary.Add(property0.Name, property0.Value.GetString());
+                    }
+                    tags = dictionary;
+                    continue;
+                }
+                if (property.NameEquals("locked"))
+                {
+                    locked = property.Value.GetBoolean();
+                    continue;
+                }
+                if (property.NameEquals("etag"))
+                {
+                    etag = property.Value.GetString();
+                    continue;
+                }
             }
-            return new KeyValue(key.Value, contentType.Value, value.Value, Optional.ToNullable(lastModified));
+            return new KeyValue(key.Value, label.Value, contentType.Value, value.Value, Optional.ToNullable(lastModified), Optional.ToDictionary(tags), Optional.ToNullable(locked), etag.Value);
         }
     }
 }
