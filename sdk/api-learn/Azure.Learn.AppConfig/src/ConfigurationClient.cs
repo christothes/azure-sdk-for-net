@@ -56,15 +56,30 @@ namespace Azure.Learn.AppConfig
         public virtual Response<ConfigurationSetting> GetConfigurationSetting(string key, string label = null, CancellationToken cancellationToken = default)
         {
             Argument.AssertNotNullOrEmpty(key, nameof(key));
-            
-            return _restClient.GetKeyValue(key, label, cancellationToken: cancellationToken);
+
+            var result = _restClient.GetKeyValue(key, label, cancellationToken: cancellationToken);
+            return Response.FromValue(result.Value, result.GetRawResponse());
         }
 
         /// <summary>Retrieve a <see cref="ConfigurationSetting"/> from the configuration store.</summary>
         public virtual async Task<Response<ConfigurationSetting>> GetConfigurationSettingAsync(string key, string label = null, CancellationToken cancellationToken = default)
         {
-            await Task.Yield();
-            throw new NotImplementedException();
+            Argument.AssertNotNullOrEmpty(key, nameof(key));
+
+            using DiagnosticScope scope = _clientDiagnostics.CreateScope($"{nameof(ConfigurationClient)}.{nameof(GetConfigurationSetting)}");
+            scope.AddAttribute(nameof(key), key);
+            scope.Start();
+
+            try
+            {
+                var result = await _restClient.GetKeyValueAsync(key, label, cancellationToken: cancellationToken).ConfigureAwait(false);
+                return Response.FromValue(result.Value, result.GetRawResponse());
+            }
+            catch (Exception e)
+            {
+                scope.Failed(e);
+                throw;
+            }
         }
 
         // A helper method to construct the default scope based on the service endpoint.
