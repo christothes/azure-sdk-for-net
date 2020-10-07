@@ -18,7 +18,7 @@ namespace Azure.Learn.AppConfig
         private readonly Uri _endpoint;
         private readonly HttpPipeline _pipeline;
         private readonly ClientDiagnostics _clientDiagnostics;
-        private readonly MiniAppConfigRestClient _restClient;
+        private readonly AzureAppConfigurationRestClient _restClient;
 
         /// <summary>Initializes a new instance of the <see cref="ConfigurationClient"/>.</summary>
         public ConfigurationClient(Uri endpoint, TokenCredential credential) : this(endpoint, credential, new ConfigurationClientOptions())
@@ -41,7 +41,7 @@ namespace Azure.Learn.AppConfig
             // Initialize the ClientDiagnostics.
             _clientDiagnostics = new ClientDiagnostics(options);
 
-            _restClient = new MiniAppConfigRestClient(_clientDiagnostics, _pipeline, _endpoint.AbsoluteUri, options.Version);
+            _restClient = new AzureAppConfigurationRestClient(_clientDiagnostics, _pipeline, _endpoint.AbsoluteUri, options.Version);
         }
 #pragma warning restore CA1801 // Parameter is never used
 
@@ -50,18 +50,22 @@ namespace Azure.Learn.AppConfig
         {
         }
 
-        /// <summary>Retrieve a <see cref="GetKeyValue"/> from the configuration store.</summary>
-    public virtual Response<KeyValue> GetKeyValue(string key, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        // ...
 
-    /// <summary>Retrieve a <see cref="KeyValue"/> from the configuration store.</summary>
-    public virtual async Task<Response<KeyValue>> GetKeyValueAsync(string key, CancellationToken cancellationToken = default)
-    {
-        await Task.Yield();
-        throw new NotImplementedException();
-    }
+        /// <summary>Retrieve a <see cref="ConfigurationSetting"/> from the configuration store.</summary>
+        public virtual Response<ConfigurationSetting> GetConfigurationSetting(string key, string label = null, CancellationToken cancellationToken = default)
+        {
+            Argument.AssertNotNullOrEmpty(key, nameof(key));
+            
+            return _restClient.GetKeyValue(key, label, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>Retrieve a <see cref="ConfigurationSetting"/> from the configuration store.</summary>
+        public virtual async Task<Response<ConfigurationSetting>> GetConfigurationSettingAsync(string key, string label = null, CancellationToken cancellationToken = default)
+        {
+            await Task.Yield();
+            throw new NotImplementedException();
+        }
 
         // A helper method to construct the default scope based on the service endpoint.
         private static string GetDefaultScope(Uri uri)

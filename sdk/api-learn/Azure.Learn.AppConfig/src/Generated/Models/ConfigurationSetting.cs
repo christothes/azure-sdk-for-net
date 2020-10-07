@@ -9,18 +9,18 @@ using System;
 using System.Collections.Generic;
 using Azure.Core;
 
-namespace Azure.Learn.AppConfig.Models
+namespace Azure.Learn.AppConfig
 {
     /// <summary> The KeyValue. </summary>
-    public partial class KeyValue
+    public partial class ConfigurationSetting
     {
-        /// <summary> Initializes a new instance of KeyValue. </summary>
-        public KeyValue()
+        /// <summary> Initializes a new instance of ConfigurationSetting. </summary>
+        public ConfigurationSetting()
         {
             Tags = new ChangeTrackingDictionary<string, string>();
         }
 
-        /// <summary> Initializes a new instance of KeyValue. </summary>
+        /// <summary> Initializes a new instance of ConfigurationSetting. </summary>
         /// <param name="key"> . </param>
         /// <param name="label"> . </param>
         /// <param name="contentType"> . </param>
@@ -29,7 +29,7 @@ namespace Azure.Learn.AppConfig.Models
         /// <param name="tags"> Dictionary of &lt;string&gt;. </param>
         /// <param name="locked"> . </param>
         /// <param name="etag"> . </param>
-        internal KeyValue(string key, string label, string contentType, string value, DateTimeOffset? lastModified, IDictionary<string, string> tags, bool? locked, string etag)
+        internal ConfigurationSetting(string key, string label, string contentType, string value, DateTimeOffset? lastModified, IDictionary<string, string> tags, bool? locked, string etag)
         {
             Key = key;
             Label = label;

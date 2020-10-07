@@ -10,9 +10,9 @@ using System.Collections.Generic;
 using System.Text.Json;
 using Azure.Core;
 
-namespace Azure.Learn.AppConfig.Models
+namespace Azure.Learn.AppConfig
 {
-    public partial class KeyValue : IUtf8JsonSerializable
+    public partial class ConfigurationSetting : IUtf8JsonSerializable
     {
         void IUtf8JsonSerializable.Write(Utf8JsonWriter writer)
         {
@@ -66,7 +66,7 @@ namespace Azure.Learn.AppConfig.Models
             writer.WriteEndObject();
         }
 
-        internal static KeyValue DeserializeKeyValue(JsonElement element)
+        internal static ConfigurationSetting DeserializeConfigurationSetting(JsonElement element)
         {
             Optional<string> key = default;
             Optional<string> label = default;
@@ -124,7 +124,7 @@ namespace Azure.Learn.AppConfig.Models
                     continue;
                 }
             }
-            return new KeyValue(key.Value, label.Value, contentType.Value, value.Value, Optional.ToNullable(lastModified), Optional.ToDictionary(tags), Optional.ToNullable(locked), etag.Value);
+            return new ConfigurationSetting(key.Value, label.Value, contentType.Value, value.Value, Optional.ToNullable(lastModified), Optional.ToDictionary(tags), Optional.ToNullable(locked), etag.Value);
         }
     }
 }
