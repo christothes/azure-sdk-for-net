@@ -6,11 +6,7 @@ using Azure.Core;
 namespace Azure.AI.MetricsAdvisor.Models
 {
     /// <summary>
-<<<<<<< HEAD
     /// The roll-up method performs an aggregation (for example SUM, MAX, MIN) on each dimension during ingestion. Used to
-=======
-    /// The roll-up method perform aggregation (for example SUM, MAX, MIN) on each dimension during ingestion used to
->>>>>>> 9bb9be222f... Add remaining docstrings
     /// build a hierarchy which will be used in root case analysis and other diagnostic features.
     /// </summary>
     [CodeGenModel("DataFeedDetailRollUpMethod")]

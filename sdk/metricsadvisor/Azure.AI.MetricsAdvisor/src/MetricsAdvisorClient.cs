@@ -1018,15 +1018,10 @@ namespace Azure.AI.MetricsAdvisor
         /// </summary>
         /// <param name="detectionConfigurationId">The unique identifier of the <see cref="MetricAnomalyAlertConfiguration"/>.</param>
         /// <param name="incidentId">The unique identifier of the <see cref="AnomalyIncident"/>.</param>
-<<<<<<< HEAD
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
         /// <returns>A collection of <see cref="IncidentRootCause"/>s for the specified alert configuration and incident.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is null.</exception>
+        /// /// <exception cref="ArgumentNullException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is empty; or <paramref name="detectionConfigurationId"/> is not a valid GUID.</exception>
-=======
-        /// <param name="cancellationToken"></param>
-        /// <returns>A collection of <see cref="AnomalyIncident"/>s for the specified alert configuration and incident.</returns>
->>>>>>> 9bb9be222f... Add remaining docstrings
         public virtual async Task<Response<IReadOnlyList<IncidentRootCause>>> GetIncidentRootCausesAsync(string detectionConfigurationId, string incidentId, CancellationToken cancellationToken = default)
         {
             Argument.AssertNotNullOrEmpty(detectionConfigurationId, nameof(detectionConfigurationId));
@@ -1054,15 +1049,10 @@ namespace Azure.AI.MetricsAdvisor
         /// </summary>
         /// <param name="detectionConfigurationId">The unique identifier of the <see cref="MetricAnomalyAlertConfiguration"/>.</param>
         /// <param name="incidentId">The unique identifier of the <see cref="AnomalyIncident"/>.</param>
-<<<<<<< HEAD
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
         /// <returns>A collection of <see cref="IncidentRootCause"/>s for the specified alert configuration and incident.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is null.</exception>
+        /// /// <exception cref="ArgumentNullException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="detectionConfigurationId"/> or <paramref name="incidentId"/> is empty; or <paramref name="detectionConfigurationId"/> is not a valid GUID.</exception>
-=======
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
->>>>>>> 9bb9be222f... Add remaining docstrings
         public virtual Response<IReadOnlyList<IncidentRootCause>> GetIncidentRootCauses(string detectionConfigurationId, string incidentId, CancellationToken cancellationToken = default)
         {
             Argument.AssertNotNullOrEmpty(detectionConfigurationId, nameof(detectionConfigurationId));
@@ -1213,12 +1203,12 @@ namespace Azure.AI.MetricsAdvisor
         /// <summary>
         /// Query series enriched by anomaly detection.
         /// </summary>
-        /// <param name="seriesKeys">The detection series keys.</param>
+        /// <param name="seriesKeys">The deection series keys.</param>
         /// <param name="detectionConfigurationId">The unique identifier of the <see cref="MetricAnomalyAlertConfiguration"/>.</param>
-        /// <param name="startTime">Filters the result. Only data points after this point in time, in UTC, will be returned.</param>
-        /// <param name="endTime">Filters the result. Only data points after this point in time, in UTC, will be returned.</param>
+        /// <param name="startTime">Filters the result. Only series data after this point in time, in UTC, will be returned.</param>
+        /// <param name="endTime">Filters the result. Only series data after this point in time, in UTC, will be returned.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
-        /// <returns>A collection of <see cref="MetricEnrichedSeriesData"/>.</returns>
+        /// <returns>A collection <see cref="MetricEnrichedSeriesData"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="seriesKeys"/> or <paramref name="detectionConfigurationId"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="seriesKeys"/> or <paramref name="detectionConfigurationId"/> is empty; or <paramref name="detectionConfigurationId"/> is not a valid GUID.</exception>
         public virtual async Task<Response<IReadOnlyList<MetricEnrichedSeriesData>>> GetMetricEnrichedSeriesDataAsync(IEnumerable<DimensionKey> seriesKeys, string detectionConfigurationId, DateTimeOffset startTime, DateTimeOffset endTime, CancellationToken cancellationToken = default)
@@ -1246,26 +1236,14 @@ namespace Azure.AI.MetricsAdvisor
         }
 
         /// <summary>
-<<<<<<< HEAD
         /// Query series enriched by anomaly detection.
         /// </summary>
         /// <param name="seriesKeys">The deection series keys.</param>
         /// <param name="detectionConfigurationId">The unique identifier of the <see cref="MetricAnomalyAlertConfiguration"/>.</param>
-        /// <param name="startTime">Filters the result. Only data points after this point in time, in UTC, will be returned.</param>
-        /// <param name="endTime">Filters the result. Only data points after this point in time, in UTC, will be returned.</param>
+        /// <param name="startTime">Filters the result. Only series data after this point in time, in UTC, will be returned.</param>
+        /// <param name="endTime">Filters the result. Only series data after this point in time, in UTC, will be returned.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
-        /// <returns>A collection of <see cref="MetricEnrichedSeriesData"/>.</returns>
-=======
-        /// Gets data about the data points present in the specified set of time series.
-        /// <see cref="MetricAnomalyAlertConfiguration"/>.
-        /// </summary>
-        /// <param name="seriesKeys">The name of the dimension.</param>
-        /// <param name="detectionConfigurationId">The unique identifier of the <see cref="MetricAnomalyAlertConfiguration"/>.</param>
-        /// <param name="startTime">Filters the result. Only data points ingested after this point in time, in UTC, will be returned.</param>
-        /// <param name="endTime">Filters the result. Only data points ingested after this point in time, in UTC, will be returned.</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
-        /// <returns>A collection containing the values the specified dimension assumed for anomalous data points. Items are unique.</returns>
->>>>>>> 9bb9be222f... Add remaining docstrings
+        /// <returns>A collection <see cref="MetricEnrichedSeriesData"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="seriesKeys"/> or <paramref name="detectionConfigurationId"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="seriesKeys"/> or <paramref name="detectionConfigurationId"/> is empty; or <paramref name="detectionConfigurationId"/> is not a valid GUID.</exception>
         public virtual Response<IReadOnlyList<MetricEnrichedSeriesData>> GetMetricEnrichedSeriesData(IEnumerable<DimensionKey> seriesKeys, string detectionConfigurationId, DateTimeOffset startTime, DateTimeOffset endTime, CancellationToken cancellationToken = default)
