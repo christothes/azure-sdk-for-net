@@ -39,11 +39,8 @@ namespace Azure.AI.MetricsAdvisor.Models
         public int Period { get; }
 
         /// <summary>
-<<<<<<< HEAD
         /// The number of anomalies that must be in the specified <see cref="Top"/> number of timestamps to send an alert.
-=======
-        /// Th number of anomalies that must be in the specified <see cref="Top"/> number of timestamps to send an alert.
->>>>>>> 9bb9be222f... Add remaining docstrings
+        /// The number of anomalies that must be in the specified <see cref="Top"/> number of timestamps to send an alert.
         /// </summary>
         [CodeGenMember("MinTopCount")]
         public int MinimumTopCount { get; }
