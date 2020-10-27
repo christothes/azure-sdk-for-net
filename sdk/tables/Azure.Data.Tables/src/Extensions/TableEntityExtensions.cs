@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
+using System.Security.Authentication;
 
 namespace Azure.Data.Tables
 {
@@ -60,6 +62,68 @@ namespace Azure.Data.Tables
 
             // Remove the ETag property, as it does not need to be serialized
             annotatedDictionary.Remove(TableConstants.PropertyNames.ETag);
+
+            return annotatedDictionary;
+        }
+        /// <summary>
+        /// Returns a new Dictionary with the appropriate Odata type annotation for a given propertyName value pair.
+        /// The default case is intentionally unhandled as this means that no type annotation for the specified type is required.
+        /// This is because the type is naturally serialized in a way that the table service can interpret without hints.
+        /// </summary>
+        internal static Dictionary<string, object> ToOdataAnnotatedDictionary2<T>(this T entity) where T : class, ITableEntity
+        {
+            if (entity is IDictionary<string, object> dictEntity)
+            {
+                return dictEntity.ToOdataAnnotatedDictionary();
+            }
+
+            PropertyInfo[] properties = DictionaryTableExtensions.s_propertyInfoCache.GetOrAdd(typeof(T), (type) =>
+            {
+                return type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            });
+
+            var annotatedDictionary = new Dictionary<string, object>(properties.Length * 2);
+
+            foreach (var prop in properties)
+            {
+                annotatedDictionary[prop.Name] = prop.GetValue(entity);
+
+                switch (prop.GetValue(entity))
+                {
+                    case ETag _:
+                        // skip serialization of ETag
+                        continue;
+                    case byte[] binaryValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmBinary;
+                        annotatedDictionary[prop.Name] = binaryValue;
+                        break;
+                    case long longValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmInt64;
+                        // Int64 / long should be serialized as string.
+                        annotatedDictionary[prop.Name] = longValue.ToString(CultureInfo.InvariantCulture);
+                        continue;
+                    case double doubleValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDouble;
+                        annotatedDictionary[prop.Name] = doubleValue;
+                        break;
+                    case Guid guidValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmGuid;
+                        annotatedDictionary[prop.Name] = guidValue;
+                        break;
+                    case DateTimeOffset datetimeOffsetValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
+                        annotatedDictionary[prop.Name] = datetimeOffsetValue;
+                        break;
+                    case DateTime datetimeValue:
+                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
+                        annotatedDictionary[prop.Name] = datetimeValue;
+                        break;
+                    case Enum enumValue:
+                        // serialize enum as string
+                        annotatedDictionary[prop.Name] = enumValue.ToString();
+                        continue;
+                }
+            }
 
             return annotatedDictionary;
         }

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using Azure.Data.Tables;
 using BenchmarkDotNet.Attributes;
 
 namespace Azure.Data.Tables.Performance
@@ -13,6 +12,7 @@ namespace Azure.Data.Tables.Performance
     {
         public const int ItemCount = 10000;
         private readonly List<Dictionary<string, object>> _items = new List<Dictionary<string, object>>(ItemCount);
+        private readonly List<BenchmarkEntity> _customItems = new List<BenchmarkEntity>(ItemCount);
 
         [GlobalSetup]
         public void Setup()
@@ -20,19 +20,30 @@ namespace Azure.Data.Tables.Performance
             for (int i = 0; i < ItemCount; i++)
             {
                 _items.Add(new Dictionary<string, object>
-                    {
-                        {"PartitionKey", "partition"},
-                        {"RowKey", i.ToString("D2")},
-                        {"SomeGuid", Guid.NewGuid().ToString()},
-                        {"SomeString", $"This is table entity number {i:D2}"},
-                        {"SomeInt", i},
-                        {"SomeDateTime", new DateTime(2020, 1,1,1,1,0,DateTimeKind.Utc).AddMinutes(i).ToString("o") },
-                        {"SomeBinary", Convert.ToBase64String(new byte[]{ 0x01, 0x02, 0x03, 0x04, 0x05 })},
-                    });
+                {
+                    {"PartitionKey", "partition"},
+                    {"RowKey", i.ToString("D2")},
+                    {"SomeGuid", Guid.NewGuid()},
+                    {"SomeString", $"This is table entity number {i:D2}"},
+                    {"SomeInt", i},
+                    {"SomeDateTime", new DateTime(2020, 1,1,1,1,0,DateTimeKind.Utc).AddMinutes(i)},
+                    {"SomeBinary", new byte[]{ 0x01, 0x02, 0x03, 0x04, 0x05 }},
+                });
+
+                _customItems.Add(new BenchmarkEntity
+                {
+                    PartitionKey = "partition",
+                    RowKey = i.ToString("D2"),
+                    SomeGuid = Guid.NewGuid(),
+                    SomeString = $"This is table entity number {i:D2}",
+                    SomeInt = i,
+                    SomeDateTime = new DateTime(2020, 1, 1, 1, 1, 0, DateTimeKind.Utc).AddMinutes(i),
+                    SomeBinary = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 }
+                });
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void ToTableEntity()
         {
             for (int i = 0; i < _items.Count; i++)
@@ -41,12 +52,29 @@ namespace Azure.Data.Tables.Performance
             }
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void ToTableEntityList()
         {
             _items.ToTableEntityList<BenchmarkEntity>();
         }
 
+        [Benchmark(Baseline = true)]
+        public void ToAnnotatedDictionary()
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                _customItems[i].ToOdataAnnotatedDictionary();
+            }
+        }
+
+        [Benchmark]
+        public void ToAnnotatedDictionaryCached()
+        {
+            for (int i = 0; i < _items.Count; i++)
+            {
+                _customItems[i].ToOdataAnnotatedDictionary2();
+            }
+        }
         public class BenchmarkEntity : ITableEntity
         {
             public BenchmarkEntity()

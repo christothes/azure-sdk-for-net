@@ -16,7 +16,7 @@ namespace Azure.Data.Tables
         /// <summary>
         /// A cache for reflected <see cref="PropertyInfo"/> array for the given <see cref="Type"/>.
         /// </summary>
-        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> s_propertyInfoCache = new ConcurrentDictionary<Type, PropertyInfo[]>();
+        internal static readonly ConcurrentDictionary<Type, PropertyInfo[]> s_propertyInfoCache = new ConcurrentDictionary<Type, PropertyInfo[]>();
 
         /// <summary>
         /// Returns a new Dictionary with the appropriate Odata type annotation for a given propertyName value pair.
