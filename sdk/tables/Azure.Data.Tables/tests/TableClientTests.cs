@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Core.TestFramework;
 using Azure.Data.Tables;
+using Azure.Data.Tables.Models;
 using Azure.Data.Tables.Sas;
 using NUnit.Framework;
 
@@ -132,6 +134,81 @@ namespace Azure.Tables.Tests
             Assert.That(dictEntity["MyFoo"], Is.EqualTo(entity.MyFoo.ToString()), "The entities should be equivalent");
         }
 
+        [Test]
+        public void SerializeEntity()
+        {
+            EnumEntity entity = new EnumEntity()
+            {
+                PartitionKey = "partitionFoo",
+                RowKey = "01",
+                SomeGuid = Guid.NewGuid(),
+                SomeString = "This is a table entity",
+                SomeInt = 1234,
+                SomeDateTime = DateTime.UtcNow,
+                SomeBinary = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05 },
+                Timestamp = DateTimeOffset.Now,
+                ETag = new ETag("foo"),
+                MyFoo = Foo.Two
+            };
+
+            var stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+
+            entity.SerializeEntity(writer);
+
+            writer.Flush();
+            Assert.That(stream.Position > 0, "stream position should not be zero");
+
+            stream.Position = 0;
+            var sr = new StreamReader(stream);
+            var json = sr.ReadToEnd();
+
+            Assert.That(json, Is.Not.Empty, json);
+
+            var doc = JsonDocument.Parse(json);
+            var dictionary = new Dictionary<string, object>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                dictionary.Add(prop.Name, prop.Value.GetObject());
+            }
+            Assert.That(dictionary["PartitionKey"] as string, Is.EqualTo(entity.PartitionKey));
+            Assert.That(dictionary["SomeInt"], Is.EqualTo(entity.SomeInt));
+        }
+
+        [Test]
+        public void DeSerializeEntity()
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(tableQueryResultJson);
+            writer.Flush();
+            stream.Position = 0;
+
+            
+        }
+
+        private string tableQueryResultJson = @"""odata.metadata"": ""https://t487ba7ce49634c8eprim.table.core.windows.net/$metadata#testtableifprd13i"",
+        ""value"": [
+          {
+            ""odata.etag"": ""W/\u0022datetime\u00272020-08-25T16%3A35%3A09.461291Z\u0027\u0022"",
+            ""PartitionKey"": ""somPartition"",
+            ""RowKey"": ""01"",
+            ""Timestamp"": ""2020-08-25T16:35:09.461291Z"",
+            ""SomeBinaryProperty@odata.type"": ""Edm.Binary"",
+            ""SomeBinaryProperty"": ""AQIDBAU="",
+            ""SomeDateProperty@odata.type"": ""Edm.DateTime"",
+            ""SomeDateProperty"": ""2020-01-01T01:02:00Z"",
+            ""SomeDoubleProperty0"": 1.0,
+            ""SomeDoubleProperty1"": 1.1,
+            ""SomeGuidProperty@odata.type"": ""Edm.Guid"",
+            ""SomeGuidProperty"": ""0d391d16-97f1-4b9a-be68-4cc871f90001"",
+            ""SomeInt64Property@odata.type"": ""Edm.Int64"",
+            ""SomeInt64Property"": ""1"",
+            ""SomeIntProperty"": 1,
+            ""SomeStringProperty"": ""This is table entity number 01""
+          }
+        ]";
+
         public class EnumEntity : ITableEntity
         {
             public string PartitionKey { get; set; }
@@ -139,6 +216,12 @@ namespace Azure.Tables.Tests
             public DateTimeOffset? Timestamp { get; set; }
             public ETag ETag { get; set; }
             public Foo MyFoo { get; set; }
+            public string SomeString { get; set; }
+            public int SomeInt { get; set; }
+            public DateTime SomeDateTime { get; set; }
+            public byte[] SomeBinary { get; set; }
+            public Guid SomeGuid { get; set; }
+            public long SomeLong { get; set; }
         }
         public enum Foo
         {
