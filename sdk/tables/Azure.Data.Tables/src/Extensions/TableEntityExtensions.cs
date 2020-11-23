@@ -76,7 +76,7 @@ namespace Azure.Data.Tables
         }
 
         private static readonly ConcurrentDictionary<Type, Action<ITableEntity, Utf8JsonWriter>> s_serializeExpressionCache = new ConcurrentDictionary<Type, Action<ITableEntity, Utf8JsonWriter>>();
-        private static readonly ConcurrentDictionary<Type, Dictionary<string, Action<ITableEntity, JsonElement>>> s_setterMethods = new ConcurrentDictionary<Type, Dictionary<string, Action<ITableEntity, JsonElement>>>();
+        internal static readonly ConcurrentDictionary<Type, Dictionary<string, Action<ITableEntity, JsonElement>>> s_setterMethods = new ConcurrentDictionary<Type, Dictionary<string, Action<ITableEntity, JsonElement>>>();
         private static readonly ParameterExpression s_writerParameter = Expression.Parameter(typeof(Utf8JsonWriter), "writer");
         private static readonly ParameterExpression s_entityInterfaceParameter = Expression.Parameter(typeof(ITableEntity), "entityInterface");
         private static readonly ParameterExpression s_jsonElementParameter = Expression.Parameter(typeof(JsonElement), "element");

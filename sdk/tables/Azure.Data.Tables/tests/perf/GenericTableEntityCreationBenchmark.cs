@@ -48,6 +48,11 @@ namespace Azure.Data.Tables.Performance
             var s = new MemoryStream();
             var w = new Utf8JsonWriter(s);
             entity.SerializeEntity(w);
+
+            TableEntityExtensions.s_setterMethods.GetOrAdd(typeof(BenchmarkEntity), (type) =>
+            {
+                return TableEntityExtensions.GetSetterMethodInfos<BenchmarkEntity>();
+            });
         }
 
         [Benchmark(Baseline = true)]
