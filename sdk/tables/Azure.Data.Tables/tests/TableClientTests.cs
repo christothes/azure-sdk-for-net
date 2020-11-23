@@ -5,13 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Core.Pipeline;
 using Azure.Core.TestFramework;
 using Azure.Data.Tables;
-using Azure.Data.Tables.Models;
 using Azure.Data.Tables.Sas;
+using Castle.Core.Internal;
 using NUnit.Framework;
 
 namespace Azure.Tables.Tests
@@ -178,36 +176,34 @@ namespace Azure.Tables.Tests
         [Test]
         public void DeSerializeEntity()
         {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(tableQueryResultJson);
-            writer.Flush();
-            stream.Position = 0;
+            var doc = JsonDocument.Parse(tableQueryResultJson);
+            var entities = TableEntityExtensions.DeSerializeEntityResponse<EnumEntity>(doc.RootElement);
 
-            
+            Assert.That(entities, Is.Not.Null);
+            Assert.That(entities[0].PartitionKey, Is.EqualTo("somePartition"));
         }
 
-        private string tableQueryResultJson = @"""odata.metadata"": ""https://t487ba7ce49634c8eprim.table.core.windows.net/$metadata#testtableifprd13i"",
-        ""value"": [
-          {
-            ""odata.etag"": ""W/\u0022datetime\u00272020-08-25T16%3A35%3A09.461291Z\u0027\u0022"",
-            ""PartitionKey"": ""somPartition"",
-            ""RowKey"": ""01"",
-            ""Timestamp"": ""2020-08-25T16:35:09.461291Z"",
-            ""SomeBinaryProperty@odata.type"": ""Edm.Binary"",
-            ""SomeBinaryProperty"": ""AQIDBAU="",
-            ""SomeDateProperty@odata.type"": ""Edm.DateTime"",
-            ""SomeDateProperty"": ""2020-01-01T01:02:00Z"",
-            ""SomeDoubleProperty0"": 1.0,
-            ""SomeDoubleProperty1"": 1.1,
-            ""SomeGuidProperty@odata.type"": ""Edm.Guid"",
-            ""SomeGuidProperty"": ""0d391d16-97f1-4b9a-be68-4cc871f90001"",
-            ""SomeInt64Property@odata.type"": ""Edm.Int64"",
-            ""SomeInt64Property"": ""1"",
-            ""SomeIntProperty"": 1,
-            ""SomeStringProperty"": ""This is table entity number 01""
-          }
-        ]";
+        private string tableQueryResultJson = @"{""value"": [
+    {
+    ""odata.etag"": ""W/\u0022datetime\u00272020-08-25T16%3A35%3A09.461291Z\u0027\u0022"",
+    ""PartitionKey"": ""somePartition"",
+    ""RowKey"": ""01"",
+    ""Timestamp"": ""2020-08-25T16:35:09.461291Z"",
+    ""MyFoo"": ""Two"",
+    ""SomeString"": ""This is table entity number 01"",
+    ""SomeInt"": 1,
+    ""SomeDateTime@odata.type"": ""Edm.DateTime"",
+    ""SomeDateTime"": ""2020-01-01T01:02:00Z"",
+    ""SomeBinary@odata.type"": ""Edm.Binary"",
+    ""SomeBinary"": ""AQIDBAU="",
+    ""SomeGuid@odata.type"": ""Edm.Guid"",
+    ""SomeGuid"": ""0d391d16-97f1-4b9a-be68-4cc871f90001"",
+    ""SomeLong@odata.type"": ""Edm.Int64"",
+    ""SomeLong"": ""1"",
+    ""SomeDoubleProperty0"": 1.0,
+    ""SomeDoubleProperty1"": 1.1
+    }
+]}";
 
         public class EnumEntity : ITableEntity
         {
@@ -222,6 +218,8 @@ namespace Azure.Tables.Tests
             public byte[] SomeBinary { get; set; }
             public Guid SomeGuid { get; set; }
             public long SomeLong { get; set; }
+            public double SomeDoubleProperty0 {get;set;}
+            public double SomeDoubleProperty1 {get;set;}
         }
         public enum Foo
         {

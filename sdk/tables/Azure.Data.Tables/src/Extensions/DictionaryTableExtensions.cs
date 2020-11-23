@@ -186,7 +186,7 @@ namespace Azure.Data.Tables
             {
                 if (entity.TryGetValue(property.Name, out var propertyValue))
                 {
-                    if (typeActions.TryGetValue(property.PropertyType, out var propertyAction))
+                    if (s_typeActions.TryGetValue(property.PropertyType, out var propertyAction))
                     {
                         propertyAction(property, propertyValue, result);
                     }
@@ -194,7 +194,7 @@ namespace Azure.Data.Tables
                     {
                         if (property.PropertyType.IsEnum)
                         {
-                            typeActions[typeof(Enum)](property, propertyValue, result);
+                            s_typeActions[typeof(Enum)](property, propertyValue, result);
                         }
                         else
                         {
@@ -212,7 +212,7 @@ namespace Azure.Data.Tables
             return result;
         }
 
-        private static Dictionary<Type, Action<PropertyInfo, object, object>> typeActions = new Dictionary<Type, Action<PropertyInfo, object, object>>
+        private static readonly Dictionary<Type, Action<PropertyInfo, object, object>> s_typeActions = new Dictionary<Type, Action<PropertyInfo, object, object>>
         {
             {typeof(byte[]), (property, propertyValue, result) =>  property.SetValue(result, Convert.FromBase64String(propertyValue as string))},
             {typeof(long), (property, propertyValue, result) =>  property.SetValue(result, long.Parse(propertyValue as string, CultureInfo.InvariantCulture))},
