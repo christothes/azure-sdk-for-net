@@ -10,17 +10,17 @@ using System.Threading.Tasks;
 
 namespace Azure.Security.KeyVault
 {
-    internal class ChallengeBasedAuthenticationPolicy : HttpPipelinePolicy
+    internal class ChallengeBasedAuthenticationPolicy : BearerTokenChallengeAuthenticationPolicy
     {
         private const string BearerChallengePrefix = "Bearer ";
 
-        private readonly TokenCredential _credential;
+        private TokenCredential _credential;
 
         private AuthenticationChallenge _challenge;
         private string _headerValue;
         private DateTimeOffset _refreshOn;
 
-        public ChallengeBasedAuthenticationPolicy(TokenCredential credential)
+        public ChallengeBasedAuthenticationPolicy(TokenCredential credential): base(credential, Array.Empty<string>())
         {
             _credential = credential;
         }
@@ -33,6 +33,11 @@ namespace Azure.Security.KeyVault
         public override ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
             return ProcessCoreAsync(message, pipeline, true);
+        }
+
+        protected override async Task OnBeforeRequestAsync(HttpMessage message, bool async)
+        {
+            return await ProcessCoreAsync(message, null, async).ConfigureAwait(false);
         }
 
         private async ValueTask ProcessCoreAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
