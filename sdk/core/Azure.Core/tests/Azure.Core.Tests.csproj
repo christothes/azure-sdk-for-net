@@ -24,6 +24,7 @@
     <Compile Include="..\src\Shared\Multipart\*.cs" />
     <Compile Include="..\src\Shared\ArrayBufferWriter.cs" />
     <Compile Include="..\src\Shared\AzureResourceProviderNamespaceAttribute.cs" />
+    <Compile Include="..\src\Shared\BearerTokenChallengeAuthenticationPolicy.cs" />
     <Compile Include="..\src\Shared\ConnectionString.cs" />
     <Compile Include="..\src\Shared\ForwardsClientCallsAttribute.cs" />
     <Compile Include="..\src\Shared\NoBodyResponseOfT.cs" />
@@ -31,6 +32,8 @@
     <Compile Include="..\src\Shared\PageResponseEnumerator.cs" />
     <Compile Include="..\src\Shared\RetriableStream.cs" />
     <Compile Include="..\src\Shared\RequestRequestContent.cs" />
+    <Compile Include="..\src\Shared\TokenChallengeCredential.cs" />
+    <Compile Include="..\src\Shared\TokenChallengeRequestContext.cs" />
     <Compile Include="..\src\Shared\ValueStopwatch.cs" />
   </ItemGroup>
 

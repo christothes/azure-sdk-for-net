@@ -1,19 +1,19 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace Azure.Core.Experimental
+namespace Azure.Core
 {
     /// <summary>
     /// Contains the details of an authentication token request.
     /// </summary>
-    public readonly struct TokenRequestContext
+    internal readonly struct TokenChallengeRequestContext
     {
         /// <summary>
         /// Creates a new TokenRequest with the specified scopes.
         /// </summary>
         /// <param name="scopes">The scopes required for the token.</param>
         /// <param name="parentRequestId">The <see cref="Request.ClientRequestId"/> of the request requiring a token for authentication, if applicable.</param>
-        public TokenRequestContext(string[] scopes, string? parentRequestId)
+        public TokenChallengeRequestContext(string[] scopes, string parentRequestId)
         {
             Scopes = scopes;
             ParentRequestId = parentRequestId;
@@ -26,7 +26,7 @@ namespace Azure.Core.Experimental
         /// <param name="scopes">The scopes required for the token.</param>
         /// <param name="parentRequestId">The <see cref="Request.ClientRequestId"/> of the request requiring a token for authentication, if applicable.</param>
         /// <param name="claimsChallenge">A claims challenge returned from a failed authentication or authorization request.</param>
-        public TokenRequestContext(string[] scopes, string? parentRequestId = default, string? claimsChallenge = default)
+        public TokenChallengeRequestContext(string[] scopes, string parentRequestId = default, string claimsChallenge = default)
         {
             Scopes = scopes;
             ClaimsChallenge = claimsChallenge;
@@ -41,11 +41,13 @@ namespace Azure.Core.Experimental
         /// <summary>
         /// A claims challenge returned from a failed authentication or authorization request.
         /// </summary>
-        public string? ClaimsChallenge { get; }
+        public string ClaimsChallenge { get; }
 
         /// <summary>
         /// The <see cref="Request.ClientRequestId"/> of the request requiring a token for authentication, if applicable.
         /// </summary>
-        public string? ParentRequestId { get; }
+        public string ParentRequestId { get; }
+
+        public static implicit operator TokenChallengeRequestContext(TokenRequestContext t) => new TokenChallengeRequestContext(t.Scopes, t.ParentRequestId);
     }
 }
