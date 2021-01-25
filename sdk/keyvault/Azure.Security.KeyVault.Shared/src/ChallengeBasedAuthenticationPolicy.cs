@@ -37,7 +37,7 @@ namespace Azure.Security.KeyVault
 
         protected override async Task OnBeforeRequestAsync(HttpMessage message, bool async)
         {
-            return await ProcessCoreAsync(message, null, async).ConfigureAwait(false);
+            await ProcessCoreAsync(message, null, async).ConfigureAwait(false);
         }
 
         private async ValueTask ProcessCoreAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
