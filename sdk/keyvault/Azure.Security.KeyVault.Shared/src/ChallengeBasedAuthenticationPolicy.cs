@@ -25,17 +25,15 @@ namespace Azure.Security.KeyVault
             _credential = credential;
         }
 
-        public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
-        {
-            //ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
-            base.Process(message, pipeline);
-        }
+        // public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        // {
+        //     ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
+        // }
 
-        public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
-        {
-            //await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
-            await base.ProcessAsync(message, pipeline).ConfigureAwait(false);
-        }
+        // public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        // {
+        //     await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
+        // }
 
         protected override async Task OnBeforeRequestAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
         {
