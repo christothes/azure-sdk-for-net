@@ -20,24 +20,70 @@ namespace Azure.Security.KeyVault
         private string _headerValue;
         private DateTimeOffset _refreshOn;
 
-        public ChallengeBasedAuthenticationPolicy(TokenCredential credential): base(credential, Array.Empty<string>())
+        public ChallengeBasedAuthenticationPolicy(TokenCredential credential) : base(credential, Array.Empty<string>())
         {
             _credential = credential;
         }
 
         public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
-            ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
+            //ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
+            base.Process(message, pipeline);
         }
 
-        public override ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
-            return ProcessCoreAsync(message, pipeline, true);
+            //await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
+            await base.ProcessAsync(message, pipeline).ConfigureAwait(false);
         }
 
-        protected override async Task OnBeforeRequestAsync(HttpMessage message, bool async)
+        protected override async Task OnBeforeRequestAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
         {
-            await ProcessCoreAsync(message, null, async).ConfigureAwait(false);
+            RequestContent originalContent = message.Request.Content;
+
+            // if this policy doesn't have _challenge cached try to get it from the static challenge cache
+            AuthenticationChallenge challenge = _challenge ?? AuthenticationChallenge.GetChallenge(message);
+
+            // if we don't have the challenge for the endpoint, remove the content from the request and send without authentication to get the challenge
+            if (challenge == null)
+            {
+                message.Request.Content = null;
+
+                if (async)
+                {
+                    await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
+                }
+                else
+                {
+                    ProcessNext(message, pipeline);
+                }
+
+                // if we get a 401
+                if (message.Response.Status == 401)
+                {
+                    // set the content to the original content in case it was cleared
+                    message.Request.Content = originalContent;
+                }
+            }
+        }
+
+        protected override bool TryGetTokenRequestContextFromChallenge(HttpMessage message, out TokenRequestContext context)
+        {
+            // if this policy doesn't have _challenge cached try to get it from the static challenge cache
+            AuthenticationChallenge challenge = AuthenticationChallenge.GetChallenge(message);
+
+            if (challenge == null)
+            {
+                return false;
+            }
+
+            // update the cached challenge if not yet set or different from the current challenge (e.g. moved tenants)
+            if (_challenge == null || !challenge.Equals(_challenge))
+            {
+                _challenge = challenge;
+            }
+            context = new TokenRequestContext(_challenge.Scopes, message.Request.ClientRequestId);
+            return true;
         }
 
         private async ValueTask ProcessCoreAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
@@ -89,7 +135,6 @@ namespace Azure.Security.KeyVault
                     {
                         _challenge = challenge;
                     }
-
                     // authenticate the request and resend
                     await AuthenticateRequestAsync(message, async, challenge).ConfigureAwait(false);
 
