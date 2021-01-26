@@ -14,27 +14,19 @@ namespace Azure.Security.KeyVault
     {
         private const string BearerChallengePrefix = "Bearer ";
 
-        private TokenCredential _credential;
-
         private AuthenticationChallenge _challenge;
-        private string _headerValue;
-        private DateTimeOffset _refreshOn;
 
         public ChallengeBasedAuthenticationPolicy(TokenCredential credential) : base(credential, Array.Empty<string>())
-        {
-            _credential = credential;
-        }
+        { }
 
         public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
-            // ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
             PreProcessAsync(message, pipeline, false).EnsureCompleted();
             base.Process(message, pipeline);
         }
 
         public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
-            // await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
             await PreProcessAsync(message, pipeline, true).ConfigureAwait(false);
             await base.ProcessAsync(message, pipeline).ConfigureAwait(false);
         }
@@ -91,85 +83,6 @@ namespace Azure.Security.KeyVault
             }
             context = new TokenRequestContext(_challenge.Scopes, message.Request.ClientRequestId);
             return true;
-        }
-
-        private async ValueTask ProcessCoreAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
-        {
-            if (message.Request.Uri.Scheme != Uri.UriSchemeHttps)
-            {
-                throw new InvalidOperationException("Bearer token authentication is not permitted for non TLS protected (https) endpoints.");
-            }
-
-            RequestContent originalContent = message.Request.Content;
-
-            // if this policy doesn't have _challenge cached try to get it from the static challenge cache
-            AuthenticationChallenge challenge = _challenge ?? AuthenticationChallenge.GetChallenge(message);
-
-            // if we still don't have the challenge for the endpoint
-            // remove the content from the request and send without authentication to get the challenge
-            if (challenge == null)
-            {
-                message.Request.Content = null;
-            }
-            // otherwise if we already know the challenge authenticate the request
-            else
-            {
-                await AuthenticateRequestAsync(message, async, challenge).ConfigureAwait(false);
-            }
-
-            if (async)
-            {
-                await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
-            }
-            else
-            {
-                ProcessNext(message, pipeline);
-            }
-
-            // if we get a 401
-            if (message.Response.Status == 401)
-            {
-                // set the content to the original content in case it was cleared
-                message.Request.Content = originalContent;
-
-                // update the cached challenge
-                challenge = AuthenticationChallenge.GetChallenge(message);
-
-                if (challenge != null)
-                {
-                    // update the cached challenge if not yet set or different from the current challenge (e.g. moved tenants)
-                    if (_challenge == null || !challenge.Equals(_challenge))
-                    {
-                        _challenge = challenge;
-                    }
-                    // authenticate the request and resend
-                    await AuthenticateRequestAsync(message, async, challenge).ConfigureAwait(false);
-
-                    if (async)
-                    {
-                        await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        ProcessNext(message, pipeline);
-                    }
-                }
-            }
-        }
-
-        private async Task AuthenticateRequestAsync(HttpMessage message, bool async, AuthenticationChallenge challenge)
-        {
-            if (_headerValue is null || DateTimeOffset.UtcNow >= _refreshOn)
-            {
-                AccessToken token = async ?
-                        await _credential.GetTokenAsync(new TokenRequestContext(challenge.Scopes, message.Request.ClientRequestId), message.CancellationToken).ConfigureAwait(false) :
-                        _credential.GetToken(new TokenRequestContext(challenge.Scopes, message.Request.ClientRequestId), message.CancellationToken);
-
-                _headerValue = BearerChallengePrefix + token.Token;
-                _refreshOn = token.ExpiresOn - TimeSpan.FromMinutes(2);
-            }
-
-            message.Request.Headers.SetValue(HttpHeader.Names.Authorization, _headerValue);
         }
 
         internal class AuthenticationChallenge
