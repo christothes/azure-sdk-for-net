@@ -25,18 +25,27 @@ namespace Azure.Security.KeyVault
             _credential = credential;
         }
 
-        // public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
-        // {
-        //     ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
-        // }
-
-        // public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
-        // {
-        //     await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
-        // }
-
-        protected override async Task OnBeforeRequestAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
+        public override void Process(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
         {
+            // ProcessCoreAsync(message, pipeline, false).EnsureCompleted();
+            PreProcessAsync(message, pipeline, false).EnsureCompleted();
+            base.Process(message, pipeline);
+        }
+
+        public override async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline)
+        {
+            // await ProcessCoreAsync(message, pipeline, true).ConfigureAwait(false);
+            await PreProcessAsync(message, pipeline, true).ConfigureAwait(false);
+            await base.ProcessAsync(message, pipeline).ConfigureAwait(false);
+        }
+
+        protected async Task PreProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
+        {
+            if (message.Request.Uri.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new InvalidOperationException("Bearer token authentication is not permitted for non TLS protected (https) endpoints.");
+            }
+
             RequestContent originalContent = message.Request.Content;
 
             // if this policy doesn't have _challenge cached try to get it from the static challenge cache
