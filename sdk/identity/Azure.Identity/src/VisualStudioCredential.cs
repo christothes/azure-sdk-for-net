@@ -118,15 +118,15 @@ namespace Azure.Identity
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
-                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" has failed to get access token in 30 seconds."));
+                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" with arguments \"{processStartInfo.Arguments}\" has failed to get access token in 30 seconds."));
                 }
                 catch (JsonException exception)
                 {
-                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" has non-json output: {output}.", exception));
+                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" with arguments \"{processStartInfo.Arguments}\" has non-json output: {output}.", exception));
                 }
                 catch (Exception exception) when (!(exception is OperationCanceledException))
                 {
-                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" has failed with unexpected error: {exception.Message}.", exception));
+                    exceptions.Add(new CredentialUnavailableException($"Process \"{processStartInfo.FileName}\" with arguments \"{processStartInfo.Arguments}\" has failed with unexpected error: {exception.Message}.", exception));
                 }
             }
 
