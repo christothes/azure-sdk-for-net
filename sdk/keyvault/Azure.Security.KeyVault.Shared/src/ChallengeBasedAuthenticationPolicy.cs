@@ -38,14 +38,13 @@ namespace Azure.Security.KeyVault
                 throw new InvalidOperationException("Bearer token authentication is not permitted for non TLS protected (https) endpoints.");
             }
 
-            RequestContent originalContent = message.Request.Content;
-
             // if this policy doesn't have _challenge cached try to get it from the static challenge cache
             AuthenticationChallenge challenge = _challenge ?? AuthenticationChallenge.GetChallenge(message);
 
             // if we don't have the challenge for the endpoint, remove the content from the request and send without authentication to get the challenge
             if (challenge == null)
             {
+                RequestContent originalContent = message.Request.Content;
                 message.Request.Content = null;
 
                 if (async)
@@ -57,12 +56,8 @@ namespace Azure.Security.KeyVault
                     ProcessNext(message, pipeline);
                 }
 
-                // if we get a 401
-                if (message.Response.Status == 401)
-                {
-                    // set the content to the original content in case it was cleared
-                    message.Request.Content = originalContent;
-                }
+                // set the content to the original content.
+                message.Request.Content = originalContent;
             }
         }
 
@@ -81,6 +76,7 @@ namespace Azure.Security.KeyVault
             {
                 _challenge = challenge;
             }
+
             context = new TokenRequestContext(_challenge.Scopes, message.Request.ClientRequestId);
             return true;
         }
