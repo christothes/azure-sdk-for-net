@@ -431,9 +431,11 @@ namespace Azure.Core
         private readonly int _dummyPrimitive;
         public TokenRequestContext(string[] scopes, string? parentRequestId) { throw null; }
         public TokenRequestContext(string[] scopes, string? parentRequestId = null, string? claims = null) { throw null; }
+        public TokenRequestContext(string[] scopes, string? parentRequestId = null, string? claims = null, string? userAccessToken = null) { throw null; }
         public string? Claims { get { throw null; } }
         public string? ParentRequestId { get { throw null; } }
         public string[] Scopes { get { throw null; } }
+        public string? UserAssersion { get { throw null; } }
     }
 }
 namespace Azure.Core.Cryptography
@@ -541,6 +543,10 @@ namespace Azure.Core.Pipeline
         public abstract Azure.Core.Request CreateRequest();
         public abstract void Process(Azure.Core.HttpMessage message);
         public abstract System.Threading.Tasks.ValueTask ProcessAsync(Azure.Core.HttpMessage message);
+    }
+    public partial interface IModifiesTokenRequestContext
+    {
+        Azure.Core.TokenRequestContext ModifyTokenRequestContext(Azure.Core.TokenRequestContext context);
     }
 }
 namespace Azure.Core.Serialization

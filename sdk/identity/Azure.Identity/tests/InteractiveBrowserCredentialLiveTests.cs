@@ -23,7 +23,7 @@ namespace Azure.Identity.Tests
             // school / organization account as well as a personal live account, i.e. a @outlook.com, @live.com, or @hotmail.com
             var cred = new InteractiveBrowserCredential();
 
-            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }
@@ -36,7 +36,7 @@ namespace Azure.Identity.Tests
 
             var cancelSource = new CancellationTokenSource();
 
-            ValueTask<AccessToken> getTokenTask = cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }), cancelSource.Token);
+            ValueTask<AccessToken> getTokenTask = cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default), cancelSource.Token);
 
             cancelSource.Cancel();
 
@@ -49,7 +49,7 @@ namespace Azure.Identity.Tests
         {
             var cred = new InteractiveBrowserCredential(TenantId, SingleTenantClientId);
 
-            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }
@@ -64,7 +64,7 @@ namespace Azure.Identity.Tests
             await cred.AuthenticateAsync();
 
             // this should not pop browser
-            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }
@@ -81,7 +81,7 @@ namespace Azure.Identity.Tests
             var cred2 = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TokenCachePersistenceOptions = new InMemoryTokenCacheOptions(), AuthenticationRecord = record });
 
             // this should not pop browser
-            AccessToken token = await cred2.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred2.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }
@@ -100,7 +100,7 @@ namespace Azure.Identity.Tests
             var cred2 = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TokenCachePersistenceOptions = options, AuthenticationRecord = record });
 
             // this should not pop browser
-            AccessToken token = await cred2.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred2.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }
@@ -118,7 +118,7 @@ namespace Azure.Identity.Tests
             Assert.NotNull(authRecord);
 
             // this should not pop browser
-            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" })).ConfigureAwait(false);
+            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default)).ConfigureAwait(false);
 
             Assert.NotNull(token.Token);
         }

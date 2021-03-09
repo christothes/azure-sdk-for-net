@@ -146,6 +146,7 @@ namespace Azure.Core.Pipeline
         {
             private readonly object _syncObj = new object();
             private readonly TokenCredential _credential;
+            private readonly IModifiesTokenRequestContext? _credentialEx;
             private readonly TimeSpan _tokenRefreshOffset;
             private readonly TimeSpan _tokenRefreshRetryDelay;
 
@@ -155,9 +156,13 @@ namespace Azure.Core.Pipeline
             public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay, string[] initialScopes)
             {
                 _credential = credential;
+                if (credential is IModifiesTokenRequestContext ex)
+                {
+                    _credentialEx = ex;
+                }
                 _tokenRefreshOffset = tokenRefreshOffset;
                 _tokenRefreshRetryDelay = tokenRefreshRetryDelay;
-                _currentContext = new TokenRequestContext(initialScopes);
+                _currentContext = new TokenRequestContext(initialScopes, default);
             }
 
             public async ValueTask<string> GetHeaderValueAsync(HttpMessage message, TokenRequestContext context, bool async)
@@ -237,6 +242,7 @@ namespace Azure.Core.Pipeline
             {
                 lock (_syncObj)
                 {
+                    _credentialEx?.ModifyTokenRequestContext(context);
                     // Initial state. GetTaskCompletionSources has been called for the first time
                     if (_infoTcs == null || RequestRequiresNewToken(context))
                     {

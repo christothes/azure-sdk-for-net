@@ -61,7 +61,7 @@ namespace Azure.Identity.Tests
 
                 var cred = InstrumentClient(new ManagedIdentityCredential(clientId: Guid.NewGuid().ToString(), options: InstrumentClientOptions(new TokenCredentialOptions())));
 
-                Assert.ThrowsAsync<AuthenticationFailedException>(async () => await cred.GetTokenAsync(new TokenRequestContext(new string[] { AzureAuthorityHosts.GetDefaultScope(AzureAuthorityHosts.AzurePublicCloud) })));
+                Assert.ThrowsAsync<AuthenticationFailedException>(async () => await cred.GetTokenAsync(new TokenRequestContext(new string[] { AzureAuthorityHosts.GetDefaultScope(AzureAuthorityHosts.AzurePublicCloud) }, default)));
             }
         }
         // This RecordMatcher updates the authentication challange returned from Arc MI endpoint. In this case the auth challange header contains a path to a file on the local disk.

@@ -389,7 +389,7 @@ namespace Azure.Identity.Tests
 
             var cred = new DefaultAzureCredential(credFactory, options);
 
-            var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
+            var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
 
             if (!excludeEnvironmentCredential)
             {
@@ -549,7 +549,7 @@ namespace Azure.Identity.Tests
 
             var cred = new DefaultAzureCredential(credFactory, options);
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
             var unhandledException = ex.InnerException is AggregateException ae ? ae.InnerExceptions.Last() : ex.InnerException;
 
             switch (exPossition)
@@ -678,7 +678,7 @@ namespace Azure.Identity.Tests
 
             var cred = new DefaultAzureCredential(credFactory, options);
 
-            AccessToken actToken = await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
+            AccessToken actToken = await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
 
             Assert.AreEqual(expToken.Token, actToken.Token);
 
@@ -687,7 +687,7 @@ namespace Azure.Identity.Tests
 
             calledCredentials.Clear();
 
-            actToken = await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
+            actToken = await cred.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
 
             Assert.AreEqual(expToken.Token, actToken.Token);
 

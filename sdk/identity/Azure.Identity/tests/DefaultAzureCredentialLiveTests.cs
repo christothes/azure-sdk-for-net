@@ -45,7 +45,7 @@ namespace Azure.Identity.Tests
 
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None);
+                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None);
                 scopes = diagnosticListener.Scopes;
             }
 
@@ -82,7 +82,7 @@ namespace Azure.Identity.Tests
             using (await CredentialTestHelpers.CreateRefreshTokenFixtureAsync(TestEnvironment, Mode, ExpectedServiceName, cloudName))
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None);
+                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None);
                 scopes = diagnosticListener.Scopes;
             }
 
@@ -117,7 +117,7 @@ namespace Azure.Identity.Tests
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    tasks.Add(Task.Run(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None)));
+                    tasks.Add(Task.Run(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None)));
                 }
 
                 await Task.WhenAll(tasks);
@@ -153,7 +153,7 @@ namespace Azure.Identity.Tests
 
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None);
+                token = await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None);
                 scopes = diagnosticListener.Scopes;
             }
 
@@ -187,7 +187,7 @@ namespace Azure.Identity.Tests
             var tasks = new List<Task<AccessToken>>();
             for (int i = 0; i < 10; i++)
             {
-                tasks.Add(Task.Run(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None)));
+                tasks.Add(Task.Run(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None)));
             }
 
             await Task.WhenAll(tasks);
@@ -218,7 +218,7 @@ namespace Azure.Identity.Tests
 
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                Assert.CatchAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None));
+                Assert.CatchAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None));
                 scopes = diagnosticListener.Scopes;
             }
 
@@ -248,7 +248,7 @@ namespace Azure.Identity.Tests
 
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                Assert.CatchAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None));
+                Assert.CatchAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None));
                 scopes = diagnosticListener.Scopes;
             }
 
@@ -275,7 +275,7 @@ namespace Azure.Identity.Tests
 
             using (ClientDiagnosticListener diagnosticListener = new ClientDiagnosticListener(s => s.StartsWith("Azure.Identity")))
             {
-                Assert.CatchAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}), CancellationToken.None));
+                Assert.CatchAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] {"https://vault.azure.net/.default"}, default), CancellationToken.None));
                 scopes = diagnosticListener.Scopes;
             }
 

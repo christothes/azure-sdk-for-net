@@ -82,7 +82,7 @@ namespace Azure.Identity.Tests
         public void EnvironmentCredentialUnavailableException()
         {
             var credential = InstrumentClient(new EnvironmentCredential(CredentialPipeline.GetInstance(null), null));
-            Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
+            Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new EnvironmentCredential(CredentialPipeline.GetInstance(null), innerCred));
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
 
             Assert.IsInstanceOf(typeof(MockClientException), ex.InnerException);
 
@@ -128,7 +128,7 @@ namespace Azure.Identity.Tests
             {
                 var credential = InstrumentClient(new EnvironmentCredential());
 
-                Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
+                Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
             }
         }
     }
