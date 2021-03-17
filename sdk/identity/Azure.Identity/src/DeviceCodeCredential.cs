@@ -99,7 +99,7 @@ namespace Azure.Identity
             // get the default scope for the authority, throw if no default scope exists
             string defaultScope = AzureAuthorityHosts.GetDefaultScope(Pipeline.AuthorityHost) ?? throw new CredentialUnavailableException(NoDefaultScopeMessage);
 
-            return Authenticate(new TokenRequestContext(new string[] { defaultScope }, default), cancellationToken);
+            return Authenticate(new TokenRequestContext(new string[] { defaultScope }), cancellationToken);
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Azure.Identity
             // get the default scope for the authority, throw if no default scope exists
             string defaultScope = AzureAuthorityHosts.GetDefaultScope(Pipeline.AuthorityHost) ?? throw new CredentialUnavailableException(NoDefaultScopeMessage);
 
-            return await AuthenticateAsync(new TokenRequestContext(new string[] { defaultScope }, default), cancellationToken).ConfigureAwait(false);
+            return await AuthenticateAsync(new TokenRequestContext(new string[] { defaultScope }), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
