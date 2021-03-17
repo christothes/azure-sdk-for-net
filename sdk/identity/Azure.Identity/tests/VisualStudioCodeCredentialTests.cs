@@ -21,7 +21,7 @@ namespace Azure.Identity.Tests
 
             VisualStudioCodeCredential credential = InstrumentClient(new VisualStudioCodeCredential(options));
 
-            Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] { "https://vault.azure.net/.default" }, default), CancellationToken.None));
+            Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(new[] { "https://vault.azure.net/.default" }), CancellationToken.None));
         }
     }
 }

@@ -1,17 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace Azure.Core.Pipeline
+namespace Azure.Core
 {
     /// <summary>
     ///
     /// </summary>
-    public interface IModifiesTokenRequestContext
+    public interface ISupportsTokenCaching
     {
         /// <summary>
         ///
         /// </summary>
-        /// <param name="context"></param>
-        TokenRequestContext ModifyTokenRequestContext(TokenRequestContext context);
+        public bool BypassCache { get; set; }
     }
 }

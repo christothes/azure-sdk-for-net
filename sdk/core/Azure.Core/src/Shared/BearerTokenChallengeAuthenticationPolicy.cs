@@ -146,7 +146,6 @@ namespace Azure.Core.Pipeline
         {
             private readonly object _syncObj = new object();
             private readonly TokenCredential _credential;
-            private readonly IModifiesTokenRequestContext? _credentialEx;
             private readonly TimeSpan _tokenRefreshOffset;
             private readonly TimeSpan _tokenRefreshRetryDelay;
 
@@ -156,10 +155,6 @@ namespace Azure.Core.Pipeline
             public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay, string[] initialScopes)
             {
                 _credential = credential;
-                if (credential is IModifiesTokenRequestContext ex)
-                {
-                    _credentialEx = ex;
-                }
                 _tokenRefreshOffset = tokenRefreshOffset;
                 _tokenRefreshRetryDelay = tokenRefreshRetryDelay;
                 _currentContext = new TokenRequestContext(initialScopes, default);
@@ -170,8 +165,15 @@ namespace Azure.Core.Pipeline
                 bool getTokenFromCredential;
                 TaskCompletionSource<HeaderValueInfo> headerValueTcs;
                 TaskCompletionSource<HeaderValueInfo>? backgroundUpdateTcs;
-                (headerValueTcs, backgroundUpdateTcs, getTokenFromCredential) = GetTaskCompletionSources(context);
                 HeaderValueInfo info;
+
+                if (_credential is ISupportsTokenCaching c && !c.BypassCache)
+                {
+                    info = await GetHeaderValueFromCredentialAsync(context, async, message.CancellationToken).ConfigureAwait(false);
+                    return info.HeaderValue;
+                }
+
+                (headerValueTcs, backgroundUpdateTcs, getTokenFromCredential) = GetTaskCompletionSources(context);
 
                 if (getTokenFromCredential)
                 {
@@ -242,7 +244,6 @@ namespace Azure.Core.Pipeline
             {
                 lock (_syncObj)
                 {
-                    _credentialEx?.ModifyTokenRequestContext(context);
                     // Initial state. GetTaskCompletionSources has been called for the first time
                     if (_infoTcs == null || RequestRequiresNewToken(context))
                     {

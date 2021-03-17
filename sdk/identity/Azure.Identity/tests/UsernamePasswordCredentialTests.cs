@@ -30,7 +30,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new UsernamePasswordCredential(username, password, clientId, tenantId, default, default, mockMsalClient));
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsNotNull(ex.InnerException);
 

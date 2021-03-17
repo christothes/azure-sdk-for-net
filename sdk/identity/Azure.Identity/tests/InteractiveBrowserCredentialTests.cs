@@ -27,7 +27,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new InteractiveBrowserCredential(default, "", default, default, mockMsalClient));
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsNotNull(ex.InnerException);
 
@@ -53,13 +53,13 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new InteractiveBrowserCredential(default, "", default, default, mockMsalClient));
 
-            AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+            AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
             Assert.AreEqual(expToken, token.Token);
 
             Assert.AreEqual(expExpiresOn, token.ExpiresOn);
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsNotNull(ex.InnerException);
 
@@ -85,7 +85,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new InteractiveBrowserCredential(default, "", default, default, mockMsalClient));
 
-            AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+            AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
             Assert.AreEqual(expToken, token.Token);
 
@@ -93,7 +93,7 @@ namespace Azure.Identity.Tests
 
             mockMsalClient.InteractiveAuthFactory = (_) => { throw new MockClientException(expInnerExMessage); };
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsNotNull(ex.InnerException);
 

@@ -38,7 +38,7 @@
     <Compile Include="Shared\EventSourceEventFormatting.cs" />
     <Compile Include="Shared\HashCodeBuilder.cs" />
     <Compile Include="Shared\HttpMessageSanitizer.cs" />
-    <Compile Include="Shared\IModifiesTokenRequestContext.cs" />
+    <Compile Include="Shared\ISupportsTokenCaching.cs" />
     <Compile Include="Shared\NullableAttributes.cs" />
     <Compile Include="Shared\TaskExtensions.cs" />
   </ItemGroup>

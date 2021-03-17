@@ -46,7 +46,7 @@ namespace Azure.Identity.Tests
             var tenantId = Guid.NewGuid().ToString();
             var clientId = Guid.NewGuid().ToString();
 
-            TokenRequestContext tokenContext = new TokenRequestContext(MockScopes.Default, default);
+            TokenRequestContext tokenContext = new TokenRequestContext(MockScopes.Default);
 
             ClientCertificateCredential missingFileCredential = new ClientCertificateCredential(tenantId, clientId, Path.Combine(TestContext.CurrentContext.TestDirectory, "Data", "notfound.pem"));
             ClientCertificateCredential invalidPemCredential = new ClientCertificateCredential(tenantId, clientId, Path.Combine(TestContext.CurrentContext.TestDirectory, "Data", "cert-invalid-data.pem"));
@@ -90,7 +90,7 @@ namespace Azure.Identity.Tests
                 usePemFile ? new ClientCertificateCredential(expectedTenantId, expectedClientId, certificatePathPem, options) : new ClientCertificateCredential(expectedTenantId, expectedClientId, mockCert, options)
             );
 
-            Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             await Task.CompletedTask;
         }
@@ -115,7 +115,7 @@ namespace Azure.Identity.Tests
                 usePemFile ? new ClientCertificateCredential(expectedTenantId, expectedClientId, certificatePathPem, default, default, mockMsalClient) : new ClientCertificateCredential(expectedTenantId, expectedClientId, mockCert, default, default, mockMsalClient)
             );
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsNotNull(ex.InnerException);
 

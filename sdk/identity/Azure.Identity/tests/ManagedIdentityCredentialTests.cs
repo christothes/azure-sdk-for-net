@@ -35,7 +35,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(client));
 
-                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -68,7 +68,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(client));
 
-                var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+                var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
                 Assert.That(ex.Message.Contains(ImdsManagedIdentitySource.IdentityUnavailableError));
             }
@@ -88,7 +88,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(clientId, options));
 
-                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -122,7 +122,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(options: options));
 
-                AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, token.Token);
 
@@ -152,7 +152,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(options: options));
 
-                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -181,7 +181,7 @@ namespace Azure.Identity.Tests
                 var options = new TokenCredentialOptions { Transport = mockTransport };
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential("mock-client-id", options));
-                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -208,7 +208,7 @@ namespace Azure.Identity.Tests
                 var options = new TokenCredentialOptions() { Transport = mockTransport };
 
                 ManagedIdentityCredential credential = InstrumentClient(new ManagedIdentityCredential(options: options));
-                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -242,7 +242,7 @@ namespace Azure.Identity.Tests
 
                 ManagedIdentityCredential client = InstrumentClient(new ManagedIdentityCredential(clientId, options));
 
-                AccessToken actualToken = await client.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default));
+                AccessToken actualToken = await client.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
 
                 Assert.AreEqual(ExpectedToken, actualToken.Token);
 
@@ -273,7 +273,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new ManagedIdentityCredential(mockClient));
 
-            var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<CredentialUnavailableException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.AreEqual(ManagedIdentityClient.MsiUnavailableError, ex.Message);
 
@@ -287,7 +287,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new ManagedIdentityCredential(mockClient));
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsInstanceOf(typeof(MockClientException), ex.InnerException);
 
@@ -301,7 +301,7 @@ namespace Azure.Identity.Tests
 
             var credential = InstrumentClient(new ManagedIdentityCredential(mockClient));
 
-            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, default)));
+            var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             Assert.IsInstanceOf(typeof(MockClientException), ex.InnerException);
 

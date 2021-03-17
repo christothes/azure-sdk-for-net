@@ -72,7 +72,7 @@ namespace Azure.Identity.Tests
 
             var cred = InstrumentClient(new UsernamePasswordCredential(username, password, tenantId, ClientId, options));
 
-            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }, default));
+            AccessToken token = await cred.GetTokenAsync(new TokenRequestContext(new string[] { "https://vault.azure.net/.default" }));
 
             Assert.IsNotNull(token.Token);
         }
@@ -107,7 +107,7 @@ namespace Azure.Identity.Tests
 
             var cred = InstrumentClient(new UsernamePasswordCredential(username, password, tenantId, ClientId, options));
 
-            AuthenticationRecord record = await cred.AuthenticateAsync(new TokenRequestContext(new[] { "https://vault.azure.net/.default" }, default));
+            AuthenticationRecord record = await cred.AuthenticateAsync(new TokenRequestContext(new[] { "https://vault.azure.net/.default" }));
 
             Assert.IsNotNull(record);
 

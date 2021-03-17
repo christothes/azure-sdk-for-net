@@ -12,10 +12,16 @@ namespace Azure.Identity
     /// <summary>
     ///
     /// </summary>
-    public class OnBehalfOfCredential : TokenCredential, IModifiesTokenRequestContext
+    public class OnBehalfOfCredential : TokenCredential, ISupportsTokenCaching
     {
         private readonly IConfidentialClientApplication _confidentialClient;
         private readonly UserAssertion _userAssertion;
+
+        /// <summary>
+        /// Indicates that callers to GetToken should not expect that the credential will perform caching.
+        /// </summary>
+        /// <value></value>
+        public bool BypassCache { get; set; }
 
         /// <summary>
         ///
@@ -77,22 +83,6 @@ namespace Azure.Identity
             }
 
             return new AccessToken(result.AccessToken, result.ExpiresOn);
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="context"></param>
-        public TokenRequestContext ModifyTokenRequestContext(TokenRequestContext context)
-        {
-            if (context.UserAssersion != UserAssertionScope._userAssertion.Value?.Assertion)
-            {
-                return new TokenRequestContext(context.Scopes, context.ParentRequestId, context.Claims, UserAssertionScope._userAssertion.Value?.Assertion);
-            }
-            else
-            {
-                return context;
-            }
         }
     }
 }
