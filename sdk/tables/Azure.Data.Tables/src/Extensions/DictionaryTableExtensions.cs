@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Azure.Data.Tables
 {
@@ -136,7 +137,7 @@ namespace Azure.Data.Tables
         {
             PropertyInfo[] properties = s_propertyInfoCache.GetOrAdd(typeof(T), (type) =>
             {
-                return type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                return type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             });
 
             var result = new List<T>(entityList.Count);
@@ -172,13 +173,24 @@ namespace Azure.Data.Tables
 
             properties ??= s_propertyInfoCache.GetOrAdd(typeof(T), (type) =>
             {
-                return type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                return type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             });
 
             // Iterate through each property of the entity and set them as the correct type.
             foreach (var property in properties)
             {
-                if (entity.TryGetValue(property.Name, out var propertyValue))
+                var dataMemberAttribute = property.GetCustomAttribute<DataMemberAttribute>(false);
+                if (dataMemberAttribute == null && !property.GetGetMethod(true).IsPublic)
+                {
+                    // skip internal properties that do not have a DataMember attribute.
+                    continue;
+                }
+                string serailizedPropertyName = dataMemberAttribute?.Name switch
+                {
+                    null => property.Name,
+                    var name => name
+                };
+                if (entity.TryGetValue(serailizedPropertyName, out var propertyValue))
                 {
                     if (typeActions.TryGetValue(property.PropertyType, out var propertyAction))
                     {

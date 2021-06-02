@@ -351,6 +351,9 @@ namespace Azure.Data.Tables.Tests
         {
             [DataMember(Name = PropertyRename)]
             public string SomeStringProperty { get; set; }
+            internal string SomeInternalProperty { get; set; }
+            [DataMember]
+            internal string SomeInternalPropertyWithDataMember { get; set; }
             public string PartitionKey { get; set; }
             public string RowKey { get; set; }
             public DateTimeOffset? Timestamp { get; set; }

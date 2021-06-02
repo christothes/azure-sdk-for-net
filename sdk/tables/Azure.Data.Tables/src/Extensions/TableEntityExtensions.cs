@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 
@@ -22,7 +23,7 @@ namespace Azure.Data.Tables
                 return dictEntity.ToOdataAnnotatedDictionary();
             }
 
-            var properties = entity.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            var properties = entity.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var annotatedDictionary = new Dictionary<string, object>(properties.Length * 2);
 
             foreach (var prop in properties)
@@ -34,6 +35,11 @@ namespace Azure.Data.Tables
                     continue;
                 }
                 var dataMemberAttribute = prop.GetCustomAttribute<DataMemberAttribute>(false);
+                if (dataMemberAttribute == null && !prop.GetGetMethod(true).IsPublic)
+                {
+                    // skip internal properties that do not have a DataMember attribute.
+                    continue;
+                }
                 string serailizedPropertyName = dataMemberAttribute?.Name switch
                 {
                     null => prop.Name,

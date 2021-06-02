@@ -595,13 +595,16 @@ namespace Azure.Data.Tables.Tests
         [RecordedTest]
         public async Task EntityWithDataMemberAttributeIsRoundTrippedWithRenamedProperty()
         {
-            var entity = new RenameTestEntity { PartitionKey = "partition", RowKey = "1", SomeStringProperty = "foo" };
+            var entity = new RenameTestEntity { PartitionKey = "partition", RowKey = "1", SomeStringProperty = "foo", SomeInternalProperty = "foo2", SomeInternalPropertyWithDataMember = "foo2"};
 
             await client.AddEntityAsync(entity).ConfigureAwait(false);
 
             var result = (await client.QueryAsync<RenameTestEntity>().ToEnumerableAsync().ConfigureAwait(false)).Single();
 
-            Assert.AreEqual("foo", entity.SomeStringProperty);
+            Assert.AreEqual("foo", result.SomeStringProperty);
+            Assert.AreEqual("foo2", result.SomeInternalPropertyWithDataMember);
+            // An internal property without a DataMember attribute will not be serialized
+            Assert.IsNull(result.SomeInternalProperty);
         }
 
         /// <summary>
