@@ -78,6 +78,7 @@ namespace Azure.Data.Tables.Tests
         private static readonly Expression<Func<TableEntity, bool>> s_binaryExpDE = ent => ent.GetBinaryData("Binary") == s_someBinaryData;
         private static readonly Expression<Func<ComplexEntity, bool>> s_complexExp = ent => ent.String.CompareTo(SomeString) >= 0 && ent.Int64 >= SomeInt64 && ent.Int32 >= SomeInt && ent.DateTime >= s_someDateTime;
         private static readonly Expression<Func<TableEntity, bool>> s_complexExpDE = ent => ent.GetString("String").CompareTo(SomeString) >= 0 && ent.GetInt64("Int64") >= SomeInt64 && ent.GetInt32("Int32") >= SomeInt && ent.GetDateTime("DateTime") >= s_someDateTime;
+        private static readonly Expression<Func<RenameTestEntity, bool>> s_rename_eq = ent => ent.SomeStringProperty == SomeString;
 
         public static object[] TableEntityExpressionTestCases =
         {
@@ -99,6 +100,7 @@ namespace Azure.Data.Tables.Tests
             new object[] { $"Binary eq X'{string.Join(string.Empty, s_someBinary.Select(b => b.ToString("D2")))}'", s_binaryExp },
             new object[] { $"Binary eq X'{string.Join(string.Empty, s_someBinaryData.ToArray().Select(b => b.ToString("D2")))}'", s_binaryExp },
             new object[] { $"(((String ge '{SomeString}') and (Int64 ge {SomeInt64}L)) and (Int32 ge {SomeInt})) and (DateTime ge datetime'{s_someDateTimeOffsetRoundtrip}')", s_complexExp },
+            new object[] { $"{PropertyRename} eq '{SomeString}'", s_rename_eq}
         };
 
         public static object[] TableItemExpressionTestCases =
@@ -145,7 +147,7 @@ namespace Azure.Data.Tables.Tests
 
         [TestCaseSource(nameof(TableEntityExpressionTestCases))]
         [Test]
-        public void TestPOCOFilterExpressions(string expectedFilter, Expression<Func<ComplexEntity, bool>> expression)
+        public void TestPOCOFilterExpressions<T>(string expectedFilter, Expression<Func<T, bool>> expression)
         {
             var filter = TableClient.CreateQueryFilter(expression);
 

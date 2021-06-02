@@ -241,7 +241,7 @@ namespace Azure.Data.Tables.Tests
         public async Task CreateEntityWithETagProperty()
         {
             List<TableEntity> entityResults;
-            List<TableEntity> entitiesToCreate = CreateTableEntities(PartitionKeyValue,1);
+            List<TableEntity> entitiesToCreate = CreateTableEntities(PartitionKeyValue, 1);
             entitiesToCreate[0]["ETag"] = "foo";
 
             // Create the new entities.
@@ -590,6 +590,18 @@ namespace Azure.Data.Tables.Tests
                 .ConfigureAwait(false);
 
             Assert.That(emptyresult, Is.Empty, $"The query should have returned no results.");
+        }
+
+        [RecordedTest]
+        public async Task EntityWithDataMemberAttributeIsRoundTrippedWithRenamedProperty()
+        {
+            var entity = new RenameTestEntity { PartitionKey = "partition", RowKey = "1", SomeStringProperty = "foo" };
+
+            await client.AddEntityAsync(entity).ConfigureAwait(false);
+
+            var result = (await client.QueryAsync<RenameTestEntity>().ToEnumerableAsync().ConfigureAwait(false)).Single();
+
+            Assert.AreEqual("foo", entity.SomeStringProperty);
         }
 
         /// <summary>

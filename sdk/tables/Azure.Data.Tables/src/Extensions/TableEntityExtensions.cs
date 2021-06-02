@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Azure.Data.Tables
 {
@@ -26,40 +27,52 @@ namespace Azure.Data.Tables
 
             foreach (var prop in properties)
             {
+                var ignoreAttribute = prop.GetCustomAttribute<IgnoreDataMemberAttribute>(false);
+                if (ignoreAttribute != null)
+                {
+                    // do not serialize this property.
+                    continue;
+                }
+                var dataMemberAttribute = prop.GetCustomAttribute<DataMemberAttribute>(false);
+                string serailizedPropertyName = dataMemberAttribute?.Name switch
+                {
+                    null => prop.Name,
+                    var name => name
+                };
                 // Remove the ETag and Timestamp properties, as they do not need to be serialized
                 if (prop.Name == TableConstants.PropertyNames.ETag || prop.Name == TableConstants.PropertyNames.Timestamp)
                 {
                     continue;
                 }
 
-                annotatedDictionary[prop.Name] = prop.GetValue(entity);
+                annotatedDictionary[serailizedPropertyName] = prop.GetValue(entity);
 
-                switch (annotatedDictionary[prop.Name])
+                switch (annotatedDictionary[serailizedPropertyName])
                 {
                     case byte[]:
                     case BinaryData:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmBinary;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmBinary;
                         break;
                     case long:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmInt64;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmInt64;
                         // Int64 / long should be serialized as string.
-                        annotatedDictionary[prop.Name] = annotatedDictionary[prop.Name].ToString();
+                        annotatedDictionary[serailizedPropertyName] = annotatedDictionary[serailizedPropertyName].ToString();
                         break;
                     case double:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDouble;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmDouble;
                         break;
                     case Guid:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmGuid;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmGuid;
                         break;
                     case DateTimeOffset:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
                         break;
                     case DateTime:
-                        annotatedDictionary[prop.Name.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
+                        annotatedDictionary[serailizedPropertyName.ToOdataTypeString()] = TableConstants.Odata.EdmDateTime;
                         break;
                     case Enum enumValue:
                         // serialize enum as string
-                        annotatedDictionary[prop.Name] = enumValue.ToString();
+                        annotatedDictionary[serailizedPropertyName] = enumValue.ToString();
                         break;
                 }
             }

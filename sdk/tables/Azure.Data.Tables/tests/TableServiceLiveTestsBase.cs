@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Azure.Core.TestFramework;
 using NUnit.Framework;
@@ -243,6 +244,7 @@ namespace Azure.Data.Tables.Tests
                     Int64 = (long)int.MaxValue + n,
                     LongPrimitive = (long)int.MaxValue + n,
                     LongPrimitiveN = (long)int.MaxValue + n,
+                    IgnoredProperty = string.Format("{0:0000}", n)
                 };
             }).ToList();
         }
@@ -337,6 +339,18 @@ namespace Azure.Data.Tables.Tests
             public double DoubleTypeProperty { get; set; }
 
             public int IntTypeProperty { get; set; }
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
+        }
+
+        public const string PropertyRename = "PropertyRename";
+
+        public class RenameTestEntity : ITableEntity
+        {
+            [DataMember(Name = PropertyRename)]
+            public string SomeStringProperty { get; set; }
             public string PartitionKey { get; set; }
             public string RowKey { get; set; }
             public DateTimeOffset? Timestamp { get; set; }
@@ -479,6 +493,9 @@ namespace Azure.Data.Tables.Tests
             public DateTimeOffset? Timestamp { get; set; }
 
             public ETag ETag { get; set; }
+
+            [IgnoreDataMember]
+            public string IgnoredProperty { get; set; }
 
             public static void AssertEquality(ComplexEntity a, ComplexEntity b)
             {
