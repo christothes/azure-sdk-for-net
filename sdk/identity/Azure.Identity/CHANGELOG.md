@@ -1,15 +1,9 @@
 # Release History
 
-## 1.5.0-beta.5 (Unreleased)
-
-### Features Added
+## 1.5.0 (2021-10-05)
 
 ### Breaking Changes from 1.5.0-beta.4
 - The `AllowMultiTenantAuthentication` option has been removed and the default behavior is now as if it were true. The multi-tenant discovery feature can be totally disabled by either setting an `AppContext` switch named "Azure.Identity.DisableTenantDiscovery" to `true` or by setting the environment variable "AZURE_IDENTITY_DISABLE_TENANTDISCOVERY" to "true".
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 1.5.0-beta.4 (2021-09-08)
 
