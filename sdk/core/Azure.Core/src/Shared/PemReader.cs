@@ -149,9 +149,9 @@ namespace Azure.Core
                 X509Certificate2 certificate = (X509Certificate2)s_rsaCopyWithPrivateKeyMethod.Invoke(null, new object[] { certificateWithoutPrivateKey, privateKey });
 
                 // On .NET Framework the PrivateKey member is not initialized after calling CopyWithPrivateKey.
-                if (certificate.PrivateKey is null)
+                if (certificate.GetRSAPrivateKey() is null)
                 {
-                    certificate.PrivateKey = privateKey;
+                    certificate = certificate.CopyWithPrivateKey(privateKey);
                 }
 
                 // Make sure the private key doesn't get disposed now that it's used.

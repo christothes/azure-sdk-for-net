@@ -17,12 +17,10 @@ namespace Azure.Core.Tests
         [Test]
         public void ConstructorValidatesRequiredParameters()
         {
-            Assert.That(
-                () => new CloudEvent(null, "type", null),
-                Throws.InstanceOf<ArgumentNullException>());
-            Assert.That(
-                () => new CloudEvent("source", null, null),
-                Throws.InstanceOf<ArgumentNullException>());
+            Assert.Throws<ArgumentNullException>(
+                () => new CloudEvent(null, "type", null));
+            Assert.Throws<ArgumentNullException>(
+                () => new CloudEvent("source", null, null));
         }
 
         [Test]
@@ -84,15 +82,9 @@ namespace Azure.Core.Tests
             }
             else
             {
-                Assert.That(
-                    () => cloudEvent.ExtensionAttributes[key] = "value",
-                    Throws.InstanceOf<ArgumentException>());
-                Assert.That(
-                    () => cloudEvent.ExtensionAttributes.Add(key, "value"),
-                    Throws.InstanceOf<ArgumentException>());
-                Assert.That(
-                    () => cloudEvent.ExtensionAttributes.Add(new KeyValuePair<string, object>(key, "value")),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes[key] = "value");
+                Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes.Add(key, "value"));
+                Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes.Add(new KeyValuePair<string, object>(key, "value")));
             }
         }
 
@@ -112,18 +104,10 @@ namespace Azure.Core.Tests
             cloudEvent.ExtensionAttributes.Add("dto", dto);
             cloudEvent.ExtensionAttributes.Add("dt", dt);
 
-            Assert.That(
-                () => cloudEvent.ExtensionAttributes.Add("long", long.MaxValue),
-                Throws.InstanceOf<ArgumentException>());
-            Assert.That(
-                () => cloudEvent.ExtensionAttributes.Add("array", new string[] { "string" }),
-                Throws.InstanceOf<ArgumentException>());
-            Assert.That(
-                () => cloudEvent.ExtensionAttributes.Add("dict", new Dictionary<string, object>()),
-                Throws.InstanceOf<ArgumentException>());
-            Assert.That(
-                () => cloudEvent.ExtensionAttributes.Add("null", null),
-                Throws.InstanceOf<ArgumentNullException>());
+            Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes.Add("long", long.MaxValue));
+            Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes.Add("array", new string[] { "string" }));
+            Assert.Throws<ArgumentException>(() => cloudEvent.ExtensionAttributes.Add("dict", new Dictionary<string, object>()));
+            Assert.Throws<ArgumentNullException>(() => cloudEvent.ExtensionAttributes.Add("null", null));
 
             var serializer = new JsonObjectSerializer();
             BinaryData bd = serializer.Serialize(cloudEvent);
@@ -613,9 +597,7 @@ namespace Azure.Core.Tests
         [Test]
         public void PassingBinaryDataToWrongConstructorThrows()
         {
-            Assert.That(
-                () => new CloudEvent("source", "type", new BinaryData("data")),
-                Throws.InstanceOf<InvalidOperationException>());
+            Assert.Throws<InvalidOperationException>(() => new CloudEvent("source", "type", new BinaryData("data")));
         }
 
         [Test]
@@ -704,11 +686,9 @@ namespace Azure.Core.Tests
         [Test]
         public void CloudEventParseThrowsOnNullInput()
         {
-            Assert.That(() => CloudEvent.ParseMany(null),
-                Throws.InstanceOf<ArgumentNullException>());
+            Assert.Throws<ArgumentNullException>(() => CloudEvent.ParseMany(null));
 
-            Assert.That(() => CloudEvent.Parse(null),
-                Throws.InstanceOf<ArgumentNullException>());
+            Assert.Throws<ArgumentNullException>(() => CloudEvent.Parse(null));
         }
 
         [Test]
@@ -716,8 +696,7 @@ namespace Azure.Core.Tests
         {
             string requestContent = "[{\"specversion\": \"1.0\", \"id\":\"id\", \"source\":\"source\", \"type\":\"type\", \"subject\": \"Subject-0\", \"data\": {    \"itemSku\": \"512d38b6-c7b8-40c8-89fe-f46f9e9622b6\",    \"itemUri\": \"https://rp-eastus2.eventgrid.azure.net:553/eventsubscriptions/estest/validate?id=B2E34264-7D71-453A-B5FB-B62D0FDC85EE&t=2018-04-26T20:30:54.4538837Z&apiVersion=2018-05-01-preview&token=1BNqCxBBSSE9OnNSfZM4%2b5H9zDegKMY6uJ%2fO2DFRkwQ%3d\"  }}, { \"specversion\": \"1.0\", \"id\":\"id\", \"source\":\"source\", \"type\":\"type\", \"subject\": \"Subject-0\", \"data\": {    \"itemSku\": \"512d38b6-c7b8-40c8-89fe-f46f9e9622b6\",    \"itemUri\": \"https://rp-eastus2.eventgrid.azure.net:553/eventsubscriptions/estest/validate?id=B2E34264-7D71-453A-B5FB-B62D0FDC85EE&t=2018-04-26T20:30:54.4538837Z&apiVersion=2018-05-01-preview&token=1BNqCxBBSSE9OnNSfZM4%2b5H9zDegKMY6uJ%2fO2DFRkwQ%3d\"  }}]";
 
-            Assert.That(() => CloudEvent.Parse(new BinaryData(requestContent)),
-                Throws.InstanceOf<ArgumentException>());
+            Assert.Throws<ArgumentException>(() => CloudEvent.Parse(new BinaryData(requestContent)));
         }
 
         [Test]
@@ -730,9 +709,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.ParseMany(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.ParseMany(requestContent, skipValidation));
             }
             else
             {
@@ -756,9 +733,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.Parse(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.Parse(requestContent, skipValidation));
             }
             else
             {
@@ -787,9 +762,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.Parse(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.Parse(requestContent, skipValidation));
             }
             else
             {
@@ -819,9 +792,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.Parse(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.Parse(requestContent, skipValidation));
             }
             else
             {
@@ -850,9 +821,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.Parse(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.Parse(requestContent, skipValidation));
             }
             else
             {
@@ -881,9 +850,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.Parse(requestContent, skipValidation),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.Parse(requestContent, skipValidation));
             }
             else
             {
@@ -912,9 +879,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.ParseMany(json),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentException>(() => CloudEvent.ParseMany(json));
             }
             else
             {
@@ -937,9 +902,7 @@ namespace Azure.Core.Tests
 
             if (!skipValidation)
             {
-                Assert.That(
-                    () => CloudEvent.ParseMany(json),
-                    Throws.InstanceOf<ArgumentException>());
+                Assert.Throws<ArgumentNullException>(() => CloudEvent.ParseMany(json));
             }
             else
             {

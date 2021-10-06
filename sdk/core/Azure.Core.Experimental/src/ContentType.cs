@@ -50,9 +50,11 @@ namespace Azure.Core
             return string.Equals(_contentType, other._contentType, StringComparison.Ordinal);
         }
 
+#pragma warning disable CS8767 //Nullability of reference types in type of parameter 'other' of 'bool ContentType.Equals(string other)' doesn't match implicitly implemented member 'bool IEquatable<string>.Equals(string? other)' (possibly because of nullability attributes).
         /// <inheritdoc />
         public bool Equals(string other)
             => string.Equals(_contentType, _contentType, StringComparison.Ordinal);
+#pragma warning restore CS8767 //Nullability of reference types in type of parameter 'other' of 'bool ContentType.Equals(string other)' doesn't match implicitly implemented member 'bool IEquatable<string>.Equals(string? other)' (possibly because of nullability attributes).
 
         /// <inheritdoc />
         public override bool Equals(object? obj)

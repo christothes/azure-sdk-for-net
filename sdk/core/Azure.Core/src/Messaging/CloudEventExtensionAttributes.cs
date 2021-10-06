@@ -90,7 +90,7 @@ namespace Azure.Messaging
         private static void ValidateAttribute(string? name, object? value)
         {
             Argument.AssertNotNullOrEmpty(name, nameof(name));
-            Argument.AssertNotNull(value, nameof(value));
+            Argument.AssertNotNull(value, $"{nameof(value)} for key: {name}");
             if (s_reservedAttributes.Contains(name))
             {
                 throw new ArgumentException($"Attribute name cannot use the reserved attribute: '{name}'", nameof(name));

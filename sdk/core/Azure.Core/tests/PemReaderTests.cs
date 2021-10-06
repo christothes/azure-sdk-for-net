@@ -150,7 +150,7 @@ pn29yMivL7r48dlo";
             using X509Certificate2 certificate = PemReader.LoadCertificate(RsaPem.AsSpan(), keyType: PemReader.KeyType.RSA);
             Assert.AreEqual("CN=Azure SDK", certificate.Subject);
             Assert.IsTrue(certificate.HasPrivateKey);
-            Assert.AreEqual(2048, certificate.PrivateKey.KeySize);
+            Assert.AreEqual(2048, certificate.GetRSAPrivateKey().KeySize);
         }
 
         [Test]
@@ -159,7 +159,7 @@ pn29yMivL7r48dlo";
             using X509Certificate2 certificate = PemReader.LoadCertificate(RsaPem.AsSpan());
             Assert.AreEqual("CN=Azure SDK", certificate.Subject);
             Assert.IsTrue(certificate.HasPrivateKey);
-            Assert.AreEqual(2048, certificate.PrivateKey.KeySize);
+            Assert.AreEqual(2048, certificate.GetRSAPrivateKey().KeySize);
         }
 
         [Test]
@@ -168,7 +168,7 @@ pn29yMivL7r48dlo";
             using X509Certificate2 certificate = PemReader.LoadCertificate(RsaPemPrivateKey.AsSpan(), s_rsaCertificateBytes, keyType: PemReader.KeyType.RSA);
             Assert.AreEqual("CN=Azure SDK", certificate.Subject);
             Assert.IsTrue(certificate.HasPrivateKey);
-            Assert.AreEqual(2048, certificate.PrivateKey.KeySize);
+            Assert.AreEqual(2048, certificate.GetRSAPrivateKey().KeySize);
         }
 
         [Test]
@@ -223,7 +223,7 @@ pn29yMivL7r48dlo";
             using X509Certificate2 certificate = PemReader.LoadCertificate(pem.AsSpan(), keyType: PemReader.KeyType.RSA);
             Assert.AreEqual("CN=Azure SDK", certificate.Subject);
             Assert.IsTrue(certificate.HasPrivateKey);
-            Assert.AreEqual(2048, certificate.PrivateKey.KeySize);
+            Assert.AreEqual(2048, certificate.GetRSAPrivateKey().KeySize);
         }
 
         [Test]
@@ -232,7 +232,7 @@ pn29yMivL7r48dlo";
             using X509Certificate2 certificate = PemReader.LoadCertificate(RsaPem.AsSpan(), Encoding.UTF8.GetBytes("This is not a certificate"), keyType: PemReader.KeyType.RSA);
             Assert.AreEqual("CN=Azure SDK", certificate.Subject);
             Assert.IsTrue(certificate.HasPrivateKey);
-            Assert.AreEqual(2048, certificate.PrivateKey.KeySize);
+            Assert.AreEqual(2048, certificate.GetRSAPrivateKey().KeySize);
         }
 
         [Test]
@@ -243,7 +243,8 @@ pn29yMivL7r48dlo";
             Assert.Throws<InvalidDataException>(() => PemReader.LoadCertificate(ECDsaCertificate.AsSpan(), keyType: PemReader.KeyType.RSA));
 #else
             // Compatible with the previous release. Goes through RSA.ImportPKcs8PrivateKey().
-            Assert.That(() => PemReader.LoadCertificate(ECDsaCertificate.AsSpan(), keyType: PemReader.KeyType.RSA), Throws.InstanceOf<CryptographicException>());
+            Assert.Throws<CryptographicException>(() =>
+                PemReader.LoadCertificate(ECDsaCertificate.AsSpan(), keyType: PemReader.KeyType.RSA));
 #endif
         }
 

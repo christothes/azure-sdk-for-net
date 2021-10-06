@@ -293,8 +293,8 @@ namespace Azure.ResourceManager
         {
             if (Parent == null)
                 return string.Empty;
-
             StringBuilder builder = new StringBuilder(Parent.ToResourceString());
+#pragma warning disable CA1305 // Use IFormatProvider overload
             if (IsChild)
             {
                 builder.Append($"/{ResourceType.LastType}");
@@ -305,7 +305,7 @@ namespace Azure.ResourceManager
             {
                 builder.Append($"/providers/{ResourceType.Namespace}/{ResourceType.Type}/{Name}");
             }
-
+#pragma warning restore CA1305
             return builder.ToString();
         }
 

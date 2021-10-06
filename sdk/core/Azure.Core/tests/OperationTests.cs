@@ -104,11 +104,7 @@ namespace Azure.Core.Tests
                 UpdateCalled = () => { updateCalled++; }
             };
 
-            Assert.That(async () =>
-            {
-                _ = await operation.WaitForCompletionAsync(cancel.Token);
-            }, Throws.InstanceOf<OperationCanceledException>());
-
+            Assert.ThrowsAsync<TaskCanceledException>(async () => await operation.WaitForCompletionAsync(cancel.Token));
             Assert.IsTrue(cancel.IsCancellationRequested);
             Assert.Greater(updateCalled, 0);
             Assert.IsFalse(operation.HasValue);

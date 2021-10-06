@@ -17,6 +17,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 #pragma warning disable AZC0014 // Avoid using banned types in public API
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8603 // Possible null reference return.
+#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8767 // Nullability of reference types in type of parameter 'other' of 'bool JsonData.Equals(JsonData other)' doesn't match implicitly implemented member 'bool IEquatable<JsonData>.Equals(JsonData? other)' (possibly because of nullability attributes).
 
 namespace Azure.Core
 {
@@ -1322,4 +1326,8 @@ namespace Azure.Core
             }
         }
     }
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8603 // Possible null reference return.
+#pragma warning restore CS8601 //Possible null reference assignment.
+#pragma warning restore CS8767 // Nullability of reference types in type of parameter 'other' of 'bool JsonData.Equals(JsonData other)' doesn't match implicitly implemented member 'bool IEquatable<JsonData>.Equals(JsonData? other)' (possibly because of nullability attributes).
 }

@@ -98,9 +98,8 @@ namespace Azure.Core.TestFramework
                     switch (Mode)
                     {
                         case RecordedTestMode.Live:
-                            var csp = new RNGCryptoServiceProvider();
                             var bytes = new byte[4];
-                            csp.GetBytes(bytes);
+                            RandomNumberGenerator.Create().GetBytes(bytes);
                             _random = new TestRandom(Mode, BitConverter.ToInt32(bytes, 0));
                             break;
                         case RecordedTestMode.Record:
