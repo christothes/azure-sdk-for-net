@@ -439,6 +439,29 @@ namespace Azure.Data.Tables.Tests
             Assert.ThrowsAsync<RequestFailedException>(() => client.CreateIfNotExistsAsync());
         }
 
+        [Test]
+        public async Task CreateIfNotExistsImplicitResponseCaseWhenExists()
+        {
+            _transport = new MockTransport(
+                request => throw new RequestFailedException(
+                    (int)HttpStatusCode.Conflict,
+                    null,
+                    string.Empty,
+                    null));
+            var service_Instrumented = InstrumentClient(
+                new TableServiceClient(
+                    new Uri($"https://example.com?{signature}"),
+                    new AzureSasCredential("sig"),
+                    new TableClientOptions { Transport = _transport }));
+            client = service_Instrumented.GetTableClient(TableName);
+
+            // No cast
+            Response<TableItem> responseItem = await client.CreateIfNotExistsAsync();
+
+            // implicit cast
+            TableItem item = await client.CreateIfNotExistsAsync();
+        }
+
         private static IEnumerable<object[]> TableClientsWithTableNameInUri()
         {
             var tokenTransport = TableAlreadyExistsTransport();
