@@ -74,24 +74,21 @@ namespace Azure.Security.ConfidentialLedger
         ///   </item>
         /// </list>
         /// </remarks>
+        /// <param name="waitUntil"> <see cref="WaitUntil.Completed"/> if the method should wait to return until the long-running operation has completed on the service; <see cref="WaitUntil.Started"/> if it should return after starting the operation. For more information on long-running operations, please see <see href="https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/samples/LongRunningOperations.md"> Azure.Core Long-Running Operation samples</see>. </param>
         /// <param name="content"> The content to send as the body of the request. </param>
         /// <param name="subLedgerId"> The sub-ledger id. </param>
-        /// <param name="waitForCompletion"> If <c>true</c>, the <see cref="PostLedgerEntryOperation"/> will not be returned until the ledger entry is committed.
-        /// If <c>false</c>,<see cref="Operation.WaitForCompletionResponse(System.Threading.CancellationToken)"/> must be called to ensure the operation has completed.</param>
         /// <param name="context"> The request context. </param>
-#pragma warning disable AZC0002
-        public virtual PostLedgerEntryOperation PostLedgerEntry(
+        public virtual Operation PostLedgerEntry(
+            WaitUntil waitUntil,
             RequestContent content,
             string subLedgerId = null,
-            bool waitForCompletion = true,
             RequestContext context = null)
-#pragma warning restore AZC0002
         {
             var response = PostLedgerEntry(content, subLedgerId, context);
             response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
 
             var operation = new PostLedgerEntryOperation(this, transactionId);
-            if (waitForCompletion)
+            if (waitUntil == WaitUntil.Completed)
             {
                 operation.WaitForCompletionResponse(context?.CancellationToken ?? default);
             }
@@ -128,26 +125,21 @@ namespace Azure.Security.ConfidentialLedger
         ///   </item>
         /// </list>
         /// </remarks>
+        /// <param name="waitUntil"> <see cref="WaitUntil.Completed"/> if the method should wait to return until the long-running operation has completed on the service; <see cref="WaitUntil.Started"/> if it should return after starting the operation. For more information on long-running operations, please see <see href="https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/samples/LongRunningOperations.md"> Azure.Core Long-Running Operation samples</see>. </param>
         /// <param name="content"> The content to send as the body of the request. </param>
         /// <param name="subLedgerId"> The sub-ledger id. </param>
-        /// <param name="waitForCompletion"> If <c>true</c>, the <see cref="PostLedgerEntryOperation"/>
-        /// will automatically poll for status until the ledger entry is committed before it is returned.
-        /// If <c>false</c>,<see cref="Operation.WaitForCompletionResponseAsync(System.Threading.CancellationToken)"/>
-        /// must be called to ensure the operation has completed.</param>
         /// <param name="context"> The request context. </param>
-#pragma warning disable AZC0002
-        public virtual async Task<PostLedgerEntryOperation> PostLedgerEntryAsync(
+        public virtual async Task<Operation> PostLedgerEntryAsync(
+            WaitUntil waitUntil,
             RequestContent content,
             string subLedgerId = null,
-            bool waitForCompletion = true,
             RequestContext context = null)
-#pragma warning restore AZC0002
         {
-            var response = await PostLedgerEntryAsync(content, subLedgerId, context).ConfigureAwait(false);
+           var response = await PostLedgerEntryAsync(content, subLedgerId, context).ConfigureAwait(false);
             response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
 
             var operation = new PostLedgerEntryOperation(this, transactionId);
-            if (waitForCompletion)
+            if (waitUntil == WaitUntil.Completed)
             {
                 await operation.WaitForCompletionResponseAsync(context?.CancellationToken ?? default).ConfigureAwait(false);
             }
@@ -156,7 +148,7 @@ namespace Azure.Security.ConfidentialLedger
 
         internal static HttpPipelineTransportOptions GetIdentityServerTlsCertAndTrust(Uri ledgerUri, ConfidentialLedgerClientOptions options)
         {
-            var identityClient = new ConfidentialLedgerIdentityServiceClient(new Uri("https://identity.accledger.azure.com"), options);
+            var identityClient = new ConfidentialLedgerIdentityServiceClient(new Uri("https://identity.confidential-ledger.core.azure.com"), options);
 
             // Get the ledger's  TLS certificate for our ledger.
             var ledgerId = ledgerUri.Host.Substring(0, ledgerUri.Host.IndexOf('.'));
@@ -184,7 +176,8 @@ namespace Azure.Security.ConfidentialLedger
             bool CertValidationCheck(X509Certificate2 cert)
             {
                 bool isChainValid = certificateChain.Build(cert);
-                if (!isChainValid) return false;
+                if (!isChainValid)
+                    return false;
 
                 var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
                     .Any(x => x.Certificate.Thumbprint == ledgerTlsCert.Thumbprint);

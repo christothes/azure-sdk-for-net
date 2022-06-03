@@ -21,10 +21,9 @@ namespace Azure.Security.ConfidentialLedger.Tests
         private ConfidentialLedgerClientOptions Options;
         private ConfidentialLedgerClient Client;
         private ConfidentialLedgerIdentityServiceClient IdentityClient;
-        private string transactionId;
         private HashSet<string> TestsNotRequiringLedgerEntry = new() { "GetEnclaveQuotes", "GetConsortiumMembers", "GetConstitution" };
 
-        public ConfidentialLedgerClientLiveTests(bool isAsync) : base(isAsync)
+        public ConfidentialLedgerClientLiveTests(bool isAsync) : base(isAsync, RecordedTestMode.Live)
         {
             // https://github.com/Azure/autorest.csharp/issues/1214
             TestDiagnostics = false;
@@ -57,10 +56,9 @@ namespace Azure.Security.ConfidentialLedger.Tests
 
             if (!TestsNotRequiringLedgerEntry.Contains(TestContext.CurrentContext.Test.MethodName))
             {
-                var operation = Client.PostLedgerEntryAsync(RequestContent.Create(new { contents = Recording.GenerateAssetName("test") }), waitForCompletion: true)
+                var operation = Client.PostLedgerEntryAsync(WaitUntil.Completed, RequestContent.Create(new { contents = Recording.GenerateAssetName("test") }))
                     .GetAwaiter()
                     .GetResult();
-                transactionId = operation.Id;
             }
         }
 
@@ -161,15 +159,13 @@ namespace Azure.Security.ConfidentialLedger.Tests
         public async Task PostLedgerEntry()
         {
             var operation = await Client.PostLedgerEntryAsync(
-                RequestContent.Create(new { contents = Recording.GenerateAssetName("test") }),
-                waitForCompletion: true);
+                WaitUntil.Completed,
+                RequestContent.Create(new { contents = Recording.GenerateAssetName("test") }));
             var result = operation.GetRawResponse();
             var stringResult = new StreamReader(result.ContentStream).ReadToEnd();
 
             Assert.AreEqual((int)HttpStatusCode.OK, result.Status);
-            Assert.NotNull(operation.Id);
             Assert.That(stringResult, Does.Contain("Committed"));
-            Assert.That(stringResult, Does.Contain(operation.Id));
         }
 
         [RecordedTest]
@@ -244,7 +240,7 @@ namespace Azure.Security.ConfidentialLedger.Tests
                 first = false;
             }
 
-            while (stringResult.Contains("Loading"))
+            while (!stringResult.Contains("Committed"))
             {
                 first = true;
                 result = Client.GetLedgerEntriesAsync();

@@ -83,10 +83,10 @@ namespace Azure.Security.ConfidentialLedger.Tests.samples
 
             #region Snippet:AppendToLedger
 
-            PostLedgerEntryOperation postOperation = ledgerClient.PostLedgerEntry(
+            Operation postOperation = ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
                 RequestContent.Create(
-                    new { contents = "Hello world!" }),
-                waitForCompletion: true);
+                    new { contents = "Hello world!" }));
 
             string transactionId = postOperation.Id;
             Console.WriteLine($"Appended transaction with Id: {transactionId}");
@@ -130,14 +130,14 @@ namespace Azure.Security.ConfidentialLedger.Tests.samples
             #region Snippet:SubLedger
 
             ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
                 RequestContent.Create(
-                    new { contents = "Hello from Chris!", subLedgerId = "Chris' messages" }),
-                waitForCompletion: true);
+                    new { contents = "Hello from Chris!", subLedgerId = "Chris' messages" }));
 
             ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
                 RequestContent.Create(
-                    new { contents = "Hello from Allison!", subLedgerId = "Allison's messages" }),
-                waitForCompletion: true);
+                    new { contents = "Hello from Allison!", subLedgerId = "Allison's messages" }));
 
             #endregion
 
@@ -148,9 +148,9 @@ namespace Azure.Security.ConfidentialLedger.Tests.samples
 #else
             postOperation = ledgerClient.PostLedgerEntry(
 #endif
+                WaitUntil.Completed,
                 RequestContent.Create(
-                    new { contents = "Hello world!" }),
-                waitForCompletion: true);
+                    new { contents = "Hello world!" }));
 #if SNIPPET
             string transactionId = postOperation.Id;
 #else
@@ -197,20 +197,20 @@ namespace Azure.Security.ConfidentialLedger.Tests.samples
 
             #region Snippet:GetEnteryWithNoTransactionId
 
-            PostLedgerEntryOperation firstPostOperation = ledgerClient.PostLedgerEntry(
-                RequestContent.Create(new { contents = "Hello world 0" }),
-                waitForCompletion: true);
+            Operation firstPostOperation = ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
+                RequestContent.Create(new { contents = "Hello world 0" }));
             ledgerClient.PostLedgerEntry(
-                RequestContent.Create(new { contents = "Hello world 1" }),
-                waitForCompletion: true);
-            PostLedgerEntryOperation subLedgerPostOperation = ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
+                RequestContent.Create(new { contents = "Hello world 1" }));
+            Operation subLedgerPostOperation = ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
                 RequestContent.Create(new { contents = "Hello world sub-ledger 0" }),
-                "my sub-ledger",
-                waitForCompletion: true);
+                "my sub-ledger");
             ledgerClient.PostLedgerEntry(
+                WaitUntil.Completed,
                 RequestContent.Create(new { contents = "Hello world sub-ledger 1" }),
-                "my sub-ledger",
-                waitForCompletion: true);
+                "my sub-ledger");
 
 #if SNIPPET
             string transactionId = firstPostOperation.Id;

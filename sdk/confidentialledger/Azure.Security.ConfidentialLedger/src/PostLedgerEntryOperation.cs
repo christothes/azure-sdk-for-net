@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Net;
 using System.Text.Json;
 using System.Threading;
@@ -11,7 +10,7 @@ using Azure.Core;
 namespace Azure.Security.ConfidentialLedger
 {
     /// <summary>
-    /// Tracks the status of a call to <see cref="ConfidentialLedgerClient.PostLedgerEntry(Azure.Core.RequestContent,string,bool,Azure.RequestContext)"/> and <see cref="ConfidentialLedgerClient.PostLedgerEntryAsync(Azure.Core.RequestContent,string,bool,Azure.RequestContext)"/>
+    /// Tracks the status of a call to <see cref="ConfidentialLedgerClient.PostLedgerEntry(WaitUntil, Azure.Core.RequestContent,string,Azure.RequestContext)"/> and <see cref="ConfidentialLedgerClient.PostLedgerEntryAsync(WaitUntil, Azure.Core.RequestContent,string,Azure.RequestContext)"/>
     /// until completion.
     /// </summary>
     public class PostLedgerEntryOperation : Operation, IOperation
@@ -27,7 +26,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </summary>
         /// <param name="client"> Tje <see cref="ConfidentialLedgerClient"/>. </param>
         /// <param name="transactionId"> The transaction id from a previous call to
-        /// <see cref="ConfidentialLedgerClient.PostLedgerEntry(Azure.Core.RequestContent,string,bool,Azure.RequestContext)"/>.</param>
+        /// <see cref="ConfidentialLedgerClient.PostLedgerEntry(WaitUntil, Azure.Core.RequestContent,string,Azure.RequestContext)"/>.</param>
         public PostLedgerEntryOperation(ConfidentialLedgerClient client, string transactionId)
         {
             _client = client;
@@ -74,7 +73,7 @@ namespace Azure.Security.ConfidentialLedger
                 .RootElement
                 .GetProperty("state")
                 .GetString();
-            if (status != "Pending")
+            if (status == "Committed")
             {
                 return OperationState.Success(statusResponse);
             }
