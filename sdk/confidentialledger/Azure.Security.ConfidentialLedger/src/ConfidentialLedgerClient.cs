@@ -6,12 +6,13 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Azure;
 using Azure.Core;
 using Azure.Core.Pipeline;
 
 namespace Azure.Security.ConfidentialLedger
 {
+    [CodeGenSuppress("PostLedgerEntry", typeof(RequestContent), typeof(string), typeof(RequestContext))]
+    [CodeGenSuppress("PostLedgerEntryAsync", typeof(RequestContent), typeof(string), typeof(RequestContext))]
     public partial class ConfidentialLedgerClient
     {
         /// <summary> Initializes a new instance of ConfidentialLedgerClient. </summary>
@@ -44,106 +45,112 @@ namespace Azure.Security.ConfidentialLedger
             _apiVersion = actualOptions.Version;
         }
 
-        /// <summary> Posts a new entry to the ledger. A sub-ledger id may optionally be specified. </summary>
-        /// <remarks>
-        /// Schema for <c>Request Body</c>:
-        /// <list type="table">
-        ///   <listheader>
-        ///     <term>Name</term>
-        ///     <term>Type</term>
-        ///     <term>Required</term>
-        ///     <term>Description</term>
-        ///   </listheader>
-        ///   <item>
-        ///     <term>contents</term>
-        ///     <term>string</term>
-        ///     <term>Yes</term>
-        ///     <term> Contents of the ledger entry. </term>
-        ///   </item>
-        ///   <item>
-        ///     <term>subLedgerId</term>
-        ///     <term>string</term>
-        ///     <term></term>
-        ///     <term> Identifier for sub-ledgers. </term>
-        ///   </item>
-        ///   <item>
-        ///     <term>transactionId</term>
-        ///     <term>string</term>
-        ///     <term></term>
-        ///     <term> A unique identifier for the state of the ledger. If returned as part of a LedgerEntry, it indicates the state from which the entry was read. </term>
-        ///   </item>
-        /// </list>
-        /// </remarks>
+        /// <summary> Posts a new entry to the ledger. A collection id may optionally be specified. </summary>
         /// <param name="waitUntil"> <see cref="WaitUntil.Completed"/> if the method should wait to return until the long-running operation has completed on the service; <see cref="WaitUntil.Started"/> if it should return after starting the operation. For more information on long-running operations, please see <see href="https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/samples/LongRunningOperations.md"> Azure.Core Long-Running Operation samples</see>. </param>
         /// <param name="content"> The content to send as the body of the request. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
-        /// <param name="context"> The request context. </param>
+        /// <param name="collectionId"> The collection id. </param>
+        /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
+        /// <exception cref="ArgumentNullException"> <paramref name="content"/> is null. </exception>
+        /// <remarks>
+        /// Schema for <c>Request Body</c>:
+        /// <code>{
+        ///   contents: string (required),
+        ///   collectionId: {
+        ///     collectionId: string (required)
+        ///   },
+        ///   transactionId: string
+        /// }
+        /// </code>
+        /// Schema for <c>Response Error</c>:
+        /// <code>{
+        ///   error: {
+        ///     code: string,
+        ///     message: string
+        ///   }
+        /// }
+        /// </code>
+        ///
+        /// </remarks>
         public virtual Operation PostLedgerEntry(
             WaitUntil waitUntil,
             RequestContent content,
-            string subLedgerId = null,
+            string collectionId = null,
             RequestContext context = null)
         {
-            var response = PostLedgerEntry(content, subLedgerId, context);
-            response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
-
-            var operation = new PostLedgerEntryOperation(this, transactionId);
-            if (waitUntil == WaitUntil.Completed)
+            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.PostLedgerEntry");
+            scope.Start();
+            try
             {
-                operation.WaitForCompletionResponse(context?.CancellationToken ?? default);
+                using HttpMessage message = CreatePostLedgerEntryRequest(content, collectionId, context);
+                var response = _pipeline.ProcessMessage(message, context);
+                response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
+
+                var operation = new PostLedgerEntryOperation(this, transactionId);
+                if (waitUntil == WaitUntil.Completed)
+                {
+                    operation.WaitForCompletionResponse(context?.CancellationToken ?? default);
+                }
+                return operation;
             }
-            return operation;
+            catch (Exception e)
+            {
+                scope.Failed(e);
+                throw;
+            }
         }
 
-        /// <summary> Posts a new entry to the ledger. A sub-ledger id may optionally be specified. </summary>
-        /// <remarks>
-        /// Schema for <c>Request Body</c>:
-        /// <list type="table">
-        ///   <listheader>
-        ///     <term>Name</term>
-        ///     <term>Type</term>
-        ///     <term>Required</term>
-        ///     <term>Description</term>
-        ///   </listheader>
-        ///   <item>
-        ///     <term>contents</term>
-        ///     <term>string</term>
-        ///     <term>Yes</term>
-        ///     <term> Contents of the ledger entry. </term>
-        ///   </item>
-        ///   <item>
-        ///     <term>subLedgerId</term>
-        ///     <term>string</term>
-        ///     <term></term>
-        ///     <term> Identifier for sub-ledgers. </term>
-        ///   </item>
-        ///   <item>
-        ///     <term>transactionId</term>
-        ///     <term>string</term>
-        ///     <term></term>
-        ///     <term> A unique identifier for the state of the ledger. If returned as part of a LedgerEntry, it indicates the state from which the entry was read. </term>
-        ///   </item>
-        /// </list>
-        /// </remarks>
+        /// <summary> Posts a new entry to the ledger. A collection id may optionally be specified. </summary>
         /// <param name="waitUntil"> <see cref="WaitUntil.Completed"/> if the method should wait to return until the long-running operation has completed on the service; <see cref="WaitUntil.Started"/> if it should return after starting the operation. For more information on long-running operations, please see <see href="https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/samples/LongRunningOperations.md"> Azure.Core Long-Running Operation samples</see>. </param>
         /// <param name="content"> The content to send as the body of the request. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
-        /// <param name="context"> The request context. </param>
+        /// <param name="collectionId"> The collection id. </param>
+        /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
+        /// <exception cref="ArgumentNullException"> <paramref name="content"/> is null. </exception>
+        /// <remarks>
+        /// Schema for <c>Request Body</c>:
+        /// <code>{
+        ///   contents: string (required),
+        ///   collectionId: {
+        ///     collectionId: string (required)
+        ///   },
+        ///   transactionId: string
+        /// }
+        /// </code>
+        /// Schema for <c>Response Error</c>:
+        /// <code>{
+        ///   error: {
+        ///     code: string,
+        ///     message: string
+        ///   }
+        /// }
+        /// </code>
+        ///
+        /// </remarks>
         public virtual async Task<Operation> PostLedgerEntryAsync(
             WaitUntil waitUntil,
             RequestContent content,
-            string subLedgerId = null,
+            string collectionId = null,
             RequestContext context = null)
         {
-           var response = await PostLedgerEntryAsync(content, subLedgerId, context).ConfigureAwait(false);
-            response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
-
-            var operation = new PostLedgerEntryOperation(this, transactionId);
-            if (waitUntil == WaitUntil.Completed)
+            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.PostLedgerEntry");
+            scope.Start();
+            try
             {
-                await operation.WaitForCompletionResponseAsync(context?.CancellationToken ?? default).ConfigureAwait(false);
+                using HttpMessage message = CreatePostLedgerEntryRequest(content, collectionId, context);
+                var response = await _pipeline.ProcessMessageAsync(message, context).ConfigureAwait(false);
+                response.Headers.TryGetValue(ConfidentialLedgerConstants.TransactionIdHeaderName, out string transactionId);
+
+                var operation = new PostLedgerEntryOperation(this, transactionId);
+                if (waitUntil == WaitUntil.Completed)
+                {
+                    await operation.WaitForCompletionResponseAsync(context?.CancellationToken ?? default).ConfigureAwait(false);
+                }
+                return operation;
             }
-            return operation;
+            catch (Exception e)
+            {
+                scope.Failed(e);
+                throw;
+            }
         }
 
         internal static HttpPipelineTransportOptions GetIdentityServerTlsCertAndTrust(Uri ledgerUri, ConfidentialLedgerClientOptions options)

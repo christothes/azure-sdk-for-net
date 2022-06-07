@@ -57,8 +57,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -93,8 +92,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -133,8 +131,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -173,8 +170,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -209,8 +205,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -245,8 +240,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -268,41 +262,31 @@ namespace Azure.Security.ConfidentialLedger
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. </summary>
-        /// <param name="content"> The content to send as the body of the request. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> Collection ids are user-created collections of ledger entries. </summary>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <remarks>
-        /// Schema for <c>Request Body</c>:
-        /// <code>{
-        ///   contents: string (required),
-        ///   subLedgerId: string,
-        ///   transactionId: string
-        /// }
-        /// </code>
         /// Schema for <c>Response Body</c>:
         /// <code>{
-        ///   subLedgerId: string
+        ///   collectionId: string
         /// }
         /// </code>
         /// Schema for <c>Response Error</c>:
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual async Task<Response> PostLedgerEntryAsync(RequestContent content, string subLedgerId = null, RequestContext context = null)
+        public virtual async Task<Response> GetCollectionsAsync(RequestContext context = null)
         {
-            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.PostLedgerEntry");
+            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetCollections");
             scope.Start();
             try
             {
-                using HttpMessage message = CreatePostLedgerEntryRequest(content, subLedgerId, context);
+                using HttpMessage message = CreateGetCollectionsRequest(context);
                 return await _pipeline.ProcessMessageAsync(message, context).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -312,41 +296,31 @@ namespace Azure.Security.ConfidentialLedger
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. </summary>
-        /// <param name="content"> The content to send as the body of the request. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> Collection ids are user-created collections of ledger entries. </summary>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <remarks>
-        /// Schema for <c>Request Body</c>:
-        /// <code>{
-        ///   contents: string (required),
-        ///   subLedgerId: string,
-        ///   transactionId: string
-        /// }
-        /// </code>
         /// Schema for <c>Response Body</c>:
         /// <code>{
-        ///   subLedgerId: string
+        ///   collectionId: string
         /// }
         /// </code>
         /// Schema for <c>Response Error</c>:
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual Response PostLedgerEntry(RequestContent content, string subLedgerId = null, RequestContext context = null)
+        public virtual Response GetCollections(RequestContext context = null)
         {
-            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.PostLedgerEntry");
+            using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetCollections");
             scope.Start();
             try
             {
-                using HttpMessage message = CreatePostLedgerEntryRequest(content, subLedgerId, context);
+                using HttpMessage message = CreateGetCollectionsRequest(context);
                 return _pipeline.ProcessMessage(message, context);
             }
             catch (Exception e)
@@ -358,7 +332,7 @@ namespace Azure.Security.ConfidentialLedger
 
         /// <summary> To return older ledger entries, the relevant sections of the ledger must be read from disk and validated. To prevent blocking within the enclave, the response will indicate whether the entry is ready and part of the response, or if the loading is still ongoing. </summary>
         /// <param name="transactionId"> Identifies a write transaction. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="transactionId"/> is null. </exception>
         /// <exception cref="ArgumentException"> <paramref name="transactionId"/> is an empty string, and was expected to be non-empty. </exception>
@@ -368,7 +342,9 @@ namespace Azure.Security.ConfidentialLedger
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
         ///   entry: {
         ///     contents: string,
-        ///     subLedgerId: string,
+        ///     collectionId: {
+        ///       collectionId: string
+        ///     },
         ///     transactionId: string
         ///   }
         /// }
@@ -377,14 +353,13 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual async Task<Response> GetLedgerEntryAsync(string transactionId, string subLedgerId = null, RequestContext context = null)
+        public virtual async Task<Response> GetLedgerEntryAsync(string transactionId, string collectionId = null, RequestContext context = null)
         {
             Argument.AssertNotNullOrEmpty(transactionId, nameof(transactionId));
 
@@ -392,7 +367,7 @@ namespace Azure.Security.ConfidentialLedger
             scope.Start();
             try
             {
-                using HttpMessage message = CreateGetLedgerEntryRequest(transactionId, subLedgerId, context);
+                using HttpMessage message = CreateGetLedgerEntryRequest(transactionId, collectionId, context);
                 return await _pipeline.ProcessMessageAsync(message, context).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -404,7 +379,7 @@ namespace Azure.Security.ConfidentialLedger
 
         /// <summary> To return older ledger entries, the relevant sections of the ledger must be read from disk and validated. To prevent blocking within the enclave, the response will indicate whether the entry is ready and part of the response, or if the loading is still ongoing. </summary>
         /// <param name="transactionId"> Identifies a write transaction. </param>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="transactionId"/> is null. </exception>
         /// <exception cref="ArgumentException"> <paramref name="transactionId"/> is an empty string, and was expected to be non-empty. </exception>
@@ -414,7 +389,9 @@ namespace Azure.Security.ConfidentialLedger
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
         ///   entry: {
         ///     contents: string,
-        ///     subLedgerId: string,
+        ///     collectionId: {
+        ///       collectionId: string
+        ///     },
         ///     transactionId: string
         ///   }
         /// }
@@ -423,14 +400,13 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual Response GetLedgerEntry(string transactionId, string subLedgerId = null, RequestContext context = null)
+        public virtual Response GetLedgerEntry(string transactionId, string collectionId = null, RequestContext context = null)
         {
             Argument.AssertNotNullOrEmpty(transactionId, nameof(transactionId));
 
@@ -438,7 +414,7 @@ namespace Azure.Security.ConfidentialLedger
             scope.Start();
             try
             {
-                using HttpMessage message = CreateGetLedgerEntryRequest(transactionId, subLedgerId, context);
+                using HttpMessage message = CreateGetLedgerEntryRequest(transactionId, collectionId, context);
                 return _pipeline.ProcessMessage(message, context);
             }
             catch (Exception e)
@@ -457,7 +433,13 @@ namespace Azure.Security.ConfidentialLedger
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   receipt: {
+        ///     cert: string,
         ///     leaf: string,
+        ///     leafComponents: {
+        ///       claimsDigest: string,
+        ///       commitEvidence: string,
+        ///       writeSetDigest: string
+        ///     },
         ///     nodeId: string,
         ///     proof: [
         ///       {
@@ -466,6 +448,7 @@ namespace Azure.Security.ConfidentialLedger
         ///       }
         ///     ],
         ///     root: string,
+        ///     serviceEndorsements: [string],
         ///     signature: string
         ///   },
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
@@ -476,8 +459,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -510,7 +492,13 @@ namespace Azure.Security.ConfidentialLedger
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   receipt: {
+        ///     cert: string,
         ///     leaf: string,
+        ///     leafComponents: {
+        ///       claimsDigest: string,
+        ///       commitEvidence: string,
+        ///       writeSetDigest: string
+        ///     },
         ///     nodeId: string,
         ///     proof: [
         ///       {
@@ -519,6 +507,7 @@ namespace Azure.Security.ConfidentialLedger
         ///       }
         ///     ],
         ///     root: string,
+        ///     serviceEndorsements: [string],
         ///     signature: string
         ///   },
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
@@ -529,8 +518,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -570,8 +558,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -611,8 +598,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -636,14 +622,16 @@ namespace Azure.Security.ConfidentialLedger
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. </summary>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> A collection id may optionally be specified. </summary>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <remarks>
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   contents: string,
-        ///   subLedgerId: string,
+        ///   collectionId: {
+        ///     collectionId: string
+        ///   },
         ///   transactionId: string
         /// }
         /// </code>
@@ -651,20 +639,19 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual async Task<Response> GetCurrentLedgerEntryAsync(string subLedgerId = null, RequestContext context = null)
+        public virtual async Task<Response> GetCurrentLedgerEntryAsync(string collectionId = null, RequestContext context = null)
         {
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetCurrentLedgerEntry");
             scope.Start();
             try
             {
-                using HttpMessage message = CreateGetCurrentLedgerEntryRequest(subLedgerId, context);
+                using HttpMessage message = CreateGetCurrentLedgerEntryRequest(collectionId, context);
                 return await _pipeline.ProcessMessageAsync(message, context).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -674,14 +661,16 @@ namespace Azure.Security.ConfidentialLedger
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. </summary>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> A collection id may optionally be specified. </summary>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <remarks>
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   contents: string,
-        ///   subLedgerId: string,
+        ///   collectionId: {
+        ///     collectionId: string
+        ///   },
         ///   transactionId: string
         /// }
         /// </code>
@@ -689,20 +678,19 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual Response GetCurrentLedgerEntry(string subLedgerId = null, RequestContext context = null)
+        public virtual Response GetCurrentLedgerEntry(string collectionId = null, RequestContext context = null)
         {
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetCurrentLedgerEntry");
             scope.Start();
             try
             {
-                using HttpMessage message = CreateGetCurrentLedgerEntryRequest(subLedgerId, context);
+                using HttpMessage message = CreateGetCurrentLedgerEntryRequest(collectionId, context);
                 return _pipeline.ProcessMessage(message, context);
             }
             catch (Exception e)
@@ -716,14 +704,12 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="userId"> The user id, either an AAD object ID or certificate fingerprint. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Response Error</c>:
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -731,7 +717,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual async Task<Response> DeleteUserAsync(string userId, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.DeleteUser");
             scope.Start();
@@ -751,14 +737,12 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="userId"> The user id, either an AAD object ID or certificate fingerprint. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Response Error</c>:
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -766,7 +750,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual Response DeleteUser(string userId, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.DeleteUser");
             scope.Start();
@@ -786,7 +770,6 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="userId"> The user id, either an AAD object ID or certificate fingerprint. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Response Body</c>:
         /// <code>{
@@ -798,8 +781,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -807,7 +789,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual async Task<Response> GetUserAsync(string userId, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetUser");
             scope.Start();
@@ -827,7 +809,6 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="userId"> The user id, either an AAD object ID or certificate fingerprint. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Response Body</c>:
         /// <code>{
@@ -839,8 +820,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -848,7 +828,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual Response GetUser(string userId, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.GetUser");
             scope.Start();
@@ -869,7 +849,6 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="content"> The content to send as the body of the request. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> or <paramref name="content"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Request Body</c>:
         /// <code>{
@@ -887,8 +866,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -896,7 +874,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual async Task<Response> CreateOrUpdateUserAsync(string userId, RequestContent content, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
             Argument.AssertNotNull(content, nameof(content));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.CreateOrUpdateUser");
@@ -918,7 +896,6 @@ namespace Azure.Security.ConfidentialLedger
         /// <param name="content"> The content to send as the body of the request. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
         /// <exception cref="ArgumentNullException"> <paramref name="userId"/> or <paramref name="content"/> is null. </exception>
-        /// <exception cref="ArgumentException"> <paramref name="userId"/> is an empty string, and was expected to be non-empty. </exception>
         /// <remarks>
         /// Schema for <c>Request Body</c>:
         /// <code>{
@@ -936,8 +913,7 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
@@ -945,7 +921,7 @@ namespace Azure.Security.ConfidentialLedger
         /// </remarks>
         public virtual Response CreateOrUpdateUser(string userId, RequestContent content, RequestContext context = null)
         {
-            Argument.AssertNotNullOrEmpty(userId, nameof(userId));
+            Argument.AssertNotNull(userId, nameof(userId));
             Argument.AssertNotNull(content, nameof(content));
 
             using var scope = ClientDiagnostics.CreateScope("ConfidentialLedgerClient.CreateOrUpdateUser");
@@ -962,8 +938,8 @@ namespace Azure.Security.ConfidentialLedger
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. Only entries in the specified (or default) sub-ledger will be returned. </summary>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> A collection id may optionally be specified. Only entries in the specified (or default) collection will be returned. </summary>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="fromTransactionId"> Specify the first transaction ID in a range. </param>
         /// <param name="toTransactionId"> Specify the last transaction ID in a range. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
@@ -971,11 +947,13 @@ namespace Azure.Security.ConfidentialLedger
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
-        ///   @nextLink: string,
+        ///   nextLink: string,
         ///   entries: [
         ///     {
         ///       contents: string,
-        ///       subLedgerId: string,
+        ///       collectionId: {
+        ///         collectionId: string
+        ///       },
         ///       transactionId: string
         ///     }
         ///   ]
@@ -985,19 +963,18 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual AsyncPageable<BinaryData> GetLedgerEntriesAsync(string subLedgerId = null, string fromTransactionId = null, string toTransactionId = null, RequestContext context = null)
+        public virtual AsyncPageable<BinaryData> GetLedgerEntriesAsync(string collectionId = null, string fromTransactionId = null, string toTransactionId = null, RequestContext context = null)
         {
-            return GetLedgerEntriesImplementationAsync("ConfidentialLedgerClient.GetLedgerEntries", subLedgerId, fromTransactionId, toTransactionId, context);
+            return GetLedgerEntriesImplementationAsync("ConfidentialLedgerClient.GetLedgerEntries", collectionId, fromTransactionId, toTransactionId, context);
         }
 
-        private AsyncPageable<BinaryData> GetLedgerEntriesImplementationAsync(string diagnosticsScopeName, string subLedgerId, string fromTransactionId, string toTransactionId, RequestContext context)
+        private AsyncPageable<BinaryData> GetLedgerEntriesImplementationAsync(string diagnosticsScopeName, string collectionId, string fromTransactionId, string toTransactionId, RequestContext context)
         {
             return PageableHelpers.CreateAsyncPageable(CreateEnumerableAsync, ClientDiagnostics, diagnosticsScopeName);
             async IAsyncEnumerable<Page<BinaryData>> CreateEnumerableAsync(string nextLink, int? pageSizeHint, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -1005,17 +982,17 @@ namespace Azure.Security.ConfidentialLedger
                 do
                 {
                     var message = string.IsNullOrEmpty(nextLink)
-                        ? CreateGetLedgerEntriesRequest(subLedgerId, fromTransactionId, toTransactionId, context)
-                        : CreateGetLedgerEntriesNextPageRequest(nextLink, subLedgerId, fromTransactionId, toTransactionId, context);
-                    var page = await LowLevelPageableHelpers.ProcessMessageAsync(_pipeline, message, context, "entries", "@nextLink", cancellationToken).ConfigureAwait(false);
+                        ? CreateGetLedgerEntriesRequest(collectionId, fromTransactionId, toTransactionId, context)
+                        : CreateGetLedgerEntriesNextPageRequest(nextLink, collectionId, fromTransactionId, toTransactionId, context);
+                    var page = await LowLevelPageableHelpers.ProcessMessageAsync(_pipeline, message, context, "entries", "nextLink", cancellationToken).ConfigureAwait(false);
                     nextLink = page.ContinuationToken;
                     yield return page;
                 } while (!string.IsNullOrEmpty(nextLink));
             }
         }
 
-        /// <summary> A sub-ledger id may optionally be specified. Only entries in the specified (or default) sub-ledger will be returned. </summary>
-        /// <param name="subLedgerId"> The sub-ledger id. </param>
+        /// <summary> A collection id may optionally be specified. Only entries in the specified (or default) collection will be returned. </summary>
+        /// <param name="collectionId"> The collection id. </param>
         /// <param name="fromTransactionId"> Specify the first transaction ID in a range. </param>
         /// <param name="toTransactionId"> Specify the last transaction ID in a range. </param>
         /// <param name="context"> The request context, which can override default behaviors on the request on a per-call basis. </param>
@@ -1023,11 +1000,13 @@ namespace Azure.Security.ConfidentialLedger
         /// Schema for <c>Response Body</c>:
         /// <code>{
         ///   state: &quot;Loading&quot; | &quot;Ready&quot;,
-        ///   @nextLink: string,
+        ///   nextLink: string,
         ///   entries: [
         ///     {
         ///       contents: string,
-        ///       subLedgerId: string,
+        ///       collectionId: {
+        ///         collectionId: string
+        ///       },
         ///       transactionId: string
         ///     }
         ///   ]
@@ -1037,19 +1016,18 @@ namespace Azure.Security.ConfidentialLedger
         /// <code>{
         ///   error: {
         ///     code: string,
-        ///     message: string,
-        ///     innererror: ConfidentialLedgerErrorBody
+        ///     message: string
         ///   }
         /// }
         /// </code>
         /// 
         /// </remarks>
-        public virtual Pageable<BinaryData> GetLedgerEntries(string subLedgerId = null, string fromTransactionId = null, string toTransactionId = null, RequestContext context = null)
+        public virtual Pageable<BinaryData> GetLedgerEntries(string collectionId = null, string fromTransactionId = null, string toTransactionId = null, RequestContext context = null)
         {
-            return GetLedgerEntriesImplementation("ConfidentialLedgerClient.GetLedgerEntries", subLedgerId, fromTransactionId, toTransactionId, context);
+            return GetLedgerEntriesImplementation("ConfidentialLedgerClient.GetLedgerEntries", collectionId, fromTransactionId, toTransactionId, context);
         }
 
-        private Pageable<BinaryData> GetLedgerEntriesImplementation(string diagnosticsScopeName, string subLedgerId, string fromTransactionId, string toTransactionId, RequestContext context)
+        private Pageable<BinaryData> GetLedgerEntriesImplementation(string diagnosticsScopeName, string collectionId, string fromTransactionId, string toTransactionId, RequestContext context)
         {
             return PageableHelpers.CreatePageable(CreateEnumerable, ClientDiagnostics, diagnosticsScopeName);
             IEnumerable<Page<BinaryData>> CreateEnumerable(string nextLink, int? pageSizeHint)
@@ -1057,9 +1035,9 @@ namespace Azure.Security.ConfidentialLedger
                 do
                 {
                     var message = string.IsNullOrEmpty(nextLink)
-                        ? CreateGetLedgerEntriesRequest(subLedgerId, fromTransactionId, toTransactionId, context)
-                        : CreateGetLedgerEntriesNextPageRequest(nextLink, subLedgerId, fromTransactionId, toTransactionId, context);
-                    var page = LowLevelPageableHelpers.ProcessMessage(_pipeline, message, context, "entries", "@nextLink");
+                        ? CreateGetLedgerEntriesRequest(collectionId, fromTransactionId, toTransactionId, context)
+                        : CreateGetLedgerEntriesNextPageRequest(nextLink, collectionId, fromTransactionId, toTransactionId, context);
+                    var page = LowLevelPageableHelpers.ProcessMessage(_pipeline, message, context, "entries", "nextLink");
                     nextLink = page.ContinuationToken;
                     yield return page;
                 } while (!string.IsNullOrEmpty(nextLink));
@@ -1108,7 +1086,21 @@ namespace Azure.Security.ConfidentialLedger
             return message;
         }
 
-        internal HttpMessage CreateGetLedgerEntriesRequest(string subLedgerId, string fromTransactionId, string toTransactionId, RequestContext context)
+        internal HttpMessage CreateGetCollectionsRequest(RequestContext context)
+        {
+            var message = _pipeline.CreateMessage(context, ResponseClassifier200);
+            var request = message.Request;
+            request.Method = RequestMethod.Get;
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_ledgerUri);
+            uri.AppendPath("/app/collections", false);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            request.Uri = uri;
+            request.Headers.Add("Accept", "application/json");
+            return message;
+        }
+
+        internal HttpMessage CreateGetLedgerEntriesRequest(string collectionId, string fromTransactionId, string toTransactionId, RequestContext context)
         {
             var message = _pipeline.CreateMessage(context, ResponseClassifier200);
             var request = message.Request;
@@ -1117,9 +1109,9 @@ namespace Azure.Security.ConfidentialLedger
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/transactions", false);
             uri.AppendQuery("api-version", _apiVersion, true);
-            if (subLedgerId != null)
+            if (collectionId != null)
             {
-                uri.AppendQuery("subLedgerId", subLedgerId, true);
+                uri.AppendQuery("collectionId", collectionId, true);
             }
             if (fromTransactionId != null)
             {
@@ -1134,7 +1126,7 @@ namespace Azure.Security.ConfidentialLedger
             return message;
         }
 
-        internal HttpMessage CreatePostLedgerEntryRequest(RequestContent content, string subLedgerId, RequestContext context)
+        internal HttpMessage CreatePostLedgerEntryRequest(RequestContent content, string collectionId, RequestContext context)
         {
             var message = _pipeline.CreateMessage(context, ResponseClassifier200);
             var request = message.Request;
@@ -1143,9 +1135,9 @@ namespace Azure.Security.ConfidentialLedger
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/transactions", false);
             uri.AppendQuery("api-version", _apiVersion, true);
-            if (subLedgerId != null)
+            if (collectionId != null)
             {
-                uri.AppendQuery("subLedgerId", subLedgerId, true);
+                uri.AppendQuery("collectionId", collectionId, true);
             }
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
@@ -1154,7 +1146,7 @@ namespace Azure.Security.ConfidentialLedger
             return message;
         }
 
-        internal HttpMessage CreateGetLedgerEntryRequest(string transactionId, string subLedgerId, RequestContext context)
+        internal HttpMessage CreateGetLedgerEntryRequest(string transactionId, string collectionId, RequestContext context)
         {
             var message = _pipeline.CreateMessage(context, ResponseClassifier200);
             var request = message.Request;
@@ -1164,9 +1156,9 @@ namespace Azure.Security.ConfidentialLedger
             uri.AppendPath("/app/transactions/", false);
             uri.AppendPath(transactionId, true);
             uri.AppendQuery("api-version", _apiVersion, true);
-            if (subLedgerId != null)
+            if (collectionId != null)
             {
-                uri.AppendQuery("subLedgerId", subLedgerId, true);
+                uri.AppendQuery("collectionId", collectionId, true);
             }
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
@@ -1205,7 +1197,7 @@ namespace Azure.Security.ConfidentialLedger
             return message;
         }
 
-        internal HttpMessage CreateGetCurrentLedgerEntryRequest(string subLedgerId, RequestContext context)
+        internal HttpMessage CreateGetCurrentLedgerEntryRequest(string collectionId, RequestContext context)
         {
             var message = _pipeline.CreateMessage(context, ResponseClassifier200);
             var request = message.Request;
@@ -1214,9 +1206,9 @@ namespace Azure.Security.ConfidentialLedger
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/transactions/current", false);
             uri.AppendQuery("api-version", _apiVersion, true);
-            if (subLedgerId != null)
+            if (collectionId != null)
             {
-                uri.AppendQuery("subLedgerId", subLedgerId, true);
+                uri.AppendQuery("collectionId", collectionId, true);
             }
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
@@ -1231,7 +1223,7 @@ namespace Azure.Security.ConfidentialLedger
             var uri = new RawRequestUriBuilder();
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/users/", false);
-            uri.AppendPath(userId, true);
+            uri.AppendPath(userId, false);
             uri.AppendQuery("api-version", _apiVersion, true);
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
@@ -1246,7 +1238,7 @@ namespace Azure.Security.ConfidentialLedger
             var uri = new RawRequestUriBuilder();
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/users/", false);
-            uri.AppendPath(userId, true);
+            uri.AppendPath(userId, false);
             uri.AppendQuery("api-version", _apiVersion, true);
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
@@ -1261,16 +1253,16 @@ namespace Azure.Security.ConfidentialLedger
             var uri = new RawRequestUriBuilder();
             uri.Reset(_ledgerUri);
             uri.AppendPath("/app/users/", false);
-            uri.AppendPath(userId, true);
+            uri.AppendPath(userId, false);
             uri.AppendQuery("api-version", _apiVersion, true);
             request.Uri = uri;
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("Content-Type", "application/json");
+            request.Headers.Add("Content-Type", "application/merge-patch+json");
             request.Content = content;
             return message;
         }
 
-        internal HttpMessage CreateGetLedgerEntriesNextPageRequest(string nextLink, string subLedgerId, string fromTransactionId, string toTransactionId, RequestContext context)
+        internal HttpMessage CreateGetLedgerEntriesNextPageRequest(string nextLink, string collectionId, string fromTransactionId, string toTransactionId, RequestContext context)
         {
             var message = _pipeline.CreateMessage(context, ResponseClassifier200);
             var request = message.Request;

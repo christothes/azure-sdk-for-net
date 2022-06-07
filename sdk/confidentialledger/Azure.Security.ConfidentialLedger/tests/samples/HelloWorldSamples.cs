@@ -6,9 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Security;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json;
 using Azure.Core;
 using Azure.Core.Pipeline;
@@ -143,11 +141,7 @@ namespace Azure.Security.ConfidentialLedger.Tests.samples
 
             #region Snippet:NoSubLedgerId
 
-#if SNIPPET
-            Response postResponse = ledgerClient.PostLedgerEntry(
-#else
-            postOperation = ledgerClient.PostLedgerEntry(
-#endif
+            ledgerClient.PostLedgerEntry(
                 WaitUntil.Completed,
                 RequestContent.Create(
                     new { contents = "Hello world!" }));
