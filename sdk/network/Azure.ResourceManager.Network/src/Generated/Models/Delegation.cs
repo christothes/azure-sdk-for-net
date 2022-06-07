@@ -6,12 +6,13 @@
 #nullable disable
 
 using System.Collections.Generic;
+using Azure;
 using Azure.Core;
 
 namespace Azure.ResourceManager.Network.Models
 {
     /// <summary> Details the service to which the subnet is delegated. </summary>
-    public partial class Delegation : NetworkResourceData
+    public partial class Delegation : NetworkWritableResourceData
     {
         /// <summary> Initializes a new instance of Delegation. </summary>
         public Delegation()
@@ -27,7 +28,7 @@ namespace Azure.ResourceManager.Network.Models
         /// <param name="serviceName"> The name of the service to whom the subnet should be delegated (e.g. Microsoft.Sql/servers). </param>
         /// <param name="actions"> The actions permitted to the service upon delegation. </param>
         /// <param name="provisioningState"> The provisioning state of the service delegation resource. </param>
-        internal Delegation(ResourceIdentifier id, string name, ResourceType? resourceType, string etag, string serviceName, IReadOnlyList<string> actions, NetworkProvisioningState? provisioningState) : base(id, name, resourceType)
+        internal Delegation(ResourceIdentifier id, string name, ResourceType? resourceType, ETag? etag, string serviceName, IReadOnlyList<string> actions, NetworkProvisioningState? provisioningState) : base(id, name, resourceType)
         {
             Etag = etag;
             ServiceName = serviceName;
@@ -36,7 +37,7 @@ namespace Azure.ResourceManager.Network.Models
         }
 
         /// <summary> A unique read-only string that changes whenever the resource is updated. </summary>
-        public string Etag { get; }
+        public ETag? Etag { get; }
         /// <summary> The name of the service to whom the subnet should be delegated (e.g. Microsoft.Sql/servers). </summary>
         public string ServiceName { get; set; }
         /// <summary> The actions permitted to the service upon delegation. </summary>
