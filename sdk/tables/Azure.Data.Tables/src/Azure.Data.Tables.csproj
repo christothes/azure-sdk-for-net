@@ -33,6 +33,7 @@
     <Compile Include="$(AzureCoreSharedSources)HashCodeBuilder.cs" LinkBase="Shared" />
     <Compile Include="$(AzureCoreSharedSources)RequestRequestContent.cs" LinkBase="Shared" />
     <Compile Include="$(AzureCoreSharedSources)TypeBinder.cs" LinkBase="Shared" />
+    <Compile Include="$(AzureCoreSharedSources)TypeBinderFlattenPropertyAttribute.cs" LinkBase="Shared" />
   </ItemGroup>
 
 </Project>

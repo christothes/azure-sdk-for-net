@@ -8,9 +8,10 @@ using Azure.Core;
 
 namespace Azure.Data.Tables
 {
-    internal class TablesTypeBinder: TypeBinder<IDictionary<string, object>>
+    internal class TablesTypeBinder : TypeBinder<IDictionary<string, object>>
     {
         public static TablesTypeBinder Shared { get; } = new();
+
         protected override void Set<T>(IDictionary<string, object> destination, T value, BoundMemberInfo memberInfo)
         {
             // Remove the ETag and Timestamp properties, as they do not need to be serialized
@@ -18,7 +19,21 @@ namespace Azure.Data.Tables
             {
                 return;
             }
+            if (memberInfo.Flatten)
+            {
+                foreach (BoundMemberInfo childMember in memberInfo.Children)
+                {
+                    SetValue(destination, value, childMember);
+                }
+            }
+            else
+            {
+                SetValue(destination, value, memberInfo);
+            }
+        }
 
+        private static void SetValue<T>(IDictionary<string, object> destination, T value, BoundMemberInfo memberInfo)
+        {
             // Int64 / long / enum should be serialized as string.
             if (value is long or ulong or Enum)
             {
@@ -77,94 +92,94 @@ namespace Azure.Data.Tables
 
             if (typeof(T) == typeof(byte[]))
             {
-                value = (T)(object) Convert.FromBase64String(propertyValue as string);
+                value = (T)(object)Convert.FromBase64String(propertyValue as string);
             }
             else if (typeof(T) == typeof(BinaryData))
             {
-                value = (T)(object) BinaryData.FromBytes(Convert.FromBase64String(propertyValue as string));
+                value = (T)(object)BinaryData.FromBytes(Convert.FromBase64String(propertyValue as string));
             }
             else if (typeof(T) == typeof(long))
             {
-                value = (T)(object) long.Parse(propertyValue as string, CultureInfo.InvariantCulture);
+                value = (T)(object)long.Parse(propertyValue as string, CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(long?))
             {
-                value = (T)(object) long.Parse(propertyValue as string, CultureInfo.InvariantCulture);
+                value = (T)(object)long.Parse(propertyValue as string, CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(ulong))
             {
-                value = (T)(object) ulong.Parse(propertyValue as string, CultureInfo.InvariantCulture);
+                value = (T)(object)ulong.Parse(propertyValue as string, CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(ulong?))
             {
-                value = (T)(object) ulong.Parse(propertyValue as string, CultureInfo.InvariantCulture);
+                value = (T)(object)ulong.Parse(propertyValue as string, CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(double))
             {
-                value = (T) Convert.ChangeType(propertyValue, typeof(double), CultureInfo.InvariantCulture);
+                value = (T)Convert.ChangeType(propertyValue, typeof(double), CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(double?))
             {
-                value = (T)(object) (double?)Convert.ChangeType(propertyValue, typeof(double), CultureInfo.InvariantCulture);
+                value = (T)(object)(double?)Convert.ChangeType(propertyValue, typeof(double), CultureInfo.InvariantCulture);
             }
             else if (typeof(T) == typeof(bool))
             {
-                value = (T)(object) (bool)propertyValue;
+                value = (T)(object)(bool)propertyValue;
             }
             else if (typeof(T) == typeof(bool?))
             {
-                value = (T)(object) (bool?)propertyValue;
+                value = (T)(object)(bool?)propertyValue;
             }
             else if (typeof(T) == typeof(Guid))
             {
-                value = (T)(object) Guid.Parse(propertyValue as string);
+                value = (T)(object)Guid.Parse(propertyValue as string);
             }
             else if (typeof(T) == typeof(Guid?))
             {
-                value = (T)(object) Guid.Parse(propertyValue as string);
+                value = (T)(object)Guid.Parse(propertyValue as string);
             }
             else if (typeof(T) == typeof(DateTimeOffset))
             {
-                value = (T)(object) DateTimeOffset.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                value = (T)(object)DateTimeOffset.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
             }
             else if (typeof(T) == typeof(DateTimeOffset?))
             {
-                value = (T)(object) DateTimeOffset.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                value = (T)(object)DateTimeOffset.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
             }
             else if (typeof(T) == typeof(DateTime))
             {
-                value = (T)(object) DateTime.Parse((string)propertyValue, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                value = (T)(object)DateTime.Parse((string)propertyValue, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
             }
             else if (typeof(T) == typeof(DateTime?))
             {
-                value = (T)(object) DateTime.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                value = (T)(object)DateTime.Parse(propertyValue as string, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
             }
             else if (typeof(T) == typeof(string))
             {
-                value = (T)(object) (propertyValue as string);
+                value = (T)(object)(propertyValue as string);
             }
             else if (typeof(T) == typeof(int))
             {
-                value = (T)(object) (int)propertyValue;
+                value = (T)(object)(int)propertyValue;
             }
             else if (typeof(T) == typeof(int?))
             {
-                value = (T)(object) (int?)propertyValue;
+                value = (T)(object)(int?)propertyValue;
             }
             else if (typeof(T).IsEnum)
             {
-                value = (T)Enum.Parse(memberInfo.Type, propertyValue as string );
+                value = (T)Enum.Parse(memberInfo.Type, propertyValue as string);
             }
             else if (typeof(T).IsGenericType &&
                      typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>) &&
                      typeof(T).GetGenericArguments() is { Length: 1 } arguments &&
                      arguments[0].IsEnum)
             {
-                value = (T)Enum.Parse(arguments[0], propertyValue as string );
+                value = (T)Enum.Parse(arguments[0], propertyValue as string);
             }
             else if (typeof(T) == typeof(ETag))
             {
-                value = (T)(object) new ETag(propertyValue as string);
+                value = (T)(object)new ETag(propertyValue as string);
             }
 
             return true;

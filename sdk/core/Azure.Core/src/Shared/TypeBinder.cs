@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -40,7 +41,7 @@ namespace Azure.Core
 
         public BoundTypeInfo GetBinderInfo(Type type)
         {
-            return _cache.GetOrAdd(type,  _valueFactory);
+            return _cache.GetOrAdd(type, _valueFactory);
         }
 
         protected abstract void Set<T>(TExchange destination, T value, BoundMemberInfo memberInfo);
@@ -70,29 +71,8 @@ namespace Azure.Core
 
                 if (!_isPrimitive)
                 {
-                    List<BoundMemberInfo> members = new List<BoundMemberInfo>();
-                    foreach (var memberInfo in type.GetMembers(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (memberInfo.IsDefined(typeof(IgnoreDataMemberAttribute)))
-                        {
-                            continue;
-                        }
-
-                        switch (memberInfo)
-                        {
-                            case PropertyInfo propertyInfo:
-                                if (propertyInfo.GetIndexParameters().Length > 0)
-                                {
-                                    continue;
-                                }
-                                members.Add((BoundMemberInfo) Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), propertyInfo.PropertyType), propertyInfo));
-                                break;
-                            case FieldInfo fieldInfo:
-                                members.Add((BoundMemberInfo) Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), fieldInfo.FieldType), fieldInfo));
-                                break;
-                        }
-                    }
-
+                    List<BoundMemberInfo> members = new();
+                    BoundMemberInfo.GetMembers(type, members);
                     _members = members.ToArray();
                 }
             }
@@ -139,11 +119,25 @@ namespace Azure.Core
         {
             public BoundMemberInfo(MemberInfo memberInfo)
             {
+                Flatten = memberInfo.IsDefined(typeof(TypeBinderFlattenPropertyAttribute));
                 MemberInfo = memberInfo;
                 Name = MemberInfo.Name;
                 if (memberInfo.GetCustomAttribute<DataMemberAttribute>() is { Name: not null } dataMemberAttribute)
                 {
                     Name = dataMemberAttribute.Name;
+                }
+                if (Flatten)
+                {
+                    var childMembers = new List<BoundMemberInfo>();
+                    if (memberInfo is PropertyInfo propertyInfo)
+                    {
+                        GetMembers(propertyInfo.PropertyType, childMembers);
+                    }
+                    else if (memberInfo is FieldInfo fieldInfo)
+                    {
+                        GetMembers(fieldInfo.FieldType, childMembers);
+                    }
+                    Children = childMembers.ToArray();
                 }
             }
 
@@ -154,6 +148,33 @@ namespace Azure.Core
             public abstract bool CanWrite { get; }
             public abstract void Serialize(object o, TExchange destination, TypeBinder<TExchange> binderImplementation);
             public abstract void Deserialize(TExchange source, object o, TypeBinder<TExchange> binderImplementation);
+            public bool Flatten { get; }
+            public BoundMemberInfo[] Children { get; }
+
+            public static void GetMembers(Type type, List<BoundMemberInfo> members)
+            {
+                foreach (var memberInfo in type.GetMembers(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (memberInfo.IsDefined(typeof(IgnoreDataMemberAttribute)))
+                    {
+                        continue;
+                    }
+
+                    switch (memberInfo)
+                    {
+                        case PropertyInfo propertyInfo:
+                            if (propertyInfo.GetIndexParameters().Length > 0)
+                            {
+                                continue;
+                            }
+                            members.Add((BoundMemberInfo)Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), propertyInfo.PropertyType), propertyInfo));
+                            break;
+                        case FieldInfo fieldInfo:
+                            members.Add((BoundMemberInfo)Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), fieldInfo.FieldType), fieldInfo));
+                            break;
+                    }
+                }
+            }
         }
 
         private delegate TProperty PropertyGetter<TProperty>(object o);
@@ -210,14 +231,36 @@ namespace Azure.Core
 
             public override void Serialize(object o, TExchange destination, TypeBinder<TExchange> binderImplementation)
             {
-                binderImplementation.Set(destination, Getter(o), this);
+                if (Flatten)
+                {
+                    foreach (var childMember in Children)
+                    {
+                        childMember.Serialize(Getter(o), destination, binderImplementation);
+                    }
+                }
+                else
+                {
+                    binderImplementation.Set(destination, Getter(o), this);
+                }
             }
 
             public override void Deserialize(TExchange source, object o, TypeBinder<TExchange> binderImplementation)
             {
-                if (binderImplementation.TryGet(this, source, out TProperty value))
+                if (Flatten)
                 {
-                    Setter(o, value);
+                    var flattenType = Activator.CreateInstance(Type);
+                    Setter(o, (TProperty)flattenType);
+                    foreach (var childMember in Children)
+                    {
+                        childMember.Deserialize(source, flattenType, binderImplementation);
+                    }
+                }
+                else
+                {
+                    if (binderImplementation.TryGet(this, source, out TProperty value))
+                    {
+                        Setter(o, value);
+                    }
                 }
             }
         }
