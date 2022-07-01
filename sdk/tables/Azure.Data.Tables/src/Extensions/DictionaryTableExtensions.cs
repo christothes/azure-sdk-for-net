@@ -117,11 +117,18 @@ namespace Azure.Data.Tables
         internal static List<T> ToTableEntityList<T>(this IReadOnlyList<IDictionary<string, object>> entityList) where T : class, ITableEntity, new()
         {
             var result = new List<T>(entityList.Count);
-            var typeInfo = TablesTypeBinder.Shared.GetBinderInfo(typeof(T));
+            Type type = typeof(T);
+            Type? nestedType = null;
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(TableEntityAdapter<>))
+            {
+                type = type.GetGenericArguments()[0];
+                nestedType = type;
+            }
+            var typeInfo = TablesTypeBinder.Shared.GetBinderInfo(type);
 
             foreach (var entity in entityList)
             {
-                var tableEntity = entity.ToTableEntity<T>(typeInfo);
+                var tableEntity = entity.ToTableEntity<T>(typeInfo, nestedType);
 
                 result.Add(tableEntity);
             }
@@ -132,7 +139,7 @@ namespace Azure.Data.Tables
         /// <summary>
         /// Cleans a Dictionary of its Odata type annotations, while using them to cast its entities accordingly.
         /// </summary>
-        internal static T ToTableEntity<T>(this IDictionary<string, object> entity, TablesTypeBinder.BoundTypeInfo? typeInfo = null) where T : class, ITableEntity, new()
+        internal static T ToTableEntity<T>(this IDictionary<string, object> entity, TablesTypeBinder.BoundTypeInfo? typeInfo = null, Type? nestedType = null) where T : class, ITableEntity, new()
         {
             if (typeof(IDictionary<string, object>).IsAssignableFrom(typeof(T)))
             {
@@ -147,8 +154,27 @@ namespace Azure.Data.Tables
 
                 return result;
             }
+            Type type = typeof(T);
+            if (nestedType != null || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(TableEntityAdapter<>)))
+            {
+                type = nestedType ?? type.GetGenericArguments()[0];
+                typeInfo ??= TablesTypeBinder.Shared.GetBinderInfo(type);
+                var tableEntity = new T();
+                var nestedEntity = typeInfo.Deserialize(type, entity);
+                if (tableEntity is INestedEntity ne)
+                {
+                    ne.EntityObject = nestedEntity;
+                }
+                if (entity.TryGetValue(TableConstants.PropertyNames.PartitionKey, out object pk))
+                    tableEntity.PartitionKey = pk as string;
+                if (entity.TryGetValue(TableConstants.PropertyNames.RowKey, out object rk))
+                    tableEntity.RowKey = rk as string;
+                if (entity.TryGetValue(TableConstants.PropertyNames.Timestamp, out object ts))
+                    tableEntity.Timestamp = ts as DateTimeOffset?;
+                return tableEntity;
+            }
 
-            typeInfo ??= TablesTypeBinder.Shared.GetBinderInfo(typeof(T));
+            typeInfo ??= TablesTypeBinder.Shared.GetBinderInfo(type);
             return typeInfo.Deserialize<T>(entity);
         }
     }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 
 namespace Azure.Data.Tables
@@ -19,9 +20,22 @@ namespace Azure.Data.Tables
                 return dictEntity.ToOdataAnnotatedDictionary();
             }
 
-            var typeInfo = TablesTypeBinder.Shared.GetBinderInfo(entity.GetType());
+            Type type = entity.GetType();
+            bool isAdapter = false;
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(TableEntityAdapter<>))
+            {
+                type = type.GetGenericArguments()[0];
+                isAdapter = true;
+            }
+
+            var typeInfo = TablesTypeBinder.Shared.GetBinderInfo(type);
             var dictionary = new Dictionary<string, object>(typeInfo.MemberCount * 2);
-            typeInfo.Serialize(entity, dictionary);
+            typeInfo.Serialize(isAdapter? ((INestedEntity)entity).EntityObject : entity, dictionary);
+            if (isAdapter) {
+                dictionary[TableConstants.PropertyNames.PartitionKey] = ((ITableEntity)entity).PartitionKey;
+                dictionary[TableConstants.PropertyNames.RowKey] = ((ITableEntity)entity).RowKey;
+            }
             return dictionary;
         }
     }

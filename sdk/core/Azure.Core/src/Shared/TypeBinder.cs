@@ -132,6 +132,30 @@ namespace Azure.Core
                 return o;
             }
 
+            public object Deserialize(Type type, TExchange source)
+            {
+                if (_isPrimitive)
+                {
+                    if (!_binderImplementation.TryGet(null, source, out object result))
+                    {
+                        throw new InvalidOperationException($"Unable to deserialize into a primitive type {type}");
+                    }
+
+                    return result;
+                }
+
+                object o = Activator.CreateInstance(type);
+                foreach (var member in _members)
+                {
+                    if (member.CanWrite)
+                    {
+                        member.Deserialize(source, o, _binderImplementation);
+                    }
+                }
+
+                return o;
+            }
+
             public int MemberCount => _members?.Length ?? 0;
         }
 

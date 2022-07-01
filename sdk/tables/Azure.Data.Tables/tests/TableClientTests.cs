@@ -592,6 +592,31 @@ namespace Azure.Data.Tables.Tests
             Assert.That(message, Does.Contain("mySelect"), "Path should not redact 'select");
         }
 
+        [Test]
+        public void EntityWrapper()
+        {
+            var entity = new TableEntityAdapter<NonEntity>
+            {
+                PartitionKey = "partitionKey",
+                RowKey = "01",
+                Timestamp = DateTime.Now,
+                ETag = ETag.All,
+                Entity = new NonEntity { StringTypeProperty = "my string", IntTypeProperty = 1234 }
+            };
+
+            // Create the new entities.
+            var dictEntity = entity.ToOdataAnnotatedDictionary();
+            var deserializedEntity = dictEntity.ToTableEntity<TableEntityAdapter<NonEntity>>();
+
+            Assert.That(dictEntity.TryGetValue(TableConstants.PropertyNames.Timestamp, out var _), Is.False, "Only PK, RK, and user properties should be sent");
+            Assert.That(dictEntity["StringTypeProperty"], Is.EqualTo(entity.Entity.StringTypeProperty));
+            Assert.That(dictEntity["IntTypeProperty"], Is.EqualTo(entity.Entity.IntTypeProperty));
+            Assert.That(deserializedEntity.PartitionKey, Is.EqualTo(entity.PartitionKey), "The entities should be equivalent");
+            Assert.That(deserializedEntity.RowKey, Is.EqualTo(entity.RowKey), "The entities should be equivalent");
+            Assert.That(deserializedEntity.Entity.StringTypeProperty, Is.EqualTo(entity.Entity.StringTypeProperty), "The entities should be equivalent");
+            Assert.That(deserializedEntity.Entity.IntTypeProperty, Is.EqualTo(entity.Entity.IntTypeProperty), "The entities should be equivalent");
+        }
+
         private static MockTransport TableAlreadyExistsTransport() =>
             new(
                 _ => throw new RequestFailedException(
@@ -599,6 +624,12 @@ namespace Azure.Data.Tables.Tests
                     null,
                     TableErrorCode.TableAlreadyExists.ToString(),
                     null));
+
+        public class NonEntity
+        {
+            public string StringTypeProperty { get; set; }
+            public int IntTypeProperty { get; set; }
+        }
 
         public class EnumEntity : ITableEntity
         {
