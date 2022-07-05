@@ -78,6 +78,8 @@ namespace Azure.Data.Tables.Tests
         private static readonly Expression<Func<TableEntity, bool>> s_binaryExpDE = ent => ent.GetBinaryData("Binary") == s_someBinaryData;
         private static readonly Expression<Func<ComplexEntity, bool>> s_complexExp = ent => ent.String.CompareTo(SomeString) >= 0 && ent.Int64 >= SomeInt64 && ent.Int32 >= SomeInt && ent.DateTime >= s_someDateTime;
         private static readonly Expression<Func<TableEntity, bool>> s_complexExpDE = ent => ent.GetString("String").CompareTo(SomeString) >= 0 && ent.GetInt64("Int64") >= SomeInt64 && ent.GetInt32("Int32") >= SomeInt && ent.GetDateTime("DateTime") >= s_someDateTime;
+        private static readonly Expression<Func<EnumEntity, bool>> s_EnumExp = ent => ent.MyFoo == Foo.Two;
+        private static readonly Expression<Func<EnumEntity, bool>> s_EnumExp2 = ent => ent.MyFoo == Foo.Two && ent.PartitionKey == Partition;
 
         public static object[] TableEntityExpressionTestCases =
         {
@@ -101,6 +103,11 @@ namespace Azure.Data.Tables.Tests
             new object[] { $"(((String ge '{SomeString}') and (Int64 ge {SomeInt64}L)) and (Int32 ge {SomeInt})) and (DateTime ge datetime'{s_someDateTimeOffsetRoundtrip}')", s_complexExp },
         };
 
+        public static object[] EnumEntityExpressionTestCases =
+        {
+            new object[] { $"MyFoo eq 'Two'", s_EnumExp },
+            new object[] { $"(MyFoo eq 'Two') and (PartitionKey eq '{Partition}')", s_EnumExp2 },
+        };
         public static object[] TableItemExpressionTestCases =
         {
             new object[] { $"TableName ne '{TableName}'", s_ne_TI },
@@ -155,6 +162,15 @@ namespace Azure.Data.Tables.Tests
         [TestCaseSource(nameof(DictionaryTableEntityExpressionTestCases))]
         [Test]
         public void TestDictionaryTableEntityFilterExpressions(string expectedFilter, Expression<Func<TableEntity, bool>> expression)
+        {
+            var filter = TableClient.CreateQueryFilter(expression);
+
+            Assert.That(filter, Is.EqualTo(expectedFilter));
+        }
+
+        [TestCaseSource(nameof(EnumEntityExpressionTestCases))]
+        [Test]
+        public void TestEnumFilterExpressions(string expectedFilter, Expression<Func<EnumEntity, bool>> expression)
         {
             var filter = TableClient.CreateQueryFilter(expression);
 
