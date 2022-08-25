@@ -14,13 +14,12 @@ namespace Azure.Storage
     /// </summary>
     internal class CosmosGeoredundantPolicy : HttpPipelineSynchronousPolicy
     {
-        private readonly IList<Uri> _readEndpoints;
-        private readonly IList<Uri> _writeEndpoints;
-        internal const string AlternateReadHostIndex = "AlternateReadHostIndex";
-        internal const string AlternateWriteHostIndex = "AlternateWriteHostIndex";
-        private
+        private readonly IList<string> _readEndpoints;
+        private readonly IList<string> _writeEndpoints;
+        internal const string AlternateHostIndexKey = "AlternateHostIndex";
+        internal const string ResourceNotReplicated = "ResourceNotReplicated";
 
-        public CosmosGeoredundantPolicy(IList<Uri> readEndpoints, IList<Uri> writeEndpoints)
+        public CosmosGeoredundantPolicy(IList<string> readEndpoints, IList<string> writeEndpoints)
         {
             Argument.AssertNotNull(readEndpoints, nameof(readEndpoints));
             Argument.AssertNotNull(writeEndpoints, nameof(writeEndpoints));
@@ -32,51 +31,41 @@ namespace Azure.Storage
         public override void OnSendingRequest(HttpMessage message)
         {
             bool isWriteOperation = message.Request.Method != RequestMethod.Get && message.Request.Method != RequestMethod.Head;
-            string alternateHost
+            if (isWriteOperation && _writeEndpoints.Count == 0)
+            {
+                //This is a write operation and there are no alternate write endpoints
+                return;
+            }
+            else if (!isWriteOperation && _readEndpoints.Count == 0)
+            {
+                // This is a read operation adn there are no alternate read endpoints
+                return;
+            }
+            IList<string> alternateHostList = isWriteOperation ? _writeEndpoints : _readEndpoints;
 
             // Look up what the alternate host is set to in the message properties. For the initial request, this will
             // not be set.
-            string alternateHost =
+            int? alternateHostIndex =
                 message.TryGetProperty(
-                    AlternateHostKey,
+                    AlternateHostIndexKey,
                     out var alternateHostObj)
-                ? alternateHostObj as string
+                ? alternateHostObj as int?
                 : null;
-            if (alternateHost == null)
+            if (alternateHostIndex == null)
             {
                 // queue up the secondary host for subsequent retries
-                message.SetProperty(AlternateHostKey, _secondaryStorageHost);
+                message.SetProperty(AlternateHostIndexKey, 0);
                 return;
             }
-
-            // Check the flag that indicates whether the resource has not been propagated to the secondary host yet.
-            // If this flag is set, we don't want to retry against the secondary host again for any subsequent retries.
-            // Also, the flag being set implies that the current request must already be set to the primary host, so we
-            // are safe to return without checking if the current host is secondary or primary.
-            var resourceNotReplicated =
-                message.TryGetProperty(ResourceNotReplicated, out var value)
-                && (bool)value;
-            if (resourceNotReplicated)
+            // If we already have retried with an alternate host previously and there are additional regional endpoints to try,
+            // increment the index to point to the next endpoint in the list
+            if (alternateHostIndex <= alternateHostList.Count - 1)
             {
-                return;
+                message.SetProperty(AlternateHostIndexKey, alternateHostIndex + 1);
+                // Toggle the host set in the request to use the alternate host for the upcoming attempt, and update the
+                // the property for the AlternateHostKey to be the host used in the last try.
+                message.Request.Uri.Host = alternateHostList[alternateHostIndex.Value];
             }
-
-            // If alternateHost was not null that means the message is being retried. Hence what is stored in the Host
-            // property of UriBuilder is actually the host from the last try.
-            var lastTriedHost = message.Request.Uri.Host;
-
-            // If necessary, set the flag to indicate that the resource has not yet been propagated to the secondary host.
-            if (message.HasResponse
-                && message.Response.Status == (int)HttpStatusCode.NotFound
-                && lastTriedHost == _secondaryStorageHost)
-            {
-                message.SetProperty(ResourceNotReplicated, true);
-            }
-
-            // Toggle the host set in the request to use the alternate host for the upcoming attempt, and update the
-            // the property for the AlternateHostKey to be the host used in the last try.
-            message.Request.Uri.Host = alternateHost;
-            message.SetProperty(AlternateHostKey, lastTriedHost);
         }
     }
 }
