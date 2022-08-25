@@ -62,8 +62,6 @@ namespace Azure.Storage
             if (alternateHostIndex <= alternateHostList.Count - 1)
             {
                 message.SetProperty(AlternateHostIndexKey, alternateHostIndex + 1);
-                // Toggle the host set in the request to use the alternate host for the upcoming attempt, and update the
-                // the property for the AlternateHostKey to be the host used in the last try.
                 message.Request.Uri.Host = alternateHostList[alternateHostIndex.Value];
             }
         }
