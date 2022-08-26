@@ -3,9 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Azure.Core;
-using Azure.Core.Pipeline;
 using Azure.Core.TestFramework;
 using Azure.Storage;
 using NUnit.Framework;
@@ -102,17 +100,11 @@ namespace Azure.Data.Tables.Tests
         }
 
         [Test]
-        public void OnSendingRequestFourthTry_ShouldStillUseTertiary([Values("GET", "POST")] string method)
+        public void OnSendingRequestMoreThanHostCount_ShouldCycleThroughHosts([Values("GET", "POST")] string method)
         {
             var message = new HttpMessage(
                  CreateMockRequest(MockPrimaryUri, method),
                  new ResponseClassifier());
-
-            var policy = new CosmosGeoredundantPolicy(SecondaryReadHosts, SecondaryWriteHosts);
-
-            policy.OnSendingRequest(message);
-            policy.OnSendingRequest(message);
-            policy.OnSendingRequest(message);
 
             var hostList = method switch
             {
@@ -120,11 +112,25 @@ namespace Azure.Data.Tables.Tests
                 _ => SecondaryWriteHosts
             };
 
-            Assert.IsTrue(message.TryGetProperty(CosmosGeoredundantPolicy.AlternateHostIndexKey, out object val));
-            int? currentIndex = (int?)val;
+            var policy = new CosmosGeoredundantPolicy(SecondaryReadHosts, SecondaryWriteHosts);
 
-            Assert.AreEqual(hostList[currentIndex.Value - 1], message.Request.Uri.Host);
-            Assert.AreEqual(2, currentIndex.Value);
+            for (int i = 0; i < 100; i++)
+            {
+                policy.OnSendingRequest(message);
+
+                Assert.IsTrue(message.TryGetProperty(CosmosGeoredundantPolicy.AlternateHostIndexKey, out object val));
+                int? currentIndex = (int?)val;
+
+                if (i == 0)
+                {
+                    Assert.AreEqual(MockPrimaryUri.Host, message.Request.Uri.Host);
+                }
+                else
+                {
+                    Assert.AreEqual(hostList[(currentIndex.Value - 1) % hostList.Count], message.Request.Uri.Host, $"Index was {i}");
+                }
+                Assert.AreEqual(i, currentIndex.Value);
+            }
         }
 
         private MockRequest CreateMockRequest(Uri uri, string method)

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Azure.Core;
 using Azure.Core.Pipeline;
@@ -14,29 +15,29 @@ namespace Azure.Storage
     /// </summary>
     internal class CosmosGeoredundantPolicy : HttpPipelineSynchronousPolicy
     {
-        private readonly IList<string> _readEndpoints;
-        private readonly IList<string> _writeEndpoints;
+        private readonly string[] _readEndpoints;
+        private readonly string[] _writeEndpoints;
         internal const string AlternateHostIndexKey = "AlternateHostIndex";
-        internal const string ResourceNotReplicated = "ResourceNotReplicated";
 
         public CosmosGeoredundantPolicy(IList<string> readEndpoints, IList<string> writeEndpoints)
         {
             Argument.AssertNotNull(readEndpoints, nameof(readEndpoints));
             Argument.AssertNotNull(writeEndpoints, nameof(writeEndpoints));
 
-            _readEndpoints = readEndpoints;
-            _writeEndpoints = writeEndpoints;
+            _readEndpoints = readEndpoints.ToArray();
+            _writeEndpoints = writeEndpoints.ToArray();
         }
 
         public override void OnSendingRequest(HttpMessage message)
         {
             bool isWriteOperation = message.Request.Method != RequestMethod.Get && message.Request.Method != RequestMethod.Head;
-            if (isWriteOperation && _writeEndpoints.Count == 0)
+
+            if (isWriteOperation && _writeEndpoints.Length == 0)
             {
                 //This is a write operation and there are no alternate write endpoints
                 return;
             }
-            else if (!isWriteOperation && _readEndpoints.Count == 0)
+            else if (!isWriteOperation && _readEndpoints.Length == 0)
             {
                 // This is a read operation adn there are no alternate read endpoints
                 return;
@@ -57,13 +58,9 @@ namespace Azure.Storage
                 message.SetProperty(AlternateHostIndexKey, 0);
                 return;
             }
-            // If we already have retried with an alternate host previously and there are additional regional endpoints to try,
-            // increment the index to point to the next endpoint in the list
-            if (alternateHostIndex <= alternateHostList.Count - 1)
-            {
-                message.SetProperty(AlternateHostIndexKey, alternateHostIndex + 1);
-                message.Request.Uri.Host = alternateHostList[alternateHostIndex.Value];
-            }
+            // Increment the index to point to the next endpoint in the list. If there are more retries than hosts, we will cycle through the list again.
+            message.SetProperty(AlternateHostIndexKey, alternateHostIndex + 1);
+            message.Request.Uri.Host = alternateHostList[alternateHostIndex.Value % alternateHostList.Count];
         }
     }
 }
