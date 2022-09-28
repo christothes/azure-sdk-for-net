@@ -1,10 +1,6 @@
 # Release History
 
-## 12.7.0-beta.2 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 12.7.0 (2022-10-11)
 
 ### Bugs Fixed
 - Fixed a OData filter issue with implicit boolean comparisons (for example expressions such as `ent => ent.BooleanProperty`) when calling `TableClient.QueryAsync(Expression<Func<T, bool>> filter, ...)`. ([#30185](https://github.com/Azure/azure-sdk-for-net/issues/30185))
