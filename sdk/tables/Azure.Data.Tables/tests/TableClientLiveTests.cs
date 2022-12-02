@@ -1374,6 +1374,28 @@ namespace Azure.Data.Tables.Tests
         /// Validates the functionality of the TableClient.
         /// </summary>
         [RecordedTest]
+        public void BatchMergeFailsWhenEntityDoesNotExist()
+        {
+            var entitiesToCreate = CreateCustomTableEntities(PartitionKeyValue, 1);
+
+            // Create the batch.
+            var batch = new List<TableTransactionAction>();
+            client.SetBatchGuids(Recording.Random.NewGuid(), Recording.Random.NewGuid());
+
+            var ex = Assert.ThrowsAsync<RequestFailedException>(
+               async () =>
+                   await client.UpdateEntityAsync(entitiesToCreate[0], ETag.All, TableUpdateMode.Merge).ConfigureAwait(false));
+
+            // Add the entities to the batch.
+            batch.AddRange(entitiesToCreate.Select(e => new TableTransactionAction(TableTransactionActionType.UpdateMerge, e, ETag.All)));
+            ex = Assert.ThrowsAsync<TableTransactionFailedException>(() => client.SubmitTransactionAsync(batch));
+            Assert.That(ex.Message, Does.Contain("The specified resource does not exist."));
+        }
+
+        /// <summary>
+        /// Validates the functionality of the TableClient.
+        /// </summary>
+        [RecordedTest]
         [TestCase(PartitionKeyValue)]
         [TestCase(PartitionKeyValueWithSingleQuotes)]
         public async Task BatchInsertAndMergeAndDelete(string partitionKey)
