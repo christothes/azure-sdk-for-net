@@ -12,11 +12,26 @@ param location string = resourceGroup().location
 //See https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var blobContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') //Storage Blob Data Contributor
 
+resource usermgdid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: baseName
+  location: location
+}
+
 resource blobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: sa
   name: guid(resourceGroup().id, blobContributor)
   properties: {
     principalId: web.identity.principalId
+    roleDefinitionId: blobContributor
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource blobRole2 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: sa
+  name: guid(resourceGroup().id, blobContributor, usermgdid.id)
+  properties: {
+    principalId: usermgdid.properties.principalId
     roleDefinitionId: blobContributor
     principalType: 'ServicePrincipal'
   }
@@ -53,7 +68,10 @@ resource web 'Microsoft.Web/sites@2021-03-01' = {
   location: location
   kind: 'app'
   identity: {
-    type: 'SystemAssigned'
+    type: 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: {
+      '${usermgdid.id}' : { }
+    }
   }
   properties: {
     enabled: true
@@ -67,3 +85,6 @@ resource web 'Microsoft.Web/sites@2021-03-01' = {
     }
   }
 }
+
+output IDENTITY_WEBAPP_NAME string = web.name
+output IDENTITY_WEBAPP_USER_DEFINED_IDENTITY string = usermgdid.id

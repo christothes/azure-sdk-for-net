@@ -11,24 +11,26 @@ namespace WebApp.Controllers
     {
         private readonly ILogger<TestController> _logger;
         private readonly TokenRequestContext _tokenRequestContext = new(new[] { "https://storage.azure.com/.default" });
+        private readonly TokenCredential _credential;
 
         public TestController(ILogger<TestController> logger)
         {
             _logger = logger;
+            _credential = new ManagedIdentityCredential();
         }
 
         [HttpGet(Name = "GetTest")]
-        public async Task<StatusCodeResult> Get()
+        public async Task<IActionResult> Get()
         {
-            var credential = new ManagedIdentityCredential();
             try
             {
-                await credential.GetTokenAsync(_tokenRequestContext, default);
-                return Ok();
+                await _credential.GetTokenAsync(_tokenRequestContext, default);
+                // await Task.Delay(1);
+                return Ok("Successfully acquired a token from ManagedIdentityCredential");
             }
             catch (Exception ex)
             {
-                return BadRequest();
+                return BadRequest(ex.ToString());
             }
         }
     }
