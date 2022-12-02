@@ -28,7 +28,7 @@ resource blobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource blobRole2 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: sa
+  scope: sa2
   name: guid(resourceGroup().id, blobContributor, usermgdid.id)
   properties: {
     principalId: usermgdid.properties.principalId
@@ -49,6 +49,18 @@ resource sa 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   }
 }
 
+resource sa2 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+  name: '${baseName}2'
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    accessTier: 'Hot'
+  }
+}
+
 resource farm 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: '${baseName}_asp'
   location: location
@@ -59,7 +71,7 @@ resource farm 'Microsoft.Web/serverfarms@2021-03-01' = {
     family: 'F'
     capacity: 0
   }
-  properties: {}
+  properties: { }
   kind: 'app'
 }
 
@@ -82,9 +94,29 @@ resource web 'Microsoft.Web/sites@2021-03-01' = {
       netFrameworkVersion: 'v6.0'
       http20Enabled: true
       minTlsVersion: '1.2'
+      appSettings: [
+        {
+          name: 'AZURE_REGIONAL_AUTHORITY_NAME'
+          value: 'eastus'
+        }
+        {
+          name: 'IDENTITY_STORAGE_NAME_1'
+          value: sa.name
+        }
+        {
+          name: 'IDENTITY_STORAGE_NAME_2'
+          value: sa2.name
+        }
+        {
+          name: 'IDENTITY_WEBAPP_USER_DEFINED_IDENTITY'
+          value: usermgdid.id
+        }
+      ]
     }
   }
 }
 
 output IDENTITY_WEBAPP_NAME string = web.name
 output IDENTITY_WEBAPP_USER_DEFINED_IDENTITY string = usermgdid.id
+output IDENTITY_STORAGE_NAME_1 string = sa.name
+output IDENTITY_STORAGE_NAME_2 string = sa2.name
