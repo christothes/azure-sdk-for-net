@@ -13,10 +13,12 @@ namespace Azure.Identity.Tests
         private static string fakeSignature = "FakeTokenSignature";
         public static readonly char[] padding = { '=' };
 
-        public static string GenerateToken(string tenantId, string clientId, string objectId, string upn, DateTime expireTime)
+        public static string GenerateToken(string tenantId, string clientId, string objectId, string upn, DateTime expireTime, DateTimeOffset? issuedAt = null)
         {
             var expires = (expireTime.AddSeconds(-epochTotalSeconds) - DateTime.MinValue).TotalSeconds;
-            var issued = (DateTime.UtcNow.AddSeconds(-epochTotalSeconds) - DateTime.MinValue).TotalSeconds;
+            var issued = issuedAt == null ?
+                (DateTime.UtcNow.AddSeconds(-epochTotalSeconds) - DateTime.MinValue).TotalSeconds :
+                issuedAt.Value.ToUnixTimeSeconds();
             var payload = $"{{\"aud\":\"https://storage.azure.com\",\"iss\":\"https://sts.windows.net/{tenantId}/\",\"iat\":{issued},\"nbf\":{issued},\"exp\":{expires},\"_claim_names\":{{\"groups\":\"src1\"}},\"_claim_sources\":{{\"src1\":{{\"endpoint\":\"https://graph.windows.net/{tenantId}/users/{objectId}/getMemberObjects\"}}}},\"acr\":\"1\",\"aio\":\"someaio\",\"amr\":[\"rsa\",\"mfa\"],\"appid\":\"{clientId}\",\"appidacr\":\"0\",\"deviceid\":\"{Guid.NewGuid()}\",\"oid\":\"{objectId}\",\"scp\":\"user_impersonation\",\"sub\":\"somesub\",\"tid\":\"{tenantId}\",\"unique_name\":\"{upn}\",\"upn\":\"{upn}\",\"uti\":\"someuti\",\"ver\":\"1.0\"}}";
 
             return string.Join(".", new[]

@@ -12,27 +12,12 @@ namespace Azure.Identity
         public static (string ClientId, string TenantId, string Upn, string ObjectId) ParseAccountInfoFromToken(string token)
         {
             Argument.AssertNotNullOrEmpty(token, nameof(token));
-            var parts = token.Split('.');
-            if (parts.Length != 3)
-            {
-                throw new ArgumentException("Invalid token", nameof(token));
-            }
 
             (string ClientId, string TenantId, string Upn, string ObjectId) result = default;
 
             try
             {
-                string convertedToken = parts[1].Replace('_', '/').Replace('-', '+');
-                switch (parts[1].Length % 4)
-                {
-                    case 2:
-                        convertedToken += "==";
-                        break;
-                    case 3:
-                        convertedToken += "=";
-                        break;
-                }
-                Utf8JsonReader reader = new Utf8JsonReader(Convert.FromBase64String(convertedToken));
+                Utf8JsonReader reader = DecodeJwt(token);
                 while (reader.Read())
                 {
                     if (reader.TokenType == JsonTokenType.PropertyName)
@@ -71,6 +56,61 @@ namespace Azure.Identity
             }
 
             return result;
+        }
+
+        public static bool TryParseValueFromToken(string token, string propertyName, out long value)
+        {
+            value = long.MinValue;
+            var reader = DecodeJwt(token);
+            try
+            {
+                while (reader.Read())
+                {
+                    if (reader.TokenType == JsonTokenType.PropertyName)
+                    {
+                        if (propertyName == reader.GetString())
+                        {
+                            reader.Read();
+                            switch (reader.TokenType)
+                            {
+                                case JsonTokenType.Number:
+                                    value = (long)reader.GetDouble();
+                                    return true;
+                                default:
+                                    reader.Read();
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+            return false;
+        }
+
+        private static Utf8JsonReader DecodeJwt(string token)
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3)
+            {
+                throw new ArgumentException("Invalid token", nameof(token));
+            }
+
+            string convertedToken = parts[1].Replace('_', '/').Replace('-', '+');
+            switch (parts[1].Length % 4)
+            {
+                case 2:
+                    convertedToken += "==";
+                    break;
+                case 3:
+                    convertedToken += "=";
+                    break;
+            }
+            var json = Convert.FromBase64String(convertedToken);
+            return new Utf8JsonReader(json);
         }
     }
 }

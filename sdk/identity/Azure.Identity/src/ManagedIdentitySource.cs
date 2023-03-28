@@ -114,6 +114,8 @@ namespace Azure.Identity
         {
             string accessToken = null;
             DateTimeOffset? expiresOn = null;
+            long? refreshIn = null;
+            DateTimeOffset? refreshOn = null;
 
             foreach (JsonProperty prop in root.EnumerateObject())
             {
@@ -126,11 +128,17 @@ namespace Azure.Identity
                     case "expires_on":
                         expiresOn = TryParseExpiresOn(prop.Value);
                         break;
+
+                    case "refresh_in":
+                        refreshIn = TryParseRefreshIn(prop.Value);
+                        break;
                 }
             }
 
+            refreshOn = TryCalculateRefreshOn(expiresOn, refreshIn, accessToken);
+
             return accessToken != null && expiresOn.HasValue
-                ? new AccessToken(accessToken, expiresOn.Value)
+                ? new AccessToken(accessToken, expiresOn.Value, refreshOn.Value)
                 : throw new AuthenticationFailedException(AuthenticationResponseInvalidFormatError);
         }
 
@@ -149,6 +157,34 @@ namespace Azure.Identity
             }
 
             return null;
+        }
+
+        private static long? TryParseRefreshIn(JsonElement jsonRetryIn)
+        {
+            // first test if expiresOn is a unix timestamp either as a number or string
+            if (jsonRetryIn.ValueKind == JsonValueKind.Number && jsonRetryIn.TryGetInt64(out long expiresOnSec) ||
+                jsonRetryIn.ValueKind == JsonValueKind.String && long.TryParse(jsonRetryIn.GetString(), out expiresOnSec))
+            {
+                return expiresOnSec;
+            }
+
+            return null;
+        }
+
+        private static DateTimeOffset? TryCalculateRefreshOn(DateTimeOffset? expiresOn, double? refreshIn, string accessToken)
+        {
+            if (refreshIn.HasValue && accessToken != null && TokenHelper.TryParseValueFromToken(accessToken, "iat", out long issuedAtSec))
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(issuedAtSec).AddSeconds(refreshIn.Value);
+            }
+            else if (expiresOn.HasValue)
+            {
+                // return the max of (expiresOn - now) / 2 and (2 hours from now)
+                return DateTimeOffset.UtcNow.AddSeconds(Math.Max(expiresOn.Value.Subtract(DateTimeOffset.UtcNow).TotalSeconds / 2, 7200));
+            }
+
+            // return the max of expiresOn - 5 minutes and now
+            return DateTimeOffset.UtcNow.AddSeconds(Math.Max(expiresOn.Value.Subtract(TimeSpan.FromMinutes(5)).ToUnixTimeSeconds(), 0));
         }
 
         private class ManagedIdentityResponseClassifier : ResponseClassifier
