@@ -33,7 +33,7 @@ namespace Azure.Identity.Tests
         [Test]
         public async Task TokenRefreshInIs12HoursFromNow()
         {
-            var response = CreateMockResponse(200, TokenGenerator.GenerateToken(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "myUpn", expires.UtcDateTime, now), expires, TimeSpan.FromHours(12).TotalSeconds);
+            var response = CreateMockResponse(200, expires, TimeSpan.FromHours(12).TotalSeconds);
             var mockTransport = new MockTransport(response);
             var target = new MockIdentitySourceClient(CredentialPipeline.GetInstance(new TokenCredentialOptions() { Transport = mockTransport }));
 
@@ -46,7 +46,7 @@ namespace Azure.Identity.Tests
         [Test]
         public async Task TokenRefreshInNotPresent()
         {
-            var response = CreateMockResponse(200, TokenGenerator.GenerateToken(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "myUpn", expires.UtcDateTime, now), expires);
+            var response = CreateMockResponse(200, expires);
             var mockTransport = new MockTransport(response);
             var target = new MockIdentitySourceClient(CredentialPipeline.GetInstance(new TokenCredentialOptions() { Transport = mockTransport }));
 
@@ -56,8 +56,25 @@ namespace Azure.Identity.Tests
             Assert.LessOrEqual(token.RefreshOn, now.AddSeconds(5).AddSeconds((long)(expires - now).TotalSeconds / 2), "RefreshOn should be less than half the token lifetime (with a fudge factor of 5 seconds to account for 'now' calculation)");
         }
 
-        private MockResponse CreateMockResponse(int responseCode, string token, DateTimeOffset expiresOn, double? refreshIn = null)
+        [Test]
+        public async Task TokenRefreshInIs12HoursFromNowTokenUnreadable()
         {
+            var response = CreateMockResponse(200, expires, TimeSpan.FromHours(12).TotalSeconds, true);
+            var mockTransport = new MockTransport(response);
+            var target = new MockIdentitySourceClient(CredentialPipeline.GetInstance(new TokenCredentialOptions() { Transport = mockTransport }));
+
+            AccessToken token = await target.AuthenticateAsync(IsAsync, new TokenRequestContext(MockScopes.Default), default);
+
+            Assert.Less(token.RefreshOn, token.ExpiresOn);
+            Assert.LessOrEqual(token.RefreshOn, now.AddSeconds(5).AddSeconds((long)(expires - now).TotalSeconds / 2), "RefreshOn should be less than half the token lifetime (with a fudge factor of 5 seconds to account for 'now' calculation)");
+        }
+
+        private MockResponse CreateMockResponse(int responseCode, DateTimeOffset expiresOn, double? refreshIn = null, bool invalidToken = false)
+        {
+            var token = invalidToken ?
+                "some invalid token" :
+                TokenGenerator.GenerateToken(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), "myUpn", expires.UtcDateTime, now);
+
             var response = new MockResponse(responseCode);
             string json = refreshIn.HasValue ?
             $"{{ \"access_token\": \"{token}\", \"expires_on\": \"{expiresOn.ToUnixTimeSeconds()}\", \"refresh_in\": \"{refreshIn.Value}\" }}" :

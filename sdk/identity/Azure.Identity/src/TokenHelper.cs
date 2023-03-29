@@ -61,9 +61,9 @@ namespace Azure.Identity
         public static bool TryParseValueFromToken(string token, string propertyName, out long value)
         {
             value = long.MinValue;
-            var reader = DecodeJwt(token);
             try
             {
+                var reader = DecodeJwt(token);
                 while (reader.Read())
                 {
                     if (reader.TokenType == JsonTokenType.PropertyName)

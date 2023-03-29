@@ -161,11 +161,11 @@ namespace Azure.Identity
 
         private static long? TryParseRefreshIn(JsonElement jsonRetryIn)
         {
-            // first test if expiresOn is a unix timestamp either as a number or string
-            if (jsonRetryIn.ValueKind == JsonValueKind.Number && jsonRetryIn.TryGetInt64(out long expiresOnSec) ||
-                jsonRetryIn.ValueKind == JsonValueKind.String && long.TryParse(jsonRetryIn.GetString(), out expiresOnSec))
+            // first test if retryIn is a unix timestamp either as a number or string
+            if (jsonRetryIn.ValueKind == JsonValueKind.Number && jsonRetryIn.TryGetInt64(out long RefreshInSec) ||
+                jsonRetryIn.ValueKind == JsonValueKind.String && long.TryParse(jsonRetryIn.GetString(), out RefreshInSec))
             {
-                return expiresOnSec;
+                return RefreshInSec;
             }
 
             return null;
@@ -173,18 +173,19 @@ namespace Azure.Identity
 
         private static DateTimeOffset? TryCalculateRefreshOn(DateTimeOffset? expiresOn, double? refreshIn, string accessToken)
         {
+            // If we have a refreshIn value and we can parse the issuance epoch from the token, use them to calculate the refreshOn value
             if (refreshIn.HasValue && accessToken != null && TokenHelper.TryParseValueFromToken(accessToken, "iat", out long issuedAtSec))
             {
                 return DateTimeOffset.FromUnixTimeSeconds(issuedAtSec).AddSeconds(refreshIn.Value);
             }
+            // Calculate half the value to expiry, assuming the token issuance is UTCNow unless that is less than two hours, in which case it should be the same as time to expiry.
             else if (expiresOn.HasValue)
             {
-                // return the max of (expiresOn - now) / 2 and (2 hours from now)
-                return DateTimeOffset.UtcNow.AddSeconds(Math.Max(expiresOn.Value.Subtract(DateTimeOffset.UtcNow).TotalSeconds / 2, 7200));
+                var candidateRefreshOn = DateTimeOffset.UtcNow.AddSeconds((expiresOn - DateTimeOffset.UtcNow).Value.TotalSeconds / 2);
+                return candidateRefreshOn >= DateTimeOffset.UtcNow.AddHours(2) ? candidateRefreshOn : expiresOn;
             }
 
-            // return the max of expiresOn - 5 minutes and now
-            return DateTimeOffset.UtcNow.AddSeconds(Math.Max(expiresOn.Value.Subtract(TimeSpan.FromMinutes(5)).ToUnixTimeSeconds(), 0));
+            return null;
         }
 
         private class ManagedIdentityResponseClassifier : ResponseClassifier
