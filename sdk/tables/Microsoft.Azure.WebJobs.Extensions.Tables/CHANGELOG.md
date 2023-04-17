@@ -1,14 +1,10 @@
 # Release History
 
-## 1.2.0-beta.1 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
-
-### Bugs Fixed
+## 1.2.0 (2023-05-09)
 
 ### Other Changes
+
+- Updated dependency on `Azure.Data.Tables` to 12.8.0
 
 ## 1.1.0 (2023-03-08)
 
