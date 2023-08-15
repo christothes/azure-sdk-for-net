@@ -60,6 +60,26 @@ namespace Azure.Identity
             public void BeginOutputReadLine() => _process.BeginOutputReadLine();
             public void BeginErrorReadLine() => _process.BeginErrorReadLine();
             public void Dispose() => _process.Dispose();
+
+            public bool IsWaitingForInput()
+            {
+                if (_process.HasExited)
+                    return false;
+                try
+                {
+                    foreach (ProcessThread thread in _process.Threads)
+                    {
+                        if (thread.ThreadState == ThreadState.Wait
+                            && thread.WaitReason == ThreadWaitReason.LpcReply)
+                        {
+                            throw new Exception("Process is waiting for input");
+                            // return true;
+                        }
+                    }
+                    return false;
+                }
+                catch { return false; }
+            }
         }
     }
 }

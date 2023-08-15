@@ -155,5 +155,10 @@ namespace Azure.Identity.Tests
         public void BeginErrorReadLine() { }
 
         private static DataReceivedEventArgs CreateDataReceivedEventArgs(string data) => s_createDataReceivedEventArgs.Value(data);
+
+        public bool IsWaitingForInput()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

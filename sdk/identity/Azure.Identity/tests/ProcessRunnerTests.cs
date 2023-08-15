@@ -62,6 +62,26 @@ namespace Azure.Identity.Tests
         }
 
         [Test]
+        public async Task HandlesReadKeyPrompts([Values("y", "n")] string args)
+        {
+            var logPII = true;
+            var output = "Hello, ReadKey!";
+            var fileName = @"C:\src\scratch\prun\prun\bin\Debug\net7.0\prun.exe";
+            var pi = new ProcessStartInfo(fileName, args);
+            var process = ProcessService.Default.Create(pi);
+            string result;
+            string log = string.Empty;
+            using AzureEventSourceListener listener = new AzureEventSourceListener((args, s) =>
+            {
+                log = $"{args.EventName} {s}";
+            }, EventLevel.Verbose);
+            using var runner = new ProcessRunner(process, TimeSpan.FromSeconds(5), logPII, default);
+            result = await Run(runner);
+
+            Assert.AreEqual(output, result);
+        }
+
+        [Test]
         public async Task ProcessRunnerRealProcessSucceeded()
         {
             var output = "Test output";

@@ -77,8 +77,8 @@ namespace Azure.Identity
             _process.StartInfo.RedirectStandardOutput = true;
             _process.StartInfo.RedirectStandardError = true;
 
-            _process.OutputDataReceived += (sender, args) => OnDataReceived(args, _outputData, _outputTcs);
-            _process.ErrorDataReceived += (sender, args) => OnDataReceived(args, _errorData, _errorTcs);
+            _process.OutputDataReceived += (sender, args) => OnDataReceived(args, _outputData, _outputTcs, _process);
+            _process.ErrorDataReceived += (sender, args) => OnDataReceived(args, _errorData, _errorTcs, _process);
             _process.Exited += (o, e) => _ = HandleExitAsync();
 
             _timeoutCts?.CancelAfter(_timeout);
@@ -130,7 +130,7 @@ namespace Azure.Identity
             TrySetCanceled();
         }
 
-        private static void OnDataReceived(DataReceivedEventArgs args, ICollection<string> data, TaskCompletionSource<ICollection<string>> tcs)
+        private static void OnDataReceived(DataReceivedEventArgs args, ICollection<string> data, TaskCompletionSource<ICollection<string>> tcs, IProcess process)
         {
             if (args.Data != null)
             {
@@ -139,6 +139,11 @@ namespace Azure.Identity
             else
             {
                 tcs.SetResult(data);
+            }
+
+            if (process.IsWaitingForInput())
+            {
+                data.Add("Process is waiting for input");
             }
         }
 

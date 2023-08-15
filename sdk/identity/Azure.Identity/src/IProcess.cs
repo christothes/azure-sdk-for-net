@@ -20,5 +20,6 @@ namespace Azure.Identity
         void Kill();
         void BeginOutputReadLine();
         void BeginErrorReadLine();
+        bool IsWaitingForInput();
     }
 }
