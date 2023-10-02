@@ -12,6 +12,34 @@ if ($null -ne $Env:AGENT_WORKFOLDER) {
 az login --service-principal -u $DeploymentOutputs['IDENTITY_CLIENT_ID'] -p $DeploymentOutputs['IDENTITY_CLIENT_SECRET'] --tenant $DeploymentOutputs['IDENTITY_TENANT_ID']
 az account set --subscription $DeploymentOutputs['IDENTITY_SUBSCRIPTION_ID']
 
+$baseName = $DeploymentOutputs['IDENTITY_BASE_NAME']
+$resourceGroupName = $DeploymentOutputs['IDENTITY_RESOURCE_GROUP_NAME']
+$location = az group show --name $resourceGroupName --query location --output tsv
+$policy = az keyvault certificate get-default-policy -o json
+Set-Content -Value $policy -Path $PSScriptRoot\kvpolicy.json
+$cert = az keyvault certificate create --vault-name $BaseName -n cert1 -p "@$PSScriptRoot\kvpolicy.json"
+Remove-Item -Path $PSScriptRoot\kvpolicy.json
+# Wait for the cert to be created
+Start-Sleep -Seconds 5
+$thumbprint = az keyvault certificate list --vault-name $baseName --query "[].x509ThumbprintHex" --output tsv
+Write-Host "thumbprint: $thumbprint"
+
+az sf cluster client-certificate add -g $baseName -c $baseName --thumbprint $thumbprint
+az sf managed-node-type create -g $baseName -c $baseName -n 'testNodes' --instance-count 5 --primary
+
+# }
+# else {
+# Write-Host "Keyvault $BaseName already exists"
+# }
+# declare CertSubjectName="mylinux.westus.cloudapp.azure.com"
+# declare vmpassword="Password!1"
+# declare certpassword="Password!4321"
+# declare vmuser="myadmin"
+# declare vmOs="UbuntuServer1804"
+# declare certOutputFolder="c:\certificates"
+
+# az sf cluster create --resource-group $baseName --location $location--certificate-output-folder $workingFolder --certificate-password $DeploymentOutputs['IDENTITY_CLIENT_SECRET'] --vault-name $baseName --vault-resource-group $resourceGroupName --template-file $templateFilePath --parameter-file $parametersFilePath --vm-os $vmOs --vm-password $vmpassword --vm-user-name $vmuser
+
 # Deploy the webapp
 dotnet publish "$webappRoot/WebApp/Integration.Identity.WebApp.csproj" -o "$workingFolder/Pub" /p:EnableSourceLink=false
 Compress-Archive -Path "$workingFolder/Pub/*" -DestinationPath "$workingFolder/Pub/package.zip" -Force

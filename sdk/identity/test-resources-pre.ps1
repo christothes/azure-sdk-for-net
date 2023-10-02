@@ -5,15 +5,21 @@ param (
     $RemainingArguments,
 
     [Parameter()]
+    $ResourceGroupName,
+
+    [Parameter()]
     [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
     [string] $TestApplicationId,
 
     [Parameter()]
     [string] $TestApplicationSecret,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
+    [Parameter()]
+    [string] $BaseName,
+
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string] $TenantId
+    [string] $TenantId = "72f988bf-86f1-41af-91ab-2d7cd011db47"
 )
 
 Import-Module -Name $PSScriptRoot/../../eng/common/scripts/X509Certificate2 -Verbose
@@ -23,8 +29,48 @@ $sshKey = Get-Content $PSScriptRoot/sshKey.pub
 
 $templateFileParameters['sshPubKey'] = $sshKey
 
-# Get the max version that is not preview and then get the name of the patch version with the max value
 az login --service-principal -u $TestApplicationId -p $TestApplicationSecret --tenant $TenantId
+# get the resource group location from the $ResourceGroupName
+# $location = az group show --name $ResourceGroupName --query location --output tsv
+# $cert = New-X509Certificate2 -SubjectName 'E=opensource@microsoft.com, CN=Azure SDK, OU=Azure SDK, O=Microsoft, L=Frisco, S=TX, C=US' -ValidDays 365
+# $templateFileParameters['sfCertThunbprint'] = $cert.Thumbprint
+# $CertFileFullPath = "$PSScriptRoot/cfCert.pfx"
+# $SecurePassword = ConvertTo-SecureString -String $TestApplicationSecret -AsPlainText -Force
+# Export-PfxCertificate -FilePath $CertFileFullPath -Password $SecurePassword -Cert $cert
+# $Bytes = [System.IO.File]::ReadAllBytes($CertFileFullPath)
+# $Base64 = [System.Convert]::ToBase64String($Bytes)
+# # Cleanup the cert on disk
+# Remove-Item -Path $CertFileFullPath
+
+# $JSONBlob = @{
+#     data = $Base64
+#     dataType = 'pfx'
+#     password = $Password
+# } | ConvertTo-Json
+# $ContentBytes = [System.Text.Encoding]::UTF8.GetBytes($JSONBlob)
+# $Content = [System.Convert]::ToBase64String($ContentBytes)
+# $templateFileParameters['sfCertSecretValue'] = $Content
+# $kv = az keyvault show --name $BaseName --resource-group $BaseName
+# if $kv contains 'not found within subscription' then create the keyvault
+# if ($kv -like '*not found within subscription*') {
+    # Write-Host "Creating keyvault $BaseName in resource group $BaseName in location $location"
+    # az keyvault create --name $BaseName --resource-group $BaseName --location $location
+    # $policy = az keyvault certificate get-default-policy -o json
+    # Set-Content -Value $policy -Path $PSScriptRoot\kvpolicy.json
+    # $cert = az keyvault certificate create --vault-name $BaseName -n cert1 -p "@$PSScriptRoot\kvpolicy.json"
+    # Remove-Item -Path $PSScriptRoot\kvpolicy.json
+    # # Wait for the cert to be created
+    # Start-Sleep -Seconds 5
+# }
+# else {
+    # Write-Host "Keyvault $BaseName already exists"
+# }
+# $thumbprint = az keyvault certificate list --vault-name t56c180479338b12b2 --query "[].x509ThumbprintHex" --output tsv
+# $certId = az keyvault certificate list --vault-name t56c180479338b12b2 --query "[].x509ThumbprintHex" --output tsv
+# $templateFileParameters['sfCertThumbprint'] = $thumbprint
+# $templateFileParameters['sfCertUri'] = $certId
+
+# Get the max version that is not preview and then get the name of the patch version with the max value
 $versions = az aks get-versions -l westus -o json | ConvertFrom-Json
 Write-Host "AKS versions: $($versions | ConvertTo-Json -Depth 100)"
 $patchVersions = $versions.values | Where-Object { $_.isPreview -eq $null } | Select-Object -ExpandProperty patchVersions

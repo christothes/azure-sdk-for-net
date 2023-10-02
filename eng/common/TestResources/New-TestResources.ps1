@@ -60,7 +60,7 @@ param (
     [int] $DeleteAfterHours = 120,
 
     [Parameter()]
-    [string] $Location = '',
+    [string] $Location = 'southcentralus',
 
     [Parameter()]
     [ValidateSet('AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud', 'Dogfood')]
