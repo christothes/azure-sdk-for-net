@@ -17,11 +17,17 @@ namespace Azure.Core.Pipeline
 
         public override void OnSendingRequest(HttpMessage message)
         {
-            if (message.Request.Headers.TryGetValue(ClientRequestIdPolicy.ClientRequestIdHeader, out string? value))
+            string ClientRequestIdHeaderName = ClientRequestIdPolicy.ClientRequestIdHeader;
+            if (message.TryGetProperty(typeof(CustomClientRequestIdHeaderNameValueKey), out object? propertyValue) && propertyValue is string customerHeaderName)
+            {
+                ClientRequestIdHeaderName = customerHeaderName;
+            }
+
+            if (message.Request.Headers.TryGetValue(ClientRequestIdHeaderName, out string? value))
             {
                 message.Request.ClientRequestId = value;
             }
-            else if (message.TryGetProperty(MessagePropertyKey, out object? propertyValue))
+            else if (message.TryGetProperty(MessagePropertyKey, out propertyValue))
             {
                 if (propertyValue is string stringValue)
                 {

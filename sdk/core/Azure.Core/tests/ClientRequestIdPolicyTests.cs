@@ -14,6 +14,8 @@ namespace Azure.Core.Tests
 {
     public class ClientRequestIdPolicyTests : PolicyTestBase
     {
+        private const string CustomReqIdHeaderName = "my-custom-request-id";
+
         [Test]
         public async Task SetsHeaders()
         {
@@ -36,7 +38,7 @@ namespace Azure.Core.Tests
             policy.Setup(p => p.OnReceivedResponse(It.IsAny<HttpMessage>()))
                 .Callback<HttpMessage>(message =>
                 {
-                    Assert.AreEqual("ExternalClientId",message.Request.ClientRequestId);
+                    Assert.AreEqual("ExternalClientId", message.Request.ClientRequestId);
                     Assert.True(message.Request.TryGetHeader("x-ms-client-request-id", out string requestId));
                     Assert.AreEqual("ExternalClientId", requestId);
                 }).Verifiable();
@@ -56,6 +58,37 @@ namespace Azure.Core.Tests
         }
 
         [Test]
+        public async Task ReadsCustomRequestIdValueOfRequest()
+        {
+            var policy = new Mock<HttpPipelineSynchronousPolicy>
+            {
+                CallBase = true
+            };
+            policy.Setup(p => p.OnReceivedResponse(It.IsAny<HttpMessage>()))
+                .Callback<HttpMessage>(message =>
+                {
+                    Assert.AreEqual("ExternalClientId", message.Request.ClientRequestId);
+                    Assert.True(message.Request.TryGetHeader(CustomReqIdHeaderName, out string requestId));
+                    Assert.AreEqual("ExternalClientId", requestId);
+                    Assert.False(message.Request.TryGetHeader("x-ms-client-request-id", out requestId));
+                }).Verifiable();
+
+            var transport = new MockTransport(new MockResponse(200));
+            var pipeline = new HttpPipeline(transport, new[] { ReadClientRequestIdPolicy.Shared, policy.Object });
+
+            using (HttpMessage message = pipeline.CreateMessage())
+            {
+                message.SetProperty(typeof(CustomClientRequestIdHeaderNameValueKey), CustomReqIdHeaderName);
+                message.Request.Method = RequestMethod.Get;
+                message.Request.Uri.Reset(new Uri("http://example.com"));
+                message.Request.Headers.Add(CustomReqIdHeaderName, "ExternalClientId");
+                await pipeline.SendAsync(message, CancellationToken.None);
+            }
+
+            policy.Verify();
+        }
+
+        [Test]
         public async Task ReadsRequestIdValueOfScope()
         {
             var transport = new MockTransport(r => new MockResponse(200));
@@ -66,6 +99,32 @@ namespace Azure.Core.Tests
             }
 
             Assert.AreEqual(transport.SingleRequest.ClientRequestId, "custom-id");
+        }
+
+        [Test]
+        public async Task ReadsCustomRequestIdValueOfScope()
+        {
+            var policy = new Mock<HttpPipelineSynchronousPolicy>
+            {
+                CallBase = true
+            };
+            var transport = new MockTransport(new MockResponse(200));
+            var pipeline = new HttpPipeline(transport, new[] { ReadClientRequestIdPolicy.Shared, ClientRequestIdPolicy.Shared, policy.Object });
+
+            using (HttpPipeline.CreateClientRequestIdScope("custom-id"))
+            {
+                using (HttpMessage message = pipeline.CreateMessage())
+                {
+                    message.SetProperty(typeof(CustomClientRequestIdHeaderNameValueKey), CustomReqIdHeaderName);
+                    message.Request.Method = RequestMethod.Get;
+                    message.Request.Uri.Reset(new Uri("http://example.com"));
+                    await pipeline.SendAsync(message, CancellationToken.None);
+                }
+            }
+
+            Assert.AreEqual(transport.SingleRequest.ClientRequestId, "custom-id");
+            Assert.True(transport.SingleRequest.TryGetHeader(CustomReqIdHeaderName, out string requestId));
+            Assert.AreEqual("custom-id", requestId);
         }
 
         [Test]
