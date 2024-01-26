@@ -10,7 +10,7 @@ using Microsoft.Identity.Client;
 namespace Azure.Identity
 {
     internal abstract class MsalClientBase<TClient>
-        where TClient : IClientApplicationBase
+        where TClient : IApplicationBase
     {
         private readonly AsyncLockWithValue<(TClient Client, TokenCache Cache)> _clientAsyncLock;
         private readonly AsyncLockWithValue<(TClient Client, TokenCache Cache)> _clientWithCaeAsyncLock;
@@ -68,10 +68,10 @@ namespace Azure.Identity
             var client = await CreateClientAsync(enableCae, async, cancellationToken).ConfigureAwait(false);
 
             TokenCache tokenCache = null;
-            if (_tokenCachePersistenceOptions != null)
+            if (_tokenCachePersistenceOptions != null && client is IClientApplicationBase clientApp)
             {
                 tokenCache = new TokenCache(_tokenCachePersistenceOptions, enableCae);
-                await tokenCache.RegisterCache(async, client.UserTokenCache, cancellationToken).ConfigureAwait(false);
+                await tokenCache.RegisterCache(async, clientApp.UserTokenCache, cancellationToken).ConfigureAwait(false);
 
                 if (client is IConfidentialClientApplication cca)
                 {

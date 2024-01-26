@@ -102,7 +102,11 @@ namespace Azure.Identity
             }
             if (tenantId != null)
             {
-                builder.WithAuthority(AuthorityHost.AbsoluteUri, tenantId);
+                UriBuilder uriBuilder = new UriBuilder(AuthorityHost)
+                {
+                    Path = tenantId
+                };
+                builder.WithTenantIdFromAuthority(uriBuilder.Uri);
             }
 
             return await builder
@@ -124,8 +128,13 @@ namespace Azure.Identity
             // if the user specified a TenantId when they created the client we want to authenticate to that tenant.
             // otherwise we should authenticate with the tenant specified by the authentication record since that's the tenant the
             // user authenticated to originally.
-            var builder = client.AcquireTokenSilent(scopes, (AuthenticationAccount)record)
-                .WithAuthority(AuthorityHost.AbsoluteUri, TenantId ?? record.TenantId);
+            var builder = client.AcquireTokenSilent(scopes, (AuthenticationAccount)record);
+
+            UriBuilder uriBuilder = new UriBuilder(AuthorityHost)
+            {
+                Path = TenantId ?? record.TenantId
+            };
+            builder.WithTenantIdFromAuthority(uriBuilder.Uri);
 
             if (!string.IsNullOrEmpty(claims))
             {
@@ -181,7 +190,11 @@ namespace Azure.Identity
             }
             if (tenantId != null)
             {
-                builder.WithAuthority(AuthorityHost.AbsoluteUri, tenantId);
+                UriBuilder uriBuilder = new UriBuilder(AuthorityHost)
+                {
+                    Path = tenantId
+                };
+                builder.WithTenantIdFromAuthority(uriBuilder.Uri);
             }
             if (browserOptions != null)
             {
@@ -222,7 +235,11 @@ namespace Azure.Identity
             }
             if (!string.IsNullOrEmpty(tenantId))
             {
-                builder.WithAuthority(AuthorityHost.AbsoluteUri, tenantId);
+                UriBuilder uriBuilder = new UriBuilder(AuthorityHost)
+                {
+                    Path = tenantId
+                };
+                builder.WithTenantIdFromAuthority(uriBuilder.Uri);
             }
             return await builder.ExecuteAsync(async, cancellationToken)
                 .ConfigureAwait(false);
@@ -260,7 +277,7 @@ namespace Azure.Identity
         {
             IPublicClientApplication client = await GetClientAsync(enableCae, async, cancellationToken).ConfigureAwait(false);
             var builder = ((IByRefreshToken)client).AcquireTokenByRefreshToken(scopes, refreshToken)
-                .WithAuthority(azureCloudInstance, tenant);
+                .WithTenantId(tenant);
 
             if (!string.IsNullOrEmpty(claims))
             {
