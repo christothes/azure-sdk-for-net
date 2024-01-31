@@ -2,11 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Core;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.AppConfig;
 
@@ -27,12 +25,6 @@ namespace Azure.Identity
         {
             Pipeline = pipeline;
             IsSupportLoggingEnabled = options?.IsUnsafeSupportLoggingEnabled ?? false;
-
-            // if (options is IMsalPublicClientInitializerOptions initializerOptions)
-            // {
-            //     _beforeBuildClient = initializerOptions.BeforeBuildClient;
-            //     IsProofOfPossessionRequired = initializerOptions.IsProofOfPossessionRequired;
-            // };
         }
 
         protected ValueTask<IManagedIdentityApplication> CreateClientAsync(bool enableCae, ManagedIdentityId managedIdentityId, bool async, CancellationToken cancellationToken)
@@ -40,15 +32,22 @@ namespace Azure.Identity
             return CreateClientCoreAsync(enableCae, managedIdentityId, async, cancellationToken);
         }
 
-        protected virtual ValueTask<IManagedIdentityApplication> CreateClientCoreAsync(bool enableCae, ManagedIdentityId managedIdentityId, bool async, CancellationToken cancellationToken)
-        {
-            string[] clientCapabilities =
-                enableCae ? cp1Capabilities : Array.Empty<string>();
+        // TODO: Implement this method when static ManagedIdentityApplication.IsProofOfPossessionSupportedByClient is implemented
+        public static bool IsProofOfPossessionSupportedByClient => ManagedIdentityApplication.GetBindingCertificate() is not null;
 
+        public static X509Certificate2 BindingCertificate => ManagedIdentityApplication.GetBindingCertificate();
+
+        internal virtual ValueTask<IManagedIdentityApplication> CreateClientCoreAsync(bool enableCae, ManagedIdentityId managedIdentityId, bool async, CancellationToken cancellationToken)
+        {
             ManagedIdentityApplicationBuilder miAppBuilder = ManagedIdentityApplicationBuilder
                 .Create(managedIdentityId)
                 .WithHttpClientFactory(new HttpPipelineClientFactory(Pipeline.HttpPipeline))
                 .WithLogging(LogMsal, enablePiiLogging: IsSupportLoggingEnabled);
+
+            if (enableCae)
+            {
+                miAppBuilder.WithClientCapabilities(cp1Capabilities);
+            }
 
             return new ValueTask<IManagedIdentityApplication>(miAppBuilder.Build());
         }

@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
+using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Extensibility;
 
 namespace Azure.Identity
 {
@@ -15,17 +17,46 @@ namespace Azure.Identity
         internal const string AuthenticationResponseInvalidFormatError = "Invalid response, the authentication response was not in the expected format.";
         internal const string UnexpectedResponse = "Managed Identity response was not in the expected format. See the inner exception for details.";
         private ManagedIdentityResponseClassifier _responseClassifier;
+        private Func<AppTokenProviderParameters, Task<AppTokenProviderResult>> _appTokenProviderCallback;
+        private TokenCredentialOptions _tokenCredentialOptions;
+        private MsalConfidentialClient _msal;
 
-        protected ManagedIdentitySource(CredentialPipeline pipeline)
+        protected ManagedIdentitySource(ManagedIdentityClientOptions options)
         {
-            Pipeline = pipeline;
             _responseClassifier = new ManagedIdentityResponseClassifier();
+            _appTokenProviderCallback = options.AppTokenProviderCallback;
+            _tokenCredentialOptions = options.Options;
+            ResourceIdentifier = string.IsNullOrEmpty(options.ResourceIdentifier) ? null : options.ResourceIdentifier;
+            ClientId = string.IsNullOrEmpty(options.ClientId) ? null : options.ClientId;
+            //TODO: let the subclass set this but not overwrite if set by options
+            Pipeline = options.Pipeline ?? CredentialPipeline.GetInstance(options.Options);
         }
 
-        protected internal CredentialPipeline Pipeline { get; }
-        protected internal string ClientId { get; }
+        protected internal CredentialPipeline Pipeline { get; protected set; }
+        protected internal string ClientId { get; protected set; }
+        protected internal ResourceIdentifier ResourceIdentifier { get; }
 
         public virtual async ValueTask<AccessToken> AuthenticateAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
+        {
+            _msal ??= new MsalConfidentialClient(
+                Pipeline,
+                "MANAGED-IDENTITY-RESOURCE-TENENT",
+                ClientId ?? "SYSTEM-ASSIGNED-MANAGED-IDENTITY",
+                _appTokenProviderCallback,
+                _tokenCredentialOptions);
+
+            AuthenticationResult result = await _msal.AcquireTokenForClientAsync(
+                context.Scopes,
+                context.TenantId,
+                context.Claims,
+                context.IsCaeEnabled,
+                async,
+                cancellationToken).ConfigureAwait(false);
+
+            return new AccessToken(result.AccessToken, result.ExpiresOn);
+        }
+
+        public virtual async ValueTask<AccessToken> GetTokenAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
         {
             using HttpMessage message = CreateHttpMessage(CreateRequest(context.Scopes));
             if (async)

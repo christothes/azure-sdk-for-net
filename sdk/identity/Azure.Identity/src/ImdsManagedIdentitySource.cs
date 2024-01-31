@@ -3,13 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Core.Pipeline;
 
 namespace Azure.Identity
 {
@@ -26,6 +22,7 @@ namespace Azure.Identity
         internal const string TimeoutError = "ManagedIdentityCredential authentication unavailable. The request to the managed identity endpoint timed out.";
         internal const string GatewayError = "ManagedIdentityCredential authentication unavailable. The request failed due to a gateway error.";
         internal const string AggregateError = "ManagedIdentityCredential authentication unavailable. Multiple attempts failed to obtain a token from the managed identity endpoint.";
+        private const string IdentityEndpointInvalidUriError = "The environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST contains an invalid Uri.";
 
         private readonly string _clientId;
         private readonly string _resourceId;
@@ -33,7 +30,7 @@ namespace Azure.Identity
 
         private TimeSpan? _imdsNetworkTimeout;
 
-        internal ImdsManagedIdentitySource(ManagedIdentityClientOptions options) : base(options.Pipeline)
+        internal ImdsManagedIdentitySource(ManagedIdentityClientOptions options) : base(options)
         {
             _clientId = options.ClientId;
             _resourceId = options.ResourceIdentifier?.ToString();
@@ -41,6 +38,10 @@ namespace Azure.Identity
 
             if (!string.IsNullOrEmpty(EnvironmentVariables.PodIdentityEndpoint))
             {
+                if (!Uri.TryCreate(EnvironmentVariables.PodIdentityEndpoint, UriKind.Absolute, out _))
+                {
+                    throw new AuthenticationFailedException(IdentityEndpointInvalidUriError);
+                }
                 var builder = new UriBuilder(EnvironmentVariables.PodIdentityEndpoint);
                 builder.Path = imddsTokenPath;
                 _imdsEndpoint = builder.Uri;
@@ -85,11 +86,11 @@ namespace Azure.Identity
             return message;
         }
 
-        public async override ValueTask<AccessToken> AuthenticateAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
+        public async override ValueTask<AccessToken> GetTokenAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
         {
             try
             {
-                return await base.AuthenticateAsync(async, context, cancellationToken).ConfigureAwait(false);
+                return await base.GetTokenAsync(async, context, cancellationToken).ConfigureAwait(false);
             }
             catch (RequestFailedException e) when (e.Status == 0)
             {

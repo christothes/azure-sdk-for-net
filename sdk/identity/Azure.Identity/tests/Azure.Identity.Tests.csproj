@@ -23,6 +23,6 @@
     <ProjectReference Include="..\integration\Integration.Identity.Container\Integration.Identity.Container.csproj" />
     <None Update="Data\*" CopyToOutputDirectory="PreserveNewest" />
     <ContentWithTargetPath Update="Data\*" CopyToOutputDirectory="PreserveNewest" TargetPath="certs\*" />
-    <Compile Include="$(AzureCoreSharedSources)ForwardsClientCallsAttribute.cs" LinkBase="Shared" />
+    <!--<Compile Include="$(AzureCoreSharedSources)ForwardsClientCallsAttribute.cs" LinkBase="Shared" />-->
   </ItemGroup>
 </Project>

@@ -18,11 +18,12 @@ namespace Azure.Identity
         private ClientAssertionCredential _clientAssertionCredential;
         private static readonly int DefaultBufferSize = 4096;
 
-        private TokenExchangeManagedIdentitySource(CredentialPipeline pipeline, string tenantId, string clientId, string tokenFilePath)
-            : base(pipeline)
+        private TokenExchangeManagedIdentitySource(ManagedIdentityClientOptions options, string tenantId, string clientId, string tokenFilePath)
+            : base(options)
         {
+            ClientId = clientId;
             _tokenFileCache = new TokenFileCache(tokenFilePath);
-            _clientAssertionCredential = new ClientAssertionCredential(tenantId, clientId, _tokenFileCache.GetTokenFileContentsAsync, new ClientAssertionCredentialOptions { Pipeline = pipeline });
+            _clientAssertionCredential = new ClientAssertionCredential(tenantId, clientId, _tokenFileCache.GetTokenFileContentsAsync, new ClientAssertionCredentialOptions { Pipeline = Pipeline });
         }
 
         public static ManagedIdentitySource TryCreate(ManagedIdentityClientOptions options)
@@ -36,10 +37,10 @@ namespace Azure.Identity
                 return default;
             }
 
-            return new TokenExchangeManagedIdentitySource(options.Pipeline, tenantId, clientId, tokenFilePath);
+            return new TokenExchangeManagedIdentitySource(options, tenantId, clientId, tokenFilePath);
         }
 
-        public async override ValueTask<AccessToken> AuthenticateAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
+        public async override ValueTask<AccessToken> GetTokenAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
         {
             return async ? await _clientAssertionCredential.GetTokenAsync(context, cancellationToken).ConfigureAwait(false) : _clientAssertionCredential.GetToken(context, cancellationToken);
         }

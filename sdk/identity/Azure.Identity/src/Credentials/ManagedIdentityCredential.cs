@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core.Pipeline;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Azure.Identity
 {
@@ -18,7 +19,6 @@ namespace Azure.Identity
     {
         internal const string MsiUnavailableError = "No managed identity endpoint found.";
 
-        private readonly CredentialPipeline _pipeline;
         internal ManagedIdentityClient Client { get; }
         private readonly string _clientId;
         private readonly bool _logAccountDetails;
@@ -41,7 +41,7 @@ namespace Azure.Identity
         /// </param>
         /// <param name="options">Options to configure the management of the requests sent to Microsoft Entra ID.</param>
         public ManagedIdentityCredential(string clientId = null, TokenCredentialOptions options = null)
-            : this(new ManagedIdentityClient(new ManagedIdentityClientOptions { ClientId = clientId, Pipeline = CredentialPipeline.GetInstance(options), Options = options }))
+            : this(new ManagedIdentityClient(new ManagedIdentityClientOptions { ClientId = clientId, Options = options }))
         {
             _logAccountDetails = options?.Diagnostics?.IsAccountIdentifierLoggingEnabled ?? false;
         }
@@ -55,7 +55,7 @@ namespace Azure.Identity
         /// </param>
         /// <param name="options">Options to configure the management of the requests sent to Microsoft Entra ID.</param>
         public ManagedIdentityCredential(ResourceIdentifier resourceId, TokenCredentialOptions options = null)
-            : this(new ManagedIdentityClient(new ManagedIdentityClientOptions { ResourceIdentifier = resourceId, Pipeline = CredentialPipeline.GetInstance(options), Options = options }))
+            : this(new ManagedIdentityClient(new ManagedIdentityClientOptions { ResourceIdentifier = resourceId, Options = options }))
         {
             _logAccountDetails = options?.Diagnostics?.IsAccountIdentifierLoggingEnabled ?? false;
             _clientId = resourceId.ToString();
@@ -75,7 +75,6 @@ namespace Azure.Identity
 
         internal ManagedIdentityCredential(ManagedIdentityClient client)
         {
-            _pipeline = client.Pipeline;
             Client = client;
         }
 
@@ -87,6 +86,7 @@ namespace Azure.Identity
         /// <param name="requestContext">The details of the authentication request.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
         /// <returns>An <see cref="AccessToken"/> which can be used to authenticate service client calls, or a default <see cref="AccessToken"/> if no managed identity is available.</returns>
+        [ForwardsClientCalls(true)]
         public override async ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken = default)
         {
             return await GetTokenImplAsync(true, requestContext, cancellationToken).ConfigureAwait(false);
@@ -100,6 +100,7 @@ namespace Azure.Identity
         /// <param name="requestContext">The details of the authentication request.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> controlling the request lifetime.</param>
         /// <returns>An <see cref="AccessToken"/> which can be used to authenticate service client calls, or a default <see cref="AccessToken"/> if no managed identity is available.</returns>
+        [ForwardsClientCalls(true)]
         public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken = default)
         {
             return GetTokenImplAsync(false, requestContext, cancellationToken).EnsureCompleted();
@@ -107,11 +108,11 @@ namespace Azure.Identity
 
         private async ValueTask<AccessToken> GetTokenImplAsync(bool async, TokenRequestContext requestContext, CancellationToken cancellationToken)
         {
-            using CredentialDiagnosticScope scope = _pipeline.StartGetTokenScope("ManagedIdentityCredential.GetToken", requestContext);
+            using CredentialDiagnosticScope scope = Client.Pipeline.StartGetTokenScope("ManagedIdentityCredential.GetToken", requestContext);
 
             try
             {
-                AccessToken result = await Client.AuthenticateAsync(async, requestContext, cancellationToken).ConfigureAwait(false);
+                AccessToken result = await Client.GetTokenAsync(async, requestContext, cancellationToken).ConfigureAwait(false);
                 if (_logAccountDetails)
                 {
                     var accountDetails = TokenHelper.ParseAccountInfoFromToken(result.Token);

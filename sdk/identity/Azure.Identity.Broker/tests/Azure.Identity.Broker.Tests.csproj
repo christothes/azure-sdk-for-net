@@ -22,7 +22,7 @@
     <ProjectReference Include="..\..\..\core\Azure.Core.Experimental\src\Azure.Core.Experimental.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="$(AzureCoreSharedSources)ForwardsClientCallsAttribute.cs" LinkBase="Shared" />
+    <!--<Compile Include="$(AzureCoreSharedSources)ForwardsClientCallsAttribute.cs" LinkBase="Shared" />-->
     <Compile Include="*.cs" Exclude="*Manual*.cs"/>
     <Compile Include="ManualInteractiveBrowserCredentialBrokerTests.cs" Condition="$([MSBuild]::IsOsPlatform('Windows'))"/>
     <Compile Include="ManualSharedTokenCacheCredentialBrokerTests.cs" Condition="$([MSBuild]::IsOsPlatform('Windows'))"/>

@@ -40,7 +40,7 @@ namespace Azure.Identity
             return new AzureArcManagedIdentitySource(endpointUri, options);
         }
 
-        private AzureArcManagedIdentitySource(Uri endpoint, ManagedIdentityClientOptions options) : base(options.Pipeline)
+        private AzureArcManagedIdentitySource(Uri endpoint, ManagedIdentityClientOptions options) : base(options)
         {
             _endpoint = endpoint;
             _clientId = options.ClientId;

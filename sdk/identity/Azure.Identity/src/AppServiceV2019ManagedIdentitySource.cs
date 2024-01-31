@@ -15,12 +15,12 @@ namespace Azure.Identity
         {
             var msiSecret = EnvironmentVariables.IdentityHeader;
             return TryValidateEnvVars(EnvironmentVariables.IdentityEndpoint, msiSecret, out Uri endpointUri)
-                ? new AppServiceV2019ManagedIdentitySource(options.Pipeline, endpointUri, msiSecret, options)
+                ? new AppServiceV2019ManagedIdentitySource(endpointUri, msiSecret, options)
                 : null;
         }
 
-        private AppServiceV2019ManagedIdentitySource(CredentialPipeline pipeline, Uri endpoint, string secret,
-            ManagedIdentityClientOptions options) : base(pipeline, endpoint, secret, options)
+        private AppServiceV2019ManagedIdentitySource(Uri endpoint, string secret,
+            ManagedIdentityClientOptions options) : base(endpoint, secret, options)
         {
         }
     }

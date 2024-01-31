@@ -42,8 +42,8 @@ namespace Azure.Identity
             return true;
         }
 
-        protected AppServiceManagedIdentitySource(CredentialPipeline pipeline, Uri endpoint, string secret,
-            ManagedIdentityClientOptions options) : base(pipeline)
+        protected AppServiceManagedIdentitySource( Uri endpoint, string secret,
+            ManagedIdentityClientOptions options) : base(options)
         {
             _endpoint = endpoint;
             _secret = secret;

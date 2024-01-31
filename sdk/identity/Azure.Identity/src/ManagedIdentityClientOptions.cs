@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Threading.Tasks;
 using Azure.Core;
+using Microsoft.Identity.Client.Extensibility;
 
 namespace Azure.Identity
 {
@@ -21,5 +23,7 @@ namespace Azure.Identity
         public CredentialPipeline Pipeline { get; set; }
 
         public bool ExcludeTokenExchangeManagedIdentitySource { get; set; }
+
+        public Func<AppTokenProviderParameters, Task<AppTokenProviderResult>> AppTokenProviderCallback { get; set; }
     }
 }
