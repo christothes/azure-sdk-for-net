@@ -919,14 +919,6 @@ namespace Azure.Identity.Tests
             using var environment = new TestEnvVar(environmentVariables);
 
             var credential = InstrumentClient(new ManagedIdentityCredential());
-            try
-            {
-                await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
             var ex = Assert.ThrowsAsync<AuthenticationFailedException>(async () => await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default)));
 
             await Task.CompletedTask;
