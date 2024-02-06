@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core.Pipeline;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Azure.Identity
 {

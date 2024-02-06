@@ -14,10 +14,10 @@ namespace Azure.Identity.Tests
     public class MsalManagedIdentityClientTests
     {
         [Test]
-        public async Task Ctor()
+        public async Task SLCMiCredTest()
         {
-            var client = new MsalManagedIdentityClient(CredentialPipeline.GetInstance(null), new TokenCredentialOptions());
-            await client.CreateClientCoreAsync(false, ManagedIdentityId.SystemAssigned, false, default);
+            var cred = new ManagedIdentityCredential();
+            await cred.GetTokenAsync(new Core.TokenRequestContext (new[] { "https://storage.azure.com/.default" }), default);
         }
     }
 }

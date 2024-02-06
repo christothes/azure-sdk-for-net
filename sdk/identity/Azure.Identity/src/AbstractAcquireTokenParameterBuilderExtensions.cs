@@ -20,5 +20,17 @@ namespace Azure.Identity
 
             return result;
         }
+
+        public static async ValueTask<AuthenticationResult> ExecuteAsync<T>(this AbstractManagedIdentityAcquireTokenParameterBuilder<T> builder, bool async, CancellationToken cancellationToken)
+            where T : AbstractManagedIdentityAcquireTokenParameterBuilder<T>
+        {
+            Microsoft.Identity.Client.AuthenticationResult result = async
+                ? await builder.ExecuteAsync(cancellationToken).ConfigureAwait(false)
+#pragma warning disable AZC0102 // Do not use GetAwaiter().GetResult(). Use the TaskExtensions.EnsureCompleted() extension method instead.
+                : builder.ExecuteAsync(cancellationToken).GetAwaiter().GetResult();
+#pragma warning restore AZC0102 // Do not use GetAwaiter().GetResult(). Use the TaskExtensions.EnsureCompleted() extension method instead.
+
+            return result;
+        }
     }
 }

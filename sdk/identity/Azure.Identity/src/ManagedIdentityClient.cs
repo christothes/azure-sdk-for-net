@@ -68,6 +68,7 @@ namespace Azure.Identity
         private static ManagedIdentitySource SelectManagedIdentitySource(ManagedIdentityClientOptions options)
         {
             return
+                SlcManagedIdentitySource.TryCreate(options) ??
                 ServiceFabricManagedIdentitySource.TryCreate(options) ??
                 AppServiceV2019ManagedIdentitySource.TryCreate(options) ??
                 AppServiceV2017ManagedIdentitySource.TryCreate(options) ??
