@@ -53,7 +53,7 @@ namespace Azure.Identity
                 async,
                 cancellationToken).ConfigureAwait(false);
 
-            return new AccessToken(result.AccessToken, result.ExpiresOn);
+            return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
         }
 
         public virtual async ValueTask<AccessToken> GetTokenAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)

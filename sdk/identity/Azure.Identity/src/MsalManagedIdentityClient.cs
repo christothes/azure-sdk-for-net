@@ -16,7 +16,6 @@ namespace Azure.Identity
         private readonly AsyncLockWithValue<IManagedIdentityApplication> _clientAsyncLock;
         private readonly AsyncLockWithValue<IManagedIdentityApplication> _clientWithCaeAsyncLock;
         internal string RedirectUrl { get; }
-        internal bool IsProofOfPossessionRequired { get; }
         internal string[] cp1Capabilities = new[] { "CP1" };
         internal CredentialPipeline Pipeline { get; }
         protected internal bool IsSupportLoggingEnabled { get; }
@@ -59,23 +58,7 @@ namespace Azure.Identity
         // TODO: Implement this method when static ManagedIdentityApplication.IsProofOfPossessionSupportedByClient is implemented
         public static bool IsProofOfPossessionSupportedByClient => BindingCertificate is not null;
 
-        public static X509Certificate2 BindingCertificate
-        {
-            // TODO: remove these debug prints.
-            get
-            {
-                var cert = ManagedIdentityApplication.GetBindingCertificate();
-                if (cert is null)
-                {
-                    Console.WriteLine("*******************\n\nBinding certificate is not available.\n\n*******************");
-                }
-                else
-                {
-                    Console.WriteLine($"*******************\n\nBinding certificate is available. ({cert.Thumbprint})\n\n*******************");
-                }
-                return cert;
-            }
-        }
+        public static X509Certificate2 BindingCertificate => ManagedIdentityApplication.GetBindingCertificate();
 
         internal virtual async ValueTask<IManagedIdentityApplication> CreateClientCoreAsync(bool enableCae, ManagedIdentityId managedIdentityId, bool async, CancellationToken cancellationToken)
         {

@@ -4,10 +4,11 @@
 using Azure.Core;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core.Pipeline;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.Identity.Client;
 
 namespace Azure.Identity
 {
@@ -48,6 +49,9 @@ namespace Azure.Identity
     /// </code>
     /// </example>
     public class DefaultAzureCredential : TokenCredential
+    #if PREVIEW_FEATURE_FLAG
+    , ISupportBindingCertificate
+#endif
     {
         private const string Troubleshooting = "See the troubleshooting guide for more information. https://aka.ms/azsdk/net/identity/defaultazurecredential/troubleshoot";
         private const string DefaultExceptionMessage = "DefaultAzureCredential failed to retrieve a token from the included credentials. " + Troubleshooting;
@@ -195,6 +199,12 @@ namespace Azure.Identity
             Validations.ValidateAuthorityHost(options?.AuthorityHost ?? AzureAuthorityHosts.GetDefault());
 
             return options;
+        }
+
+        bool ISupportBindingCertificate.TryGetBindingCertificate(out X509Certificate2 bindingCertificate)
+        {
+            bindingCertificate = ManagedIdentityApplication.GetBindingCertificate();
+            return bindingCertificate != null;
         }
     }
 }

@@ -218,7 +218,7 @@ namespace Azure.Identity
                     {
                         result = await Client.AcquireTokenSilentAsync(requestContext.Scopes, requestContext.Claims, _record, tenantId, requestContext.IsCaeEnabled, async, cancellationToken)
                             .ConfigureAwait(false);
-                        return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn));
+                        return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType));
                     }
                     catch (MsalUiRequiredException msalEx)
                     {
@@ -227,7 +227,7 @@ namespace Azure.Identity
                     }
                 }
                 result = await AuthenticateImplAsync(async, requestContext, cancellationToken).ConfigureAwait(false);
-                return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn));
+                return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType));
             }
             catch (Exception e)
             {

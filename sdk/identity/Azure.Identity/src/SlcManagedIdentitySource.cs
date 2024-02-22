@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -21,7 +20,9 @@ namespace Azure.Identity
 
         public static ManagedIdentitySource TryCreate(ManagedIdentityClientOptions options)
         {
-            var cred = MsalManagedIdentityClient.IsProofOfPossessionSupportedByClient ?
+            // Currently, the only way to determine if the SLC is available is to check if the binding certificate is available on the host.
+            // This may change in the future.
+            var cred = MsalManagedIdentityClient.BindingCertificate != null ?
                 new SlcManagedIdentitySource(options) :
                 default;
             return cred;
@@ -35,7 +36,7 @@ namespace Azure.Identity
         public override async ValueTask<AccessToken> GetTokenAsync(bool async, TokenRequestContext context, CancellationToken cancellationToken)
         {
             var result = await _msalClient.AuthenticateAsync(context, async, cancellationToken).ConfigureAwait(false);
-            return new AccessToken(result.AccessToken, result.ExpiresOn);
+            return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
         }
 
         protected override Request CreateRequest(string[] scopes)

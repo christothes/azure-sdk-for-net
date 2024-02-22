@@ -90,7 +90,9 @@ namespace Azure.Core.Pipeline
             var token = async ?
                 await _tokenCredential.GetTokenAsync(context, message.CancellationToken).ConfigureAwait(false) :
                 _tokenCredential.GetToken(context, message.CancellationToken);
-            message.Request.Headers.SetValue(HttpHeader.Names.Authorization, "PoP " + token.Token);
+
+            // We could get back a Bearer token or a PoP token.
+            message.Request.Headers.SetValue(HttpHeader.Names.Authorization, $"{token.TokenType} {token.Token}");
         }
 
         private async ValueTask ProcessAsync(HttpMessage message, ReadOnlyMemory<HttpPipelinePolicy> pipeline, bool async)
@@ -148,21 +150,18 @@ namespace Azure.Core.Pipeline
                 throw new InvalidOperationException("Proof of possession token authentication is not permitted for non TLS-protected (HTTPS) endpoints.");
             }
 
-            if (_popNonce != null)
+            // It's possible for nonce to be null here, and that is ok. It means we fell back to a bearer token for some reason.
+            var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce);
+            if (async)
             {
-                // We fetched the challenge from the cache, but we have not initialized the Scopes in the base yet.
-                var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce);
-                if (async)
-                {
-                    await AuthenticateAndAuthorizeRequestAsync(message, context).ConfigureAwait(false);
-                }
-                else
-                {
-                    AuthenticateAndAuthorizeRequest(message, context);
-                }
-
-                return;
+                await AuthenticateAndAuthorizeRequestAsync(message, context).ConfigureAwait(false);
             }
+            else
+            {
+                AuthenticateAndAuthorizeRequest(message, context);
+            }
+
+            return;
         }
 
         private async ValueTask<bool> AuthorizeRequestOnChallengeAsyncInternal(HttpMessage message, bool async)
@@ -172,7 +171,7 @@ namespace Azure.Core.Pipeline
             {
                 return false;
             }
-            var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce, request: message.Request);
+            var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce, isProofOfPossessionEnabled: true, request: message.Request);
             if (async)
             {
                 await AuthenticateAndAuthorizeRequestAsync(message, context).ConfigureAwait(false);

@@ -50,7 +50,7 @@ namespace Azure.Identity.Tests.samples
             {
                 AuthenticationResult result = await _confidentialClient.AcquireTokenForClient(requestContext.Scopes).ExecuteAsync();
 
-                return new AccessToken(result.AccessToken, result.ExpiresOn);
+                return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
             }
         }
         #endregion
@@ -90,7 +90,7 @@ namespace Azure.Identity.Tests.samples
             {
                 AuthenticationResult result = await _confidentialClient.AcquireTokenOnBehalfOf(requestContext.Scopes, _userAssertion).ExecuteAsync();
 
-                return new AccessToken(result.AccessToken, result.ExpiresOn);
+                return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
             }
         }
         //#endregion

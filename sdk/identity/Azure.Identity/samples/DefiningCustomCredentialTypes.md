@@ -44,7 +44,7 @@ public class ConfidentialClientCredential : TokenCredential
     {
         AuthenticationResult result = await _confidentialClient.AcquireTokenForClient(requestContext.Scopes).ExecuteAsync();
 
-        return new AccessToken(result.AccessToken, result.ExpiresOn);
+        return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
     }
 }
 ```

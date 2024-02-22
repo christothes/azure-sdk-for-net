@@ -3,6 +3,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -17,7 +18,7 @@ namespace Azure.Identity
     /// </summary>
     public class InteractiveBrowserCredential : TokenCredential
 #if PREVIEW_FEATURE_FLAG
-    , ISupportsProofOfPossession
+    , ISupportsProofOfPossession, ISupportBindingCertificate
 #endif
     {
         internal string TenantId { get; }
@@ -248,7 +249,7 @@ namespace Azure.Identity
                                 .ConfigureAwait(false);
                         }
 
-                        return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn));
+                        return scope.Succeeded(new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType));
                     }
                     catch (MsalUiRequiredException e)
                     {
@@ -283,7 +284,12 @@ namespace Azure.Identity
                 .ConfigureAwait(false);
 
             Record = new AuthenticationRecord(result, ClientId);
-            return new AccessToken(result.AccessToken, result.ExpiresOn);
+            return new AccessToken(result.AccessToken, result.ExpiresOn, result.TokenType);
+        }
+
+        bool ISupportBindingCertificate.TryGetBindingCertificate(out X509Certificate2 bindingCertificate)
+        {
+            throw new NotImplementedException();
         }
     }
 }

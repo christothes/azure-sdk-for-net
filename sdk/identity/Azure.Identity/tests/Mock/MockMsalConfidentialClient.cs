@@ -4,12 +4,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
 using Microsoft.Identity.Client;
 
 namespace Azure.Identity.Tests.Mock
 {
     internal class MockMsalConfidentialClient : MsalConfidentialClient
     {
+        //TODO: wire up for PopTokenRequestContext param.
         internal Func<string[], string, string, bool, AuthenticationResult> ClientFactory { get; set; }
         internal Func<string[], AuthenticationAccount, string, string, string, bool, ValueTask<AuthenticationResult>> SilentFactory { get; set; }
         internal Func<string[], string, string, string, string, bool, AuthenticationResult> AuthcodeFactory { get; set; }

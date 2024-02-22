@@ -15,7 +15,6 @@ namespace Azure.Identity
     {
         private Action<PublicClientApplicationBuilder> _beforeBuildClient;
         internal string RedirectUrl { get; }
-        internal bool IsProofOfPossessionRequired { get; }
 
         protected MsalPublicClient()
         { }
@@ -28,7 +27,6 @@ namespace Azure.Identity
             if (options is IMsalPublicClientInitializerOptions initializerOptions)
             {
                 _beforeBuildClient = initializerOptions.BeforeBuildClient;
-                IsProofOfPossessionRequired = initializerOptions.IsProofOfPossessionRequired;
             };
         }
 
@@ -95,7 +93,6 @@ namespace Azure.Identity
         {
             IPublicClientApplication client = await GetClientAsync(enableCae, async, cancellationToken).ConfigureAwait(false);
             var builder = client.AcquireTokenSilent(scopes, account);
-
             if (!string.IsNullOrEmpty(claims))
             {
                 builder.WithClaims(claims);
@@ -207,7 +204,7 @@ namespace Azure.Identity
                     builder.WithSystemWebViewOptions(browserOptions.SystemBrowserOptions);
                 }
             }
-            if (IsProofOfPossessionRequired)
+            if (popTokenRequestContext.IsProofOfPossessionEnabled)
             {
                 builder.WithProofOfPossession(popTokenRequestContext.ProofOfPossessionNonce, popTokenRequestContext.HttpMethod, popTokenRequestContext.Uri);
             }
