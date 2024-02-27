@@ -14,6 +14,7 @@ namespace Azure.Core.Pipeline
     {
         private readonly ISupportsProofOfPossession _tokenCredential;
         private string? _popNonce;
+        private bool _fallbackToBearer;
         private readonly string[] _scopes;
 
         /// <summary>
@@ -86,7 +87,7 @@ namespace Azure.Core.Pipeline
 
         private async ValueTask AuthenticateAndAuthorizeRequestInternal(HttpMessage message, PopTokenRequestContext context, bool async)
         {
-            _popNonce = context.ProofOfPossessionNonce;
+            // _popNonce = context.ProofOfPossessionNonce;
             var token = async ?
                 await _tokenCredential.GetTokenAsync(context, message.CancellationToken).ConfigureAwait(false) :
                 _tokenCredential.GetToken(context, message.CancellationToken);
@@ -114,22 +115,52 @@ namespace Azure.Core.Pipeline
             }
 
             // Check if we have received a challenge or we have not yet issued the first request.
-            if (message.Response.Status == (int)HttpStatusCode.Unauthorized && message.Response.Headers.Contains(HttpHeader.Names.WwwAuthenticate))
+            if (message.Response.Status == (int)HttpStatusCode.Unauthorized)
             {
-                // Attempt to get the TokenRequestContext based on the challenge.
-                // If we fail to get the context, the challenge was not present or invalid.
-                // If we succeed in getting the context, authenticate the request and pass it up the policy chain.
-                if (async)
+                if (message.Response.Headers.Contains(HttpHeader.Names.WwwAuthenticate))
                 {
-                    if (await AuthorizeRequestOnChallengeAsync(message).ConfigureAwait(false))
+                    // Attempt to get the TokenRequestContext based on the challenge.
+                    // If we fail to get the context, the challenge was not present or invalid.
+                    // If we succeed in getting the context, authenticate the request and pass it up the policy chain.
+                    if (async)
                     {
-                        await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
+                        if (await AuthorizeRequestOnChallengeAsync(message).ConfigureAwait(false))
+                        {
+                            await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            _fallbackToBearer = true;
+                            await AuthorizeRequestAsync(message).ConfigureAwait(false);
+                            await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        if (AuthorizeRequestOnChallenge(message))
+                        {
+                            ProcessNext(message, pipeline);
+                        }
+                        else
+                        {
+                            _fallbackToBearer = true;
+                            AuthorizeRequest(message);
+                            ProcessNext(message, pipeline);
+                        }
                     }
                 }
                 else
                 {
-                    if (AuthorizeRequestOnChallenge(message))
+                    // We didn't get a challenge, so we'll fall back to using a bearer token.
+                    _fallbackToBearer = true;
+                    if (async)
                     {
+                        await AuthorizeRequestAsync(message).ConfigureAwait(false);
+                        await ProcessNextAsync(message, pipeline).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        AuthorizeRequest(message);
                         ProcessNext(message, pipeline);
                     }
                 }
@@ -150,15 +181,18 @@ namespace Azure.Core.Pipeline
                 throw new InvalidOperationException("Proof of possession token authentication is not permitted for non TLS-protected (HTTPS) endpoints.");
             }
 
-            // It's possible for nonce to be null here, and that is ok. It means we fell back to a bearer token for some reason.
-            var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce);
-            if (async)
+            if (_popNonce != null || _fallbackToBearer)
             {
-                await AuthenticateAndAuthorizeRequestAsync(message, context).ConfigureAwait(false);
-            }
-            else
-            {
-                AuthenticateAndAuthorizeRequest(message, context);
+                // It's possible for nonce to be null here, and that is ok. It means we are making the first unauthenticated request or we fell back to a bearer token for some reason.
+                var context = new PopTokenRequestContext(_scopes, parentRequestId: message.Request.ClientRequestId, proofOfPossessionNonce: _popNonce, isProofOfPossessionEnabled: true, request: message.Request);
+                if (async)
+                {
+                    await AuthenticateAndAuthorizeRequestAsync(message, context).ConfigureAwait(false);
+                }
+                else
+                {
+                    AuthenticateAndAuthorizeRequest(message, context);
+                }
             }
 
             return;
