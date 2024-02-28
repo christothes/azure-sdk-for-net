@@ -294,8 +294,10 @@ namespace Azure.Core
         private object _dummy;
         private int _dummyPrimitive;
         public AccessToken(string accessToken, System.DateTimeOffset expiresOn) { throw null; }
+        public AccessToken(string accessToken, System.DateTimeOffset expiresOn, string tokenType) { throw null; }
         public System.DateTimeOffset ExpiresOn { get { throw null; } }
         public string Token { get { throw null; } }
+        public string TokenType { get { throw null; } }
         public override bool Equals(object? obj) { throw null; }
         public override int GetHashCode() { throw null; }
     }
