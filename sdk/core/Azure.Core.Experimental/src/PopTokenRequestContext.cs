@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Net.Http;
 
 namespace Azure.Core
@@ -22,13 +24,36 @@ namespace Azure.Core
         /// <param name="isProofOfPossessionEnabled">Indicates whether to enable Proof of Possession (PoP) for the requested token.</param>
         /// <param name="proofOfPossessionNonce">The nonce value required for PoP token requests.</param>
         /// <param name="request">The request to be authorized with a PoP token.</param>
-        public PopTokenRequestContext(string[] scopes, string? parentRequestId = default, string? claims = default, string? tenantId = default, bool isCaeEnabled = false, bool isProofOfPossessionEnabled = false, string? proofOfPossessionNonce = default, Request? request = default)
+        /// <param name="properties"></param>
+        public PopTokenRequestContext(
+            string[] scopes,
+            string? parentRequestId = default,
+            string? claims = default,
+            string? tenantId = default,
+            bool isCaeEnabled = false,
+            bool isProofOfPossessionEnabled = false,
+            string? proofOfPossessionNonce = default,
+            Request? request = default,
+            IEnumerable<(Type Key, object Value)>? properties = default)
         {
+            var props = new ArrayBackedPropertyBag<ulong, object>();
+            if (properties != null)
+            {
+                foreach (var property in properties)
+                {
+                    if (!props.TryAdd((ulong)property.Key.TypeHandle.Value, property.Value, out _))
+                    {
+                        throw new InvalidOperationException("A property with the same key already exists.");
+                    }
+                }
+                _propertyBag = props;
+            }
             Scopes = scopes;
             ParentRequestId = parentRequestId;
             Claims = claims;
             TenantId = tenantId;
             IsCaeEnabled = isCaeEnabled;
+            IsProofOfPossessionEnabled = isProofOfPossessionEnabled;
             ProofOfPossessionNonce = proofOfPossessionNonce;
             _request = request;
         }
@@ -48,7 +73,7 @@ namespace Azure.Core
         /// <returns>A <see cref="PopTokenRequestContext"/>.</returns>
         public static PopTokenRequestContext FromTokenRequestContext(TokenRequestContext context, Request? request = default, bool? isProofOfPossessionEnabled = false)
         {
-            return new PopTokenRequestContext(context.Scopes, context.ParentRequestId, context.Claims, context.TenantId, context.IsCaeEnabled, isProofOfPossessionEnabled ?? false, default, request);
+            return new PopTokenRequestContext(context.Scopes, context.ParentRequestId, context.Claims, context.TenantId, context.IsCaeEnabled, isProofOfPossessionEnabled ?? false);
         }
 
         /// <summary>
@@ -92,22 +117,38 @@ namespace Azure.Core
         /// </summary>
         public bool IsProofOfPossessionEnabled { get; }
 
+        private readonly ArrayBackedPropertyBag<ulong, object> _propertyBag;
+
+        /// <summary>
+        /// Gets a property that is stored with this <see cref="HttpMessage"/> instance and can be used for modifying pipeline behavior.
+        /// </summary>
+        /// <param name="type">The property type.</param>
+        /// <param name="value">The property value.</param>
+        /// <remarks>
+        /// The key value is of type <c>Type</c> for a couple of reasons. Primarily, it allows values to be stored such that though the accessor methods
+        /// are public, storing values keyed by internal types make them inaccessible to other assemblies. This protects internal values from being overwritten
+        /// by external code. Secondly, <c>Type</c> comparisons are faster than string comparisons.
+        /// </remarks>
+        /// <returns><c>true</c> if property exists, otherwise. <c>false</c>.</returns>
+        public bool TryGetProperty(Type type, out object? value) =>
+            _propertyBag.TryGetValue((ulong)type.TypeHandle.Value, out value);
+
         /// <summary>
         /// The nonce value required for PoP token requests. This is typically retrieved from teh WWW-Authenticate header of a 401 challenge response.
         /// This is used in combination with <see cref="Uri"/> and <see cref="HttpMethod"/> to generate the PoP token.
         /// </summary>
-        public string? ProofOfPossessionNonce { get; }
+        internal string? ProofOfPossessionNonce { get; }
 
         private readonly Request? _request;
 
         /// <summary>
         /// The HTTP method of the request. This is used in combination with <see cref="Uri"/> and <see cref="ProofOfPossessionNonce"/> to generate the PoP token.
         /// </summary>
-        public HttpMethod? HttpMethod => new(_request!.Method.ToString());
+        internal HttpMethod? HttpMethod => new(_request!.Method.ToString());
 
         /// <summary>
         /// The URI of the request. This is used in combination with <see cref="HttpMethod"/> and <see cref="ProofOfPossessionNonce"/> to generate the PoP token.
         /// </summary>
-        public Uri? Uri => _request?.Uri.ToUri();
+        internal Uri? Uri => _request?.Uri.ToUri();
     }
 }
