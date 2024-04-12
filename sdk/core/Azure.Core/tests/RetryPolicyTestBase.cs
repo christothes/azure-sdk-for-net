@@ -13,6 +13,7 @@ using Azure.Core.Pipeline;
 using Azure.Core.Samples;
 using Azure.Core.Shared;
 using Azure.Core.TestFramework;
+using Microsoft.Extensions.Time.Testing;
 using Moq;
 using NUnit.Framework;
 
@@ -21,6 +22,7 @@ namespace Azure.Core.Tests
     public abstract class RetryPolicyTestBase : SyncAsyncPolicyTestBase
     {
         private readonly RetryMode _mode;
+        protected ZeroDelayTimeProvider timeProvider = new();
 
         protected RetryPolicyTestBase(RetryMode mode, bool isAsync) : base(isAsync)
         {
@@ -30,39 +32,40 @@ namespace Azure.Core.Tests
         [Test]
         public async Task DoesNotExceedRetryCount()
         {
+            int maxRetries = 3;
             var responseClassifier = new MockResponseClassifier(retriableCodes: new[] { 500 });
-            (HttpPipelinePolicy policy, AsyncGate<TimeSpan, object> gate) = CreateRetryPolicy(maxRetries: 3);
-            MockTransport mockTransport = CreateMockTransport();
-            Task<Response> task = SendGetRequest(mockTransport, policy, responseClassifier);
-
-            await mockTransport.RequestGate.Cycle(new MockResponse(500));
-
-            for (int i = 0; i < 3; i++)
+            var policy = new RetryPolicy(maxRetries, default, timeProvider);
+            int callCount = 0;
+            MockTransport mockTransport = CreateMockTransport(_ =>
             {
-                await gate.Cycle();
-                await mockTransport.RequestGate.Cycle(new MockResponse(500));
-            }
+                callCount++;
+                return new MockResponse(500);
+            });
+            var response = await SendGetRequest(mockTransport, policy, responseClassifier);
 
-            Response response = await task.TimeoutAfterDefault();
             Assert.AreEqual(500, response.Status);
+            Assert.AreEqual(maxRetries + 1, callCount);
         }
 
         [Test]
         public async Task OnlyRetriesRetriableCodes()
         {
+            int maxRetries = 3;
             var responseClassifier = new MockResponseClassifier(retriableCodes: new[] { 500 });
-            (HttpPipelinePolicy policy, AsyncGate<TimeSpan, object> gate) = CreateRetryPolicy(maxRetries: 3);
-            MockTransport mockTransport = CreateMockTransport();
-            Task<Response> task = SendGetRequest(mockTransport, policy, responseClassifier);
+            var policy = new RetryPolicy(maxRetries, default, timeProvider);
+            int callCount = 0;
+            MockTransport mockTransport = CreateMockTransport(_ =>
+            {
+                callCount++;
+                return callCount switch {
+                    1 => new MockResponse(500),
+                    _ => new MockResponse(501)
+                };
+            });
+            var response = await SendGetRequest(mockTransport, policy, responseClassifier);
 
-            await mockTransport.RequestGate.Cycle(new MockResponse(500));
-
-            await gate.Cycle();
-
-            await mockTransport.RequestGate.Cycle(new MockResponse(501));
-
-            Response response = await task.TimeoutAfterDefault();
             Assert.AreEqual(501, response.Status);
+            Assert.AreEqual(2, callCount);
         }
 
         [Test]
@@ -75,7 +78,7 @@ namespace Azure.Core.Tests
             var pipeline = new HttpPipeline(mockTransport, new[] { policy });
             HttpMessage message = pipeline.CreateMessage();
             Task<HttpMessage> task = SendMessageGetRequest(pipeline, message);
-            RetryPolicyMock mockPolicy = (RetryPolicyMock) policy;
+            RetryPolicyMock mockPolicy = (RetryPolicyMock)policy;
 
             await mockTransport.RequestGate.Cycle(new MockResponse(500));
             Assert.GreaterOrEqual(message.ProcessingStartTime, beforeSend);
@@ -112,7 +115,7 @@ namespace Azure.Core.Tests
             var pipeline = new HttpPipeline(mockTransport, new[] { policy });
             HttpMessage message = pipeline.CreateMessage();
             Task<HttpMessage> task = SendMessageGetRequest(pipeline, message);
-            RetryPolicyMock mockPolicy = (RetryPolicyMock) policy;
+            RetryPolicyMock mockPolicy = (RetryPolicyMock)policy;
 
             await mockTransport.RequestGate.Cycle(new MockResponse(500));
             Assert.AreEqual(0, message.ProcessingContext.RetryNumber);
@@ -388,7 +391,7 @@ namespace Azure.Core.Tests
         [Test]
         public async Task CyclesThroughReadHosts()
         {
-           (HttpPipelinePolicy policy, AsyncGate<TimeSpan, object> gate) = CreateRetryPolicy(maxRetries: 3);
+            (HttpPipelinePolicy policy, AsyncGate<TimeSpan, object> gate) = CreateRetryPolicy(maxRetries: 3);
             MockTransport mockTransport = CreateMockTransport();
             var geoPolicy = new GeoRedundantFallbackPolicy(new[] { "host1", "host2" }, null);
             var pipeline = new HttpPipeline(mockTransport, new[] { policy, geoPolicy });
@@ -730,6 +733,24 @@ namespace Azure.Core.Tests
             public override bool IsRetriableException(Exception exception)
             {
                 return _exceptionFilter != null && _exceptionFilter(exception);
+            }
+        }
+
+        protected class ZeroDelayTimeProvider : FakeTimeProvider
+        {
+            private List<TimeSpan> _delays;
+
+            public ZeroDelayTimeProvider(List<TimeSpan> observedDelays = null) : base()
+            {
+                _delays = observedDelays ?? new List<TimeSpan>();
+            }
+
+            public List<TimeSpan> ObservedDelays => _delays;
+
+            public override ITimer CreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+            {
+                _delays.Add(dueTime);
+                return base.CreateTimer(callback, state, TimeSpan.Zero, period);
             }
         }
     }

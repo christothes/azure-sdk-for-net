@@ -22,16 +22,21 @@ namespace Azure.Core.Pipeline
         /// Gets the delay to use for computing the interval between retry attempts.
         /// </summary>
         private readonly DelayStrategy _delayStrategy;
+        private readonly TimeProvider _timeProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RetryPolicy"/> class.
         /// </summary>
         /// <param name="maxRetries">The maximum number of retries to attempt.</param>
         /// <param name="delayStrategy">The delay to use for computing the interval between retry attempts.</param>
-        public RetryPolicy(int maxRetries = RetryOptions.DefaultMaxRetries, DelayStrategy? delayStrategy = default)
+        public RetryPolicy(int maxRetries = RetryOptions.DefaultMaxRetries, DelayStrategy? delayStrategy = default) : this(maxRetries, delayStrategy, null)
+        { }
+
+        internal RetryPolicy(int maxRetries, DelayStrategy? delayStrategy, TimeProvider? timeProvider)
         {
             _maxRetries = maxRetries;
             _delayStrategy = delayStrategy ?? DelayStrategy.CreateExponentialDelayStrategy();
+            _timeProvider = timeProvider ?? TimeProvider.System;
         }
 
         /// <summary>
@@ -167,7 +172,7 @@ namespace Azure.Core.Pipeline
 
         internal virtual async Task WaitAsync(TimeSpan time, CancellationToken cancellationToken)
         {
-            await Task.Delay(time, cancellationToken).ConfigureAwait(false);
+            await _timeProvider.Delay(time, cancellationToken).ConfigureAwait(false);
         }
 
         internal virtual void Wait(TimeSpan time, CancellationToken cancellationToken)

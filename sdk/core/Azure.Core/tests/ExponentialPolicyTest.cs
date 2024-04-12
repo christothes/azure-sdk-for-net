@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Azure.Core.Pipeline;
 using Azure.Core.TestFramework;
@@ -15,67 +16,51 @@ namespace Azure.Core.Tests
         public ExponentialPolicyTest(bool isAsync) : base(RetryMode.Exponential, isAsync) { }
 
         [Test]
-        public async Task WaitsBetweenRetries()
-        {
-            var responseClassifier = new MockResponseClassifier(retriableCodes: new[] { 500 });
-            var policy = new RetryPolicyMock(RetryMode.Exponential, delay: TimeSpan.FromSeconds(1), maxDelay: TimeSpan.FromSeconds(10));
-            MockTransport mockTransport = CreateMockTransport();
-            Task<Response> task = SendGetRequest(mockTransport, policy, responseClassifier);
-
-            await mockTransport.RequestGate.Cycle(new MockResponse(500));
-
-            TimeSpan delay = await policy.DelayGate.Cycle();
-            AssertExponentialDelay(TimeSpan.FromSeconds(1), delay);
-
-            await mockTransport.RequestGate.Cycle(new MockResponse(200));
-
-            Response response = await task.TimeoutAfterDefault();
-            Assert.AreEqual(200, response.Status);
-        }
-
-        [Test]
         public async Task WaitsCorrectAmountBetweenTries()
         {
+            int maxRetries = 4;
             var responseClassifier = new MockResponseClassifier(retriableCodes: new[] { 500 });
-            var policy = new RetryPolicyMock(RetryMode.Exponential, maxRetries: 4, delay: TimeSpan.FromSeconds(1), maxDelay: TimeSpan.FromSeconds(10));
-            MockTransport mockTransport = CreateMockTransport();
-            Task<Response> task = SendGetRequest(mockTransport, policy, responseClassifier);
-            var expectedDelaysInSeconds = new int[] { 1, 2, 4, 8 };
+            var time = new ZeroDelayTimeProvider();
+            var policy = new RetryPolicy(
+                maxRetries,
+                DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)),
+                time);
+            MockTransport mockTransport = CreateMockTransport(_ => new MockResponse(500));
 
-            await mockTransport.RequestGate.Cycle(new MockResponse(500));
+            var response = await SendGetRequest(mockTransport, policy, responseClassifier);
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < maxRetries; i++)
             {
-                TimeSpan delay = await policy.DelayGate.Cycle();
-                AssertExponentialDelay(TimeSpan.FromSeconds(expectedDelaysInSeconds[i]), delay);
-
-                await mockTransport.RequestGate.Cycle(new MockResponse(500));
+                AssertExponentialDelay(TimeSpan.FromSeconds(1 << i), time.ObservedDelays[i]);
             }
 
-            Response response = await task.TimeoutAfterDefault();
             Assert.AreEqual(500, response.Status);
         }
 
         [Test]
         public async Task WaitsCorrectAmountBetweenTries_Exceptions()
         {
+            int maxRetries = 4;
             var responseClassifier = new MockResponseClassifier(retriableCodes: new[] { 500 }, exceptionFilter: ex => ex is IOException);
-            var policy = new RetryPolicyMock(RetryMode.Exponential, maxRetries: 4, delay: TimeSpan.FromSeconds(1), maxDelay: TimeSpan.FromSeconds(10));
-            MockTransport mockTransport = CreateMockTransport();
-            Task<Response> task = SendGetRequest(mockTransport, policy, responseClassifier);
+            var time = new ZeroDelayTimeProvider();
+            var policy = new RetryPolicy(
+                maxRetries,
+                DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10)),
+                time);
+            int callCount = 0;
+            MockTransport mockTransport = CreateMockTransport(_ =>
+            {
+                if (callCount++ == 1) throw new IOException();
+                return new MockResponse(500);
+            });
+            var response = await SendGetRequest(mockTransport, policy, responseClassifier);
             var expectedDelaysInSeconds = new int[] { 1, 2, 4, 8 };
 
-            await mockTransport.RequestGate.CycleWithException(new IOException());
-
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < expectedDelaysInSeconds.Length; i++)
             {
-                TimeSpan delay = await policy.DelayGate.Cycle();
-                AssertExponentialDelay(TimeSpan.FromSeconds(expectedDelaysInSeconds[i]), delay);
-
-                await mockTransport.RequestGate.Cycle(new MockResponse(500));
+                AssertExponentialDelay(TimeSpan.FromSeconds(expectedDelaysInSeconds[i]), time.ObservedDelays[i]);
             }
 
-            Response response = await task.TimeoutAfterDefault();
             Assert.AreEqual(500, response.Status);
         }
 
