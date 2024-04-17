@@ -352,6 +352,47 @@ namespace Azure.Core.Tests
         }
 
         [Test]
+        public async Task BearerTokenAuthenticationPolicy_TokenExpired_TP()
+        {
+            var requestMre = new ManualResetEventSlim(true);
+            var responseMre = new ManualResetEventSlim(true);
+            var currentTime = DateTimeOffset.UtcNow;
+            var expires = new Queue<DateTimeOffset>(new[] { currentTime.AddSeconds(2), currentTime.AddMinutes(30) });
+            var credential = new TokenCredentialStub((r, c) =>
+                {
+                    requestMre.Set();
+                    responseMre.Wait(c);
+                    return new AccessToken(Guid.NewGuid().ToString(), expires.Dequeue());
+                },
+                IsAsync);
+
+            var policy = new BearerTokenAuthenticationPolicy(credential, new[] { "scope" }, TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(50));
+            MockTransport transport = CreateMockTransport(new MockResponse(200), new MockResponse(200), new MockResponse(200));
+
+            await SendGetRequest(transport, policy, uri: new Uri("https://example.com/0"));
+            Assert.True(transport.Requests[0].Headers.TryGetValue("Authorization", out string authValue));
+
+            await Task.Delay(3_000);
+
+            requestMre.Reset();
+            responseMre.Reset();
+
+            var firstRequestTask = SendGetRequest(transport, policy, uri: new Uri("https://example.com/1"));
+            var secondRequestTask = SendGetRequest(transport, policy, uri: new Uri("https://example.com/2"));
+            requestMre.Wait();
+            await Task.Delay(1_000);
+            responseMre.Set();
+
+            await Task.WhenAll(firstRequestTask, secondRequestTask);
+
+            Assert.True(transport.Requests[1].Headers.TryGetValue("Authorization", out string auth1Value));
+            Assert.True(transport.Requests[2].Headers.TryGetValue("Authorization", out string auth2Value));
+
+            Assert.AreNotEqual(authValue, auth1Value);
+            Assert.AreEqual(auth1Value, auth2Value);
+        }
+
+        [Test]
         public void BearerTokenAuthenticationPolicy_OneHundredConcurrentCallsFailed()
         {
             var credential = new TokenCredentialStub((r, c) =>

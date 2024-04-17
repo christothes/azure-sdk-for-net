@@ -40,13 +40,14 @@ namespace Azure.Core.Pipeline
             TokenCredential credential,
             IEnumerable<string> scopes,
             TimeSpan tokenRefreshOffset,
-            TimeSpan tokenRefreshRetryDelay)
+            TimeSpan tokenRefreshRetryDelay,
+            TimeProvider? timeProvider = default)
         {
             Argument.AssertNotNull(credential, nameof(credential));
             Argument.AssertNotNull(scopes, nameof(scopes));
 
             _scopes = scopes.ToArray();
-            _accessTokenCache = new AccessTokenCache(credential, tokenRefreshOffset, tokenRefreshRetryDelay);
+            _accessTokenCache = new AccessTokenCache(credential, tokenRefreshOffset, tokenRefreshRetryDelay, timeProvider ?? TimeProvider.System);
         }
 
         /// <inheritdoc />
@@ -179,15 +180,17 @@ namespace Azure.Core.Pipeline
             private readonly TokenCredential _credential;
             private readonly TimeSpan _tokenRefreshOffset;
             private readonly TimeSpan _tokenRefreshRetryDelay;
+            private readonly TimeProvider _timeProvider;
 
             // must be updated under lock (_syncObj)
             private TokenRequestState? _state;
 
-            public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay)
+            public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay,  TimeProvider timeProvider)
             {
                 _credential = credential;
                 _tokenRefreshOffset = tokenRefreshOffset;
                 _tokenRefreshRetryDelay = tokenRefreshRetryDelay;
+                _timeProvider = timeProvider;
             }
 
             public async ValueTask<string> GetHeaderValueAsync(HttpMessage message, TokenRequestContext context, bool async)
@@ -292,7 +295,7 @@ namespace Azure.Core.Pipeline
                 var localState = _state;
                 if (localState != null && localState.InfoTcs.Task.IsCompleted && !localState.RequestRequiresNewToken(context))
                 {
-                    DateTimeOffset now = DateTimeOffset.UtcNow;
+                    DateTimeOffset now = _timeProvider.GetUtcNow();
                     if (!localState.BackgroundTokenAcquiredSuccessfully(now) && !localState.AccessTokenFailedOrExpired(now) && !localState.TokenNeedsBackgroundRefresh(now))
                     {
                         // localState entity has a valid token, no need to enter lock.
@@ -319,7 +322,7 @@ namespace Azure.Core.Pipeline
                         return (_state.InfoTcs, _state.BackgroundUpdateTcs, false);
                     }
 
-                    DateTimeOffset now = DateTimeOffset.UtcNow;
+                    DateTimeOffset now = _timeProvider.GetUtcNow();
                     // Access token has been successfully acquired in background and it is not expired yet, use it instead of current one
                     if (_state.BackgroundTokenAcquiredSuccessfully(now))
                     {
@@ -359,12 +362,12 @@ namespace Azure.Core.Pipeline
                 }
                 catch (OperationCanceledException oce) when (cts.IsCancellationRequested)
                 {
-                    backgroundUpdateTcs.SetResult(new HeaderValueInfo(info.HeaderValue, info.ExpiresOn, DateTimeOffset.UtcNow));
+                    backgroundUpdateTcs.SetResult(new HeaderValueInfo(info.HeaderValue, info.ExpiresOn, _timeProvider.GetUtcNow()));
                     AzureCoreEventSource.Singleton.BackgroundRefreshFailed(context.ParentRequestId ?? string.Empty, oce.ToString());
                 }
                 catch (Exception e)
                 {
-                    backgroundUpdateTcs.SetResult(new HeaderValueInfo(info.HeaderValue, info.ExpiresOn, DateTimeOffset.UtcNow + _tokenRefreshRetryDelay));
+                    backgroundUpdateTcs.SetResult(new HeaderValueInfo(info.HeaderValue, info.ExpiresOn, _timeProvider.GetUtcNow() + _tokenRefreshRetryDelay));
                     AzureCoreEventSource.Singleton.BackgroundRefreshFailed(context.ParentRequestId ?? string.Empty, e.ToString());
                 }
                 finally
