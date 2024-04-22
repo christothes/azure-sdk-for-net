@@ -185,7 +185,7 @@ namespace Azure.Core.Pipeline
             // must be updated under lock (_syncObj)
             private TokenRequestState? _state;
 
-            public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay,  TimeProvider timeProvider)
+            public AccessTokenCache(TokenCredential credential, TimeSpan tokenRefreshOffset, TimeSpan tokenRefreshRetryDelay, TimeProvider timeProvider)
             {
                 _credential = credential;
                 _tokenRefreshOffset = tokenRefreshOffset;
@@ -210,6 +210,7 @@ namespace Azure.Core.Pipeline
                         {
                             if (async)
                             {
+                                // Console.WriteLine("** async **");
                                 info = await headerValueTcs.Task.ConfigureAwait(false);
                             }
                             else
@@ -298,6 +299,7 @@ namespace Azure.Core.Pipeline
                     DateTimeOffset now = _timeProvider.GetUtcNow();
                     if (!localState.BackgroundTokenAcquiredSuccessfully(now) && !localState.AccessTokenFailedOrExpired(now) && !localState.TokenNeedsBackgroundRefresh(now))
                     {
+                        // Console.WriteLine("__localState has valid token.");
                         // localState entity has a valid token, no need to enter lock.
                         return (localState.InfoTcs, default, false);
                     }
@@ -307,6 +309,7 @@ namespace Azure.Core.Pipeline
                     // Initial state. GetTaskCompletionSources has been called for the first time
                     if (_state == null || _state.RequestRequiresNewToken(context))
                     {
+                        // Console.WriteLine("__first time");
                         _state = new TokenRequestState(context, new TaskCompletionSource<HeaderValueInfo>(TaskCreationOptions.RunContinuationsAsynchronously), default);
                         return (_state.InfoTcs, _state.BackgroundUpdateTcs, true);
                     }
@@ -314,9 +317,11 @@ namespace Azure.Core.Pipeline
                     // Getting new access token is in progress, wait for it
                     if (!_state.InfoTcs.Task.IsCompleted)
                     {
+                        // Console.WriteLine("__wait for it");
                         // Only create new TokenRequestState if necessary.
                         if (_state.BackgroundUpdateTcs != null)
                         {
+                            // Console.WriteLine("__create new TRS if nec");
                             _state = new TokenRequestState(_state.CurrentContext, _state.InfoTcs, default);
                         }
                         return (_state.InfoTcs, _state.BackgroundUpdateTcs, false);
@@ -326,12 +331,14 @@ namespace Azure.Core.Pipeline
                     // Access token has been successfully acquired in background and it is not expired yet, use it instead of current one
                     if (_state.BackgroundTokenAcquiredSuccessfully(now))
                     {
+                        // Console.WriteLine("__Background success");
                         _state = new TokenRequestState(_state.CurrentContext, _state.BackgroundUpdateTcs!, default);
                     }
 
                     // Attempt to get access token has failed or it has already expired. Need to get a new one
                     if (_state.AccessTokenFailedOrExpired(now))
                     {
+                        // Console.WriteLine("__failed or expired");
                         _state = new TokenRequestState(_state.CurrentContext, new TaskCompletionSource<HeaderValueInfo>(TaskCreationOptions.RunContinuationsAsynchronously), _state.BackgroundUpdateTcs);
                         return (_state.InfoTcs, default, true);
                     }
@@ -339,6 +346,7 @@ namespace Azure.Core.Pipeline
                     // Access token is still valid but is about to expire, try to get it in background
                     if (_state.TokenNeedsBackgroundRefresh(now))
                     {
+                        // Console.WriteLine("__Still valid but about to expire");
                         _state = new TokenRequestState(_state.CurrentContext, _state.InfoTcs, new TaskCompletionSource<HeaderValueInfo>(TaskCreationOptions.RunContinuationsAsynchronously));
                         return (_state.InfoTcs, _state.BackgroundUpdateTcs, true);
                     }
@@ -354,6 +362,7 @@ namespace Azure.Core.Pipeline
                 TokenRequestContext context,
                 bool async)
             {
+                // Console.WriteLine("__background");
                 var cts = new CancellationTokenSource(_tokenRefreshRetryDelay);
                 try
                 {
@@ -378,6 +387,7 @@ namespace Azure.Core.Pipeline
 
             private async ValueTask<HeaderValueInfo> GetHeaderValueFromCredentialAsync(TokenRequestContext context, bool async, CancellationToken cancellationToken)
             {
+                // Console.WriteLine("GetHeaderValueFromCredentialAsync");
                 AccessToken token = async
                     ? await _credential.GetTokenAsync(context, cancellationToken).ConfigureAwait(false)
                     : _credential.GetToken(context, cancellationToken);
@@ -418,16 +428,22 @@ namespace Azure.Core.Pipeline
                     (context.Claims != null && !string.Equals(context.Claims, CurrentContext.Claims)) ||
                     (context.TenantId != null && !string.Equals(context.TenantId, CurrentContext.TenantId));
 
-                public bool BackgroundTokenAcquiredSuccessfully(DateTimeOffset now) =>
-                    BackgroundUpdateTcs != null &&
+                public bool BackgroundTokenAcquiredSuccessfully(DateTimeOffset now){
+                    var result = BackgroundUpdateTcs != null &&
                         BackgroundUpdateTcs.Task.Status == TaskStatus.RanToCompletion &&
                         BackgroundUpdateTcs.Task.Result.ExpiresOn > now;
+                    // Console.WriteLine($"BackgroundTokenAcquiredSuccessfully: {result} {BackgroundUpdateTcs != null}, {BackgroundUpdateTcs?.Task.Status == TaskStatus.RanToCompletion}, {BackgroundUpdateTcs?.Task.Result.ExpiresOn > now}");
+                    return result;
+                }
 
                 public bool AccessTokenFailedOrExpired(DateTimeOffset now) =>
                     InfoTcs.Task.Status != TaskStatus.RanToCompletion || now >= InfoTcs.Task.Result.ExpiresOn;
 
-                public bool TokenNeedsBackgroundRefresh(DateTimeOffset now) =>
-                    now >= InfoTcs.Task.Result.RefreshOn && BackgroundUpdateTcs == null;
+                public bool TokenNeedsBackgroundRefresh(DateTimeOffset now)
+                {
+                    // Console.WriteLine($"TokenNeedsBackgroundRefresh:{now >= InfoTcs.Task.Result.RefreshOn && BackgroundUpdateTcs == null} ({now} > {InfoTcs.Task.Result.RefreshOn} {BackgroundUpdateTcs == null})");
+                    return now >= InfoTcs.Task.Result.RefreshOn && BackgroundUpdateTcs == null;
+                }
             }
         }
     }
