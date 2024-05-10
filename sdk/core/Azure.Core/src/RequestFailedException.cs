@@ -21,7 +21,7 @@ namespace Azure
     public class RequestFailedException : Exception, ISerializable
     {
         private const string DefaultMessage = "Service request failed.";
-        internal const string NoContentOnSuccessMessage = "Service request succeeded. Response content and headers are not included to avoid logging sensitive data.";
+        internal const string NoContentOnSuccessMessage = "Service request succeeded. Response content and headers are not included to avoid logging sensitive data. Response content can still be accessed the Content property on the result from GetRawResponse().";
 
         /// <summary>
         /// Gets the HTTP status code of the response. Returns. <code>0</code> if response was not received.
