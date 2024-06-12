@@ -106,10 +106,10 @@ namespace Azure.Core
                                 {
                                     continue;
                                 }
-                                members.Add((BoundMemberInfo) Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), propertyInfo.PropertyType), propertyInfo));
+                                members.Add((BoundMemberInfo)Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), propertyInfo.PropertyType), propertyInfo));
                                 break;
                             case FieldInfo fieldInfo:
-                                members.Add((BoundMemberInfo) Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), fieldInfo.FieldType), fieldInfo));
+                                members.Add((BoundMemberInfo)Activator.CreateInstance(typeof(BoundMemberInfo<>).MakeGenericType(typeof(TExchange), fieldInfo.FieldType), fieldInfo));
                                 break;
                         }
                     }
@@ -229,12 +229,24 @@ namespace Azure.Core
 
                 if (canWrite)
                 {
-                    Setter = Expression.Lambda<PropertySetter<TProperty>>(
-                        Expression.Assign(
-                            Expression.MakeMemberAccess(
-                                Expression.Convert(InputParameter, memberInfo.DeclaringType),
-                                memberInfo), ValueParameter),
-                        InputParameter, ValueParameter).Compile();
+                    if (Type.IsValueType)
+                    {
+                        Setter = Expression.Lambda<PropertySetter<TProperty>>(
+                            Expression.Property(
+                                Expression.MakeMemberAccess(
+                                    Expression.Convert(InputParameter, memberInfo.DeclaringType),
+                                    memberInfo), ValueParameter),
+                            InputParameter, ValueParameter).Compile();
+                    }
+                    else
+                    {
+                        Setter = Expression.Lambda<PropertySetter<TProperty>>(
+                            Expression.Assign(
+                                Expression.MakeMemberAccess(
+                                    Expression.Convert(InputParameter, memberInfo.DeclaringType),
+                                    memberInfo), ValueParameter),
+                            InputParameter, ValueParameter).Compile();
+                    }
                 }
             }
 

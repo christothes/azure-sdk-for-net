@@ -1133,11 +1133,13 @@ namespace Azure.Data.Tables.Tests
         {
             List<TestEntity> entityResults;
             var entitiesToCreate = CreateCustomTableEntities(partitionKey, 1);
-            entitiesToCreate[0].RowKey = partitionKey switch
+            var first = entitiesToCreate[0];
+            first.RowKey = partitionKey switch
             {
                 PartitionKeyValueWithSingleQuotes => "0'1",
                 _ => entitiesToCreate[0].RowKey
             };
+            entitiesToCreate[0] = first;
 
             // Create the new entities.
 
@@ -1310,7 +1312,9 @@ namespace Azure.Data.Tables.Tests
         {
             TestEntity entityResults;
             List<TestEntity> entitiesToCreate = CreateCustomTableEntities(PartitionKeyValue, 1);
-            entitiesToCreate[0].DoubleTypeProperty = Double.NaN;
+            var first = entitiesToCreate[0];
+            first.DoubleTypeProperty = Double.NaN;
+            entitiesToCreate[0] = first;
 
             // Upsert the new entities.
 
@@ -1381,11 +1385,13 @@ namespace Azure.Data.Tables.Tests
             const string updatedString = "the string was updated!";
 
             var entitiesToCreate = CreateCustomTableEntities(partitionKey, 5);
-            entitiesToCreate[0].RowKey = partitionKey switch
+            var first = entitiesToCreate[0];
+            first.RowKey = partitionKey switch
             {
                 PartitionKeyValueWithSingleQuotes => "0'1",
                 _ => entitiesToCreate[0].RowKey
             };
+            entitiesToCreate[0] = first;
 
             // Add just the first three entities
             await client.AddEntityAsync(entitiesToCreate[0]).ConfigureAwait(false);
@@ -1406,7 +1412,9 @@ namespace Azure.Data.Tables.Tests
             batch.Add(new TableTransactionAction(TableTransactionActionType.Delete, entityToDelete, ETag.All));
 
             // Add an Upsert operation to replace the entity with an updated value.
-            entitiesToCreate[2].StringTypeProperty = updatedString;
+            var tmp = entitiesToCreate[2];
+            tmp.StringTypeProperty = updatedString;
+            entitiesToCreate[2] = tmp;
             batch.Add(new TableTransactionAction(TableTransactionActionType.UpsertReplace, entitiesToCreate[2]));
 
             // Add an Upsert operation to add an entity.
