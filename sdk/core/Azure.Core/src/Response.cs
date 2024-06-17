@@ -93,8 +93,7 @@ namespace Azure
         /// <summary>
         /// Gets the parser for extracting request failed details from the response.
         /// </summary>
-        public RequestFailedDetailsParser? RequestFailedDetailsParser { get; internal set; }
-
+        protected internal RequestFailedDetailsParser? RequestFailedDetailsParser { get; internal set; }
 
         /// <summary>
         /// Returns header value if the header is stored in the collection. If header has multiple values they are going to be joined with a comma.
