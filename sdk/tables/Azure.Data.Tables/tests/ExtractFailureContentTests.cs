@@ -59,5 +59,31 @@ namespace Azure.Data.Tables.Tests
                 Assert.That(actualException.ErrorCode, Is.EqualTo(expectedErrorCode.ToString()));
             }
         }
+
+        [Test]
+        public async Task SmugglerTest()
+        {
+            var response = new MockResponse(403) { ContentStream = new MemoryStream(Encoding.UTF8.GetBytes("{\"odata.error\":{\"code\":\"AuthenticationFailed\",\"message\":{\"lang\":\"en-US\",\"value\":\" some error \"}}}")) };
+            response.AddHeader("x-ms-error-code", "AuthenticationFailed");
+            response.AddHeader(HttpHeader.Common.JsonContentType);
+
+            var transport = new MockTransport(request => response);
+            var options = TableClientOptions.DefaultOptions;
+            options.Transport = transport;
+            var client = InstrumentClient(
+                new TableClient(
+                    new Uri($"https://example.com"),
+                    "tablename",
+                    new TableSharedKeyCredential("myAccount", "Kg=="),
+                    options));
+            try
+            {
+                await client.CreateAsync();
+            }
+            catch (RequestFailedException actualException)
+            {
+                actualException.ToString();
+            }
+        }
     }
 }

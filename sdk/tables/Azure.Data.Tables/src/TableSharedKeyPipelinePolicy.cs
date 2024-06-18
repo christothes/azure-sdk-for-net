@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
@@ -54,6 +55,7 @@ namespace Azure.Data.Tables
             message.Request.Headers.SetValue(TableConstants.HeaderNames.Date, date);
 
             var stringToSign = BuildStringToSign(message);
+            message.SetProperty(typeof(TableSharedKeyPipelinePolicy), stringToSign);
             var signature = InternalStorageCredential.GetSas(_credentials, stringToSign);
 
             var key = new AuthenticationHeaderValue(TableConstants.HeaderNames.SharedKey, _credentials.AccountName + ":" + signature).ToString();
@@ -127,6 +129,24 @@ namespace Azure.Data.Tables
             };
 
             return true;
+        }
+
+        public override void OnReceivedResponse(HttpMessage message)
+        {
+            base.OnReceivedResponse(message);
+
+            if (message.HasResponse
+                && message.Response.Status == 403
+                && message.Response.Headers.TryGetValue("x-ms-error-code", out string errorCode)
+                && errorCode == "AuthenticationFailed"
+                && message.TryGetProperty(typeof(TableSharedKeyPipelinePolicy), out object cached)
+                && cached is string stringToSign)
+            {
+                message.Response =
+                    new Smuggler(
+                        message.Response,
+                        new Dictionary<string, string> { { "Attempted StringToSign", stringToSign } });
+            }
         }
     }
 }

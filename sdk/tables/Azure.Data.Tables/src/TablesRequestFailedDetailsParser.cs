@@ -29,6 +29,13 @@ namespace Azure.Data.Tables
                     return false;
                 }
                 data = new Dictionary<string, string>();
+                if (response is Smuggler s)
+                {
+                    foreach (KeyValuePair<string, string> pair in s.Cargo)
+                    {
+                        data.Add(pair);
+                    }
+                }
                 using var document = JsonDocument.Parse(content);
                 var odataError = document.RootElement.EnumerateObject();
                 odataError.MoveNext();

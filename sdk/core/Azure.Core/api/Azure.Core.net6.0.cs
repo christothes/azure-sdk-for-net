@@ -251,6 +251,7 @@ namespace Azure
         public virtual Azure.Core.ResponseHeaders Headers { get { throw null; } }
         public virtual bool IsError { get { throw null; } }
         public abstract string ReasonPhrase { get; }
+        public Azure.Core.RequestFailedDetailsParser? RequestFailedDetailsParser { get { throw null; } protected internal set { } }
         public abstract int Status { get; }
         protected internal abstract bool ContainsHeader(string name);
         public abstract void Dispose();
