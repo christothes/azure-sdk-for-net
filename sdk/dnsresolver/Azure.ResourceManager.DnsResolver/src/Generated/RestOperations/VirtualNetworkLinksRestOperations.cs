@@ -32,8 +32,24 @@ namespace Azure.ResourceManager.DnsResolver
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _endpoint = endpoint ?? new Uri("https://management.azure.com");
-            _apiVersion = apiVersion ?? "2022-07-01";
+            _apiVersion = apiVersion ?? "2023-07-01-preview";
             _userAgent = new TelemetryDetails(GetType().Assembly, applicationId);
+        }
+
+        internal RequestUriBuilder CreateCreateOrUpdateRequestUri(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, DnsForwardingRulesetVirtualNetworkLinkData data, string ifMatch, string ifNoneMatch)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.Network/dnsForwardingRulesets/", false);
+            uri.AppendPath(rulesetName, true);
+            uri.AppendPath("/virtualNetworkLinks/", false);
+            uri.AppendPath(virtualNetworkLinkName, true);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            return uri;
         }
 
         internal HttpMessage CreateCreateOrUpdateRequest(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, DnsForwardingRulesetVirtualNetworkLinkData data, string ifMatch, string ifNoneMatch)
@@ -71,7 +87,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Creates or updates a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -103,7 +119,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Creates or updates a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -132,6 +148,22 @@ namespace Azure.ResourceManager.DnsResolver
                 default:
                     throw new RequestFailedException(message.Response);
             }
+        }
+
+        internal RequestUriBuilder CreateUpdateRequestUri(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, DnsForwardingRulesetVirtualNetworkLinkPatch patch, string ifMatch)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.Network/dnsForwardingRulesets/", false);
+            uri.AppendPath(rulesetName, true);
+            uri.AppendPath("/virtualNetworkLinks/", false);
+            uri.AppendPath(virtualNetworkLinkName, true);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            return uri;
         }
 
         internal HttpMessage CreateUpdateRequest(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, DnsForwardingRulesetVirtualNetworkLinkPatch patch, string ifMatch)
@@ -165,7 +197,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Updates a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -195,7 +227,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Updates a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -222,6 +254,22 @@ namespace Azure.ResourceManager.DnsResolver
                 default:
                     throw new RequestFailedException(message.Response);
             }
+        }
+
+        internal RequestUriBuilder CreateDeleteRequestUri(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, string ifMatch)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.Network/dnsForwardingRulesets/", false);
+            uri.AppendPath(rulesetName, true);
+            uri.AppendPath("/virtualNetworkLinks/", false);
+            uri.AppendPath(virtualNetworkLinkName, true);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            return uri;
         }
 
         internal HttpMessage CreateDeleteRequest(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName, string ifMatch)
@@ -251,7 +299,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Deletes a virtual network link to a DNS forwarding ruleset. WARNING: This operation cannot be undone. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -280,7 +328,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Deletes a virtual network link to a DNS forwarding ruleset. WARNING: This operation cannot be undone. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -308,6 +356,22 @@ namespace Azure.ResourceManager.DnsResolver
             }
         }
 
+        internal RequestUriBuilder CreateGetRequestUri(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.Network/dnsForwardingRulesets/", false);
+            uri.AppendPath(rulesetName, true);
+            uri.AppendPath("/virtualNetworkLinks/", false);
+            uri.AppendPath(virtualNetworkLinkName, true);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            return uri;
+        }
+
         internal HttpMessage CreateGetRequest(string subscriptionId, string resourceGroupName, string rulesetName, string virtualNetworkLinkName)
         {
             var message = _pipeline.CreateMessage();
@@ -331,7 +395,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Gets properties of a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -364,7 +428,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Gets properties of a virtual network link to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="virtualNetworkLinkName"> The name of the virtual network link. </param>
@@ -396,6 +460,25 @@ namespace Azure.ResourceManager.DnsResolver
             }
         }
 
+        internal RequestUriBuilder CreateListRequestUri(string subscriptionId, string resourceGroupName, string rulesetName, int? top)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.Network/dnsForwardingRulesets/", false);
+            uri.AppendPath(rulesetName, true);
+            uri.AppendPath("/virtualNetworkLinks", false);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            if (top != null)
+            {
+                uri.AppendQuery("$top", top.Value, true);
+            }
+            return uri;
+        }
+
         internal HttpMessage CreateListRequest(string subscriptionId, string resourceGroupName, string rulesetName, int? top)
         {
             var message = _pipeline.CreateMessage();
@@ -422,7 +505,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Lists virtual network links to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="top"> The maximum number of results to return. If not specified, returns up to 100 results. </param>
@@ -452,7 +535,7 @@ namespace Azure.ResourceManager.DnsResolver
         }
 
         /// <summary> Lists virtual network links to a DNS forwarding ruleset. </summary>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="top"> The maximum number of results to return. If not specified, returns up to 100 results. </param>
@@ -481,6 +564,14 @@ namespace Azure.ResourceManager.DnsResolver
             }
         }
 
+        internal RequestUriBuilder CreateListNextPageRequestUri(string nextLink, string subscriptionId, string resourceGroupName, string rulesetName, int? top)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendRawNextLink(nextLink, false);
+            return uri;
+        }
+
         internal HttpMessage CreateListNextPageRequest(string nextLink, string subscriptionId, string resourceGroupName, string rulesetName, int? top)
         {
             var message = _pipeline.CreateMessage();
@@ -497,7 +588,7 @@ namespace Azure.ResourceManager.DnsResolver
 
         /// <summary> Lists virtual network links to a DNS forwarding ruleset. </summary>
         /// <param name="nextLink"> The URL to the next page of results. </param>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="top"> The maximum number of results to return. If not specified, returns up to 100 results. </param>
@@ -529,7 +620,7 @@ namespace Azure.ResourceManager.DnsResolver
 
         /// <summary> Lists virtual network links to a DNS forwarding ruleset. </summary>
         /// <param name="nextLink"> The URL to the next page of results. </param>
-        /// <param name="subscriptionId"> The ID of the target subscription. </param>
+        /// <param name="subscriptionId"> The ID of the target subscription. The value must be an UUID. </param>
         /// <param name="resourceGroupName"> The name of the resource group. The name is case insensitive. </param>
         /// <param name="rulesetName"> The name of the DNS forwarding ruleset. </param>
         /// <param name="top"> The maximum number of results to return. If not specified, returns up to 100 results. </param>

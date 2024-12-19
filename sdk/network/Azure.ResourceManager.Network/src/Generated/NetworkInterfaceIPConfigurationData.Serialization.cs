@@ -21,32 +21,26 @@ namespace Azure.ResourceManager.Network
 
         void IJsonModel<NetworkInterfaceIPConfigurationData>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options)
         {
+            writer.WriteStartObject();
+            JsonModelWriteCore(writer, options);
+            writer.WriteEndObject();
+        }
+
+        /// <param name="writer"> The JSON writer. </param>
+        /// <param name="options"> The client options for reading and writing models. </param>
+        protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)
+        {
             var format = options.Format == "W" ? ((IPersistableModel<NetworkInterfaceIPConfigurationData>)this).GetFormatFromOptions(options) : options.Format;
             if (format != "J")
             {
                 throw new FormatException($"The model {nameof(NetworkInterfaceIPConfigurationData)} does not support writing '{format}' format.");
             }
 
-            writer.WriteStartObject();
+            base.JsonModelWriteCore(writer, options);
             if (options.Format != "W" && Optional.IsDefined(ETag))
             {
                 writer.WritePropertyName("etag"u8);
                 writer.WriteStringValue(ETag.Value.ToString());
-            }
-            if (Optional.IsDefined(Id))
-            {
-                writer.WritePropertyName("id"u8);
-                writer.WriteStringValue(Id);
-            }
-            if (Optional.IsDefined(Name))
-            {
-                writer.WritePropertyName("name"u8);
-                writer.WriteStringValue(Name);
-            }
-            if (Optional.IsDefined(ResourceType))
-            {
-                writer.WritePropertyName("type"u8);
-                writer.WriteStringValue(ResourceType.Value);
             }
             writer.WritePropertyName("properties"u8);
             writer.WriteStartObject();
@@ -100,6 +94,18 @@ namespace Azure.ResourceManager.Network
                 writer.WritePropertyName("privateIPAddress"u8);
                 writer.WriteStringValue(PrivateIPAddress);
             }
+            if (Optional.IsDefined(PrivateIPAddressPrefixLength))
+            {
+                if (PrivateIPAddressPrefixLength != null)
+                {
+                    writer.WritePropertyName("privateIPAddressPrefixLength"u8);
+                    writer.WriteNumberValue(PrivateIPAddressPrefixLength.Value);
+                }
+                else
+                {
+                    writer.WriteNull("privateIPAddressPrefixLength");
+                }
+            }
             if (Optional.IsDefined(PrivateIPAllocationMethod))
             {
                 writer.WritePropertyName("privateIPAllocationMethod"u8);
@@ -146,22 +152,6 @@ namespace Azure.ResourceManager.Network
                 writer.WriteObjectValue(PrivateLinkConnectionProperties, options);
             }
             writer.WriteEndObject();
-            if (options.Format != "W" && _serializedAdditionalRawData != null)
-            {
-                foreach (var item in _serializedAdditionalRawData)
-                {
-                    writer.WritePropertyName(item.Key);
-#if NET6_0_OR_GREATER
-				writer.WriteRawValue(item.Value);
-#else
-                    using (JsonDocument document = JsonDocument.Parse(item.Value))
-                    {
-                        JsonSerializer.Serialize(writer, document.RootElement);
-                    }
-#endif
-                }
-            }
-            writer.WriteEndObject();
         }
 
         NetworkInterfaceIPConfigurationData IJsonModel<NetworkInterfaceIPConfigurationData>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options)
@@ -194,6 +184,7 @@ namespace Azure.ResourceManager.Network
             IList<BackendAddressPoolData> loadBalancerBackendAddressPools = default;
             IList<InboundNatRuleData> loadBalancerInboundNatRules = default;
             string privateIPAddress = default;
+            int? privateIPAddressPrefixLength = default;
             NetworkIPAllocationMethod? privateIPAllocationMethod = default;
             NetworkIPVersion? privateIPAddressVersion = default;
             SubnetData subnet = default;
@@ -317,6 +308,16 @@ namespace Azure.ResourceManager.Network
                             privateIPAddress = property0.Value.GetString();
                             continue;
                         }
+                        if (property0.NameEquals("privateIPAddressPrefixLength"u8))
+                        {
+                            if (property0.Value.ValueKind == JsonValueKind.Null)
+                            {
+                                privateIPAddressPrefixLength = null;
+                                continue;
+                            }
+                            privateIPAddressPrefixLength = property0.Value.GetInt32();
+                            continue;
+                        }
                         if (property0.NameEquals("privateIPAllocationMethod"u8))
                         {
                             if (property0.Value.ValueKind == JsonValueKind.Null)
@@ -415,6 +416,7 @@ namespace Azure.ResourceManager.Network
                 loadBalancerBackendAddressPools ?? new ChangeTrackingList<BackendAddressPoolData>(),
                 loadBalancerInboundNatRules ?? new ChangeTrackingList<InboundNatRuleData>(),
                 privateIPAddress,
+                privateIPAddressPrefixLength,
                 privateIPAllocationMethod,
                 privateIPAddressVersion,
                 subnet,

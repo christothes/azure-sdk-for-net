@@ -19,17 +19,30 @@ namespace Azure.ResourceManager.Network.Models
 
         void IJsonModel<ApplicationGatewayHeaderConfiguration>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options)
         {
+            writer.WriteStartObject();
+            JsonModelWriteCore(writer, options);
+            writer.WriteEndObject();
+        }
+
+        /// <param name="writer"> The JSON writer. </param>
+        /// <param name="options"> The client options for reading and writing models. </param>
+        protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)
+        {
             var format = options.Format == "W" ? ((IPersistableModel<ApplicationGatewayHeaderConfiguration>)this).GetFormatFromOptions(options) : options.Format;
             if (format != "J")
             {
                 throw new FormatException($"The model {nameof(ApplicationGatewayHeaderConfiguration)} does not support writing '{format}' format.");
             }
 
-            writer.WriteStartObject();
             if (Optional.IsDefined(HeaderName))
             {
                 writer.WritePropertyName("headerName"u8);
                 writer.WriteStringValue(HeaderName);
+            }
+            if (Optional.IsDefined(HeaderValueMatcher))
+            {
+                writer.WritePropertyName("headerValueMatcher"u8);
+                writer.WriteObjectValue(HeaderValueMatcher, options);
             }
             if (Optional.IsDefined(HeaderValue))
             {
@@ -51,7 +64,6 @@ namespace Azure.ResourceManager.Network.Models
 #endif
                 }
             }
-            writer.WriteEndObject();
         }
 
         ApplicationGatewayHeaderConfiguration IJsonModel<ApplicationGatewayHeaderConfiguration>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options)
@@ -75,6 +87,7 @@ namespace Azure.ResourceManager.Network.Models
                 return null;
             }
             string headerName = default;
+            HeaderValueMatcher headerValueMatcher = default;
             string headerValue = default;
             IDictionary<string, BinaryData> serializedAdditionalRawData = default;
             Dictionary<string, BinaryData> rawDataDictionary = new Dictionary<string, BinaryData>();
@@ -83,6 +96,15 @@ namespace Azure.ResourceManager.Network.Models
                 if (property.NameEquals("headerName"u8))
                 {
                     headerName = property.Value.GetString();
+                    continue;
+                }
+                if (property.NameEquals("headerValueMatcher"u8))
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        continue;
+                    }
+                    headerValueMatcher = HeaderValueMatcher.DeserializeHeaderValueMatcher(property.Value, options);
                     continue;
                 }
                 if (property.NameEquals("headerValue"u8))
@@ -96,7 +118,7 @@ namespace Azure.ResourceManager.Network.Models
                 }
             }
             serializedAdditionalRawData = rawDataDictionary;
-            return new ApplicationGatewayHeaderConfiguration(headerName, headerValue, serializedAdditionalRawData);
+            return new ApplicationGatewayHeaderConfiguration(headerName, headerValueMatcher, headerValue, serializedAdditionalRawData);
         }
 
         BinaryData IPersistableModel<ApplicationGatewayHeaderConfiguration>.Write(ModelReaderWriterOptions options)

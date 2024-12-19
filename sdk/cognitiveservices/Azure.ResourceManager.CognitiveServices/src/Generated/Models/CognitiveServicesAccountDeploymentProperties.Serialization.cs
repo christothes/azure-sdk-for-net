@@ -21,13 +21,21 @@ namespace Azure.ResourceManager.CognitiveServices.Models
 
         void IJsonModel<CognitiveServicesAccountDeploymentProperties>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options)
         {
+            writer.WriteStartObject();
+            JsonModelWriteCore(writer, options);
+            writer.WriteEndObject();
+        }
+
+        /// <param name="writer"> The JSON writer. </param>
+        /// <param name="options"> The client options for reading and writing models. </param>
+        protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)
+        {
             var format = options.Format == "W" ? ((IPersistableModel<CognitiveServicesAccountDeploymentProperties>)this).GetFormatFromOptions(options) : options.Format;
             if (format != "J")
             {
                 throw new FormatException($"The model {nameof(CognitiveServicesAccountDeploymentProperties)} does not support writing '{format}' format.");
             }
 
-            writer.WriteStartObject();
             if (options.Format != "W" && Optional.IsDefined(ProvisioningState))
             {
                 writer.WritePropertyName("provisioningState"u8);
@@ -79,6 +87,26 @@ namespace Azure.ResourceManager.CognitiveServices.Models
                 writer.WritePropertyName("versionUpgradeOption"u8);
                 writer.WriteStringValue(VersionUpgradeOption.Value.ToString());
             }
+            if (options.Format != "W" && Optional.IsDefined(IsDynamicThrottlingEnabled))
+            {
+                writer.WritePropertyName("dynamicThrottlingEnabled"u8);
+                writer.WriteBooleanValue(IsDynamicThrottlingEnabled.Value);
+            }
+            if (Optional.IsDefined(CurrentCapacity))
+            {
+                writer.WritePropertyName("currentCapacity"u8);
+                writer.WriteNumberValue(CurrentCapacity.Value);
+            }
+            if (Optional.IsDefined(CapacitySettings))
+            {
+                writer.WritePropertyName("capacitySettings"u8);
+                writer.WriteObjectValue(CapacitySettings, options);
+            }
+            if (Optional.IsDefined(ParentDeploymentName))
+            {
+                writer.WritePropertyName("parentDeploymentName"u8);
+                writer.WriteStringValue(ParentDeploymentName);
+            }
             if (options.Format != "W" && _serializedAdditionalRawData != null)
             {
                 foreach (var item in _serializedAdditionalRawData)
@@ -94,7 +122,6 @@ namespace Azure.ResourceManager.CognitiveServices.Models
 #endif
                 }
             }
-            writer.WriteEndObject();
         }
 
         CognitiveServicesAccountDeploymentProperties IJsonModel<CognitiveServicesAccountDeploymentProperties>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options)
@@ -125,6 +152,10 @@ namespace Azure.ResourceManager.CognitiveServices.Models
             ServiceAccountCallRateLimit callRateLimit = default;
             IReadOnlyList<ServiceAccountThrottlingRule> rateLimits = default;
             DeploymentModelVersionUpgradeOption? versionUpgradeOption = default;
+            bool? dynamicThrottlingEnabled = default;
+            int? currentCapacity = default;
+            DeploymentCapacitySettings capacitySettings = default;
+            string parentDeploymentName = default;
             IDictionary<string, BinaryData> serializedAdditionalRawData = default;
             Dictionary<string, BinaryData> rawDataDictionary = new Dictionary<string, BinaryData>();
             foreach (var property in element.EnumerateObject())
@@ -207,6 +238,38 @@ namespace Azure.ResourceManager.CognitiveServices.Models
                     versionUpgradeOption = new DeploymentModelVersionUpgradeOption(property.Value.GetString());
                     continue;
                 }
+                if (property.NameEquals("dynamicThrottlingEnabled"u8))
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        continue;
+                    }
+                    dynamicThrottlingEnabled = property.Value.GetBoolean();
+                    continue;
+                }
+                if (property.NameEquals("currentCapacity"u8))
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        continue;
+                    }
+                    currentCapacity = property.Value.GetInt32();
+                    continue;
+                }
+                if (property.NameEquals("capacitySettings"u8))
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        continue;
+                    }
+                    capacitySettings = DeploymentCapacitySettings.DeserializeDeploymentCapacitySettings(property.Value, options);
+                    continue;
+                }
+                if (property.NameEquals("parentDeploymentName"u8))
+                {
+                    parentDeploymentName = property.Value.GetString();
+                    continue;
+                }
                 if (options.Format != "W")
                 {
                     rawDataDictionary.Add(property.Name, BinaryData.FromString(property.Value.GetRawText()));
@@ -222,6 +285,10 @@ namespace Azure.ResourceManager.CognitiveServices.Models
                 callRateLimit,
                 rateLimits ?? new ChangeTrackingList<ServiceAccountThrottlingRule>(),
                 versionUpgradeOption,
+                dynamicThrottlingEnabled,
+                currentCapacity,
+                capacitySettings,
+                parentDeploymentName,
                 serializedAdditionalRawData);
         }
 
@@ -237,59 +304,63 @@ namespace Azure.ResourceManager.CognitiveServices.Models
             builder.AppendLine("{");
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(ProvisioningState), out propertyOverride);
-            if (Optional.IsDefined(ProvisioningState) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  provisioningState: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(ProvisioningState))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  provisioningState: ");
                     builder.AppendLine($"'{ProvisioningState.Value.ToString()}'");
                 }
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(Model), out propertyOverride);
-            if (Optional.IsDefined(Model) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  model: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(Model))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  model: ");
                     BicepSerializationHelpers.AppendChildObject(builder, Model, options, 2, false, "  model: ");
                 }
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(ScaleSettings), out propertyOverride);
-            if (Optional.IsDefined(ScaleSettings) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  scaleSettings: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(ScaleSettings))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  scaleSettings: ");
                     BicepSerializationHelpers.AppendChildObject(builder, ScaleSettings, options, 2, false, "  scaleSettings: ");
                 }
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(Capabilities), out propertyOverride);
-            if (Optional.IsCollectionDefined(Capabilities) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
-                if (Capabilities.Any() || hasPropertyOverride)
+                builder.Append("  capabilities: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsCollectionDefined(Capabilities))
                 {
-                    builder.Append("  capabilities: ");
-                    if (hasPropertyOverride)
+                    if (Capabilities.Any())
                     {
-                        builder.AppendLine($"{propertyOverride}");
-                    }
-                    else
-                    {
+                        builder.Append("  capabilities: ");
                         builder.AppendLine("{");
                         foreach (var item in Capabilities)
                         {
@@ -315,15 +386,16 @@ namespace Azure.ResourceManager.CognitiveServices.Models
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(RaiPolicyName), out propertyOverride);
-            if (Optional.IsDefined(RaiPolicyName) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  raiPolicyName: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(RaiPolicyName))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  raiPolicyName: ");
                     if (RaiPolicyName.Contains(Environment.NewLine))
                     {
                         builder.AppendLine("'''");
@@ -337,31 +409,33 @@ namespace Azure.ResourceManager.CognitiveServices.Models
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(CallRateLimit), out propertyOverride);
-            if (Optional.IsDefined(CallRateLimit) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  callRateLimit: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(CallRateLimit))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  callRateLimit: ");
                     BicepSerializationHelpers.AppendChildObject(builder, CallRateLimit, options, 2, false, "  callRateLimit: ");
                 }
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(RateLimits), out propertyOverride);
-            if (Optional.IsCollectionDefined(RateLimits) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
-                if (RateLimits.Any() || hasPropertyOverride)
+                builder.Append("  rateLimits: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsCollectionDefined(RateLimits))
                 {
-                    builder.Append("  rateLimits: ");
-                    if (hasPropertyOverride)
+                    if (RateLimits.Any())
                     {
-                        builder.AppendLine($"{propertyOverride}");
-                    }
-                    else
-                    {
+                        builder.Append("  rateLimits: ");
                         builder.AppendLine("[");
                         foreach (var item in RateLimits)
                         {
@@ -373,16 +447,86 @@ namespace Azure.ResourceManager.CognitiveServices.Models
             }
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(VersionUpgradeOption), out propertyOverride);
-            if (Optional.IsDefined(VersionUpgradeOption) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  versionUpgradeOption: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(VersionUpgradeOption))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
+                    builder.Append("  versionUpgradeOption: ");
                     builder.AppendLine($"'{VersionUpgradeOption.Value.ToString()}'");
+                }
+            }
+
+            hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(IsDynamicThrottlingEnabled), out propertyOverride);
+            if (hasPropertyOverride)
+            {
+                builder.Append("  dynamicThrottlingEnabled: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(IsDynamicThrottlingEnabled))
+                {
+                    builder.Append("  dynamicThrottlingEnabled: ");
+                    var boolValue = IsDynamicThrottlingEnabled.Value == true ? "true" : "false";
+                    builder.AppendLine($"{boolValue}");
+                }
+            }
+
+            hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(CurrentCapacity), out propertyOverride);
+            if (hasPropertyOverride)
+            {
+                builder.Append("  currentCapacity: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(CurrentCapacity))
+                {
+                    builder.Append("  currentCapacity: ");
+                    builder.AppendLine($"{CurrentCapacity.Value}");
+                }
+            }
+
+            hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(CapacitySettings), out propertyOverride);
+            if (hasPropertyOverride)
+            {
+                builder.Append("  capacitySettings: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(CapacitySettings))
+                {
+                    builder.Append("  capacitySettings: ");
+                    BicepSerializationHelpers.AppendChildObject(builder, CapacitySettings, options, 2, false, "  capacitySettings: ");
+                }
+            }
+
+            hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(ParentDeploymentName), out propertyOverride);
+            if (hasPropertyOverride)
+            {
+                builder.Append("  parentDeploymentName: ");
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(ParentDeploymentName))
+                {
+                    builder.Append("  parentDeploymentName: ");
+                    if (ParentDeploymentName.Contains(Environment.NewLine))
+                    {
+                        builder.AppendLine("'''");
+                        builder.AppendLine($"{ParentDeploymentName}'''");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"'{ParentDeploymentName}'");
+                    }
                 }
             }
 

@@ -32,8 +32,23 @@ namespace Azure.ResourceManager.SecurityInsights
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _endpoint = endpoint ?? new Uri("https://management.azure.com");
-            _apiVersion = apiVersion ?? "2022-11-01";
+            _apiVersion = apiVersion ?? "2024-01-01-preview";
             _userAgent = new TelemetryDetails(GetType().Assembly, applicationId);
+        }
+
+        internal RequestUriBuilder CreateQueryIndicatorsRequestUri(string subscriptionId, string resourceGroupName, string workspaceName, ThreatIntelligenceFilteringCriteria threatIntelligenceFilteringCriteria)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendPath("/subscriptions/", false);
+            uri.AppendPath(subscriptionId, true);
+            uri.AppendPath("/resourceGroups/", false);
+            uri.AppendPath(resourceGroupName, true);
+            uri.AppendPath("/providers/Microsoft.OperationalInsights/workspaces/", false);
+            uri.AppendPath(workspaceName, true);
+            uri.AppendPath("/providers/Microsoft.SecurityInsights/threatIntelligence/main/queryIndicators", false);
+            uri.AppendQuery("api-version", _apiVersion, true);
+            return uri;
         }
 
         internal HttpMessage CreateQueryIndicatorsRequest(string subscriptionId, string resourceGroupName, string workspaceName, ThreatIntelligenceFilteringCriteria threatIntelligenceFilteringCriteria)
@@ -121,6 +136,14 @@ namespace Azure.ResourceManager.SecurityInsights
                 default:
                     throw new RequestFailedException(message.Response);
             }
+        }
+
+        internal RequestUriBuilder CreateQueryIndicatorsNextPageRequestUri(string nextLink, string subscriptionId, string resourceGroupName, string workspaceName, ThreatIntelligenceFilteringCriteria threatIntelligenceFilteringCriteria)
+        {
+            var uri = new RawRequestUriBuilder();
+            uri.Reset(_endpoint);
+            uri.AppendRawNextLink(nextLink, false);
+            return uri;
         }
 
         internal HttpMessage CreateQueryIndicatorsNextPageRequest(string nextLink, string subscriptionId, string resourceGroupName, string workspaceName, ThreatIntelligenceFilteringCriteria threatIntelligenceFilteringCriteria)

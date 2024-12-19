@@ -20,17 +20,25 @@ namespace Azure.ResourceManager.Search.Models
 
         void IJsonModel<SearchSku>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options)
         {
+            writer.WriteStartObject();
+            JsonModelWriteCore(writer, options);
+            writer.WriteEndObject();
+        }
+
+        /// <param name="writer"> The JSON writer. </param>
+        /// <param name="options"> The client options for reading and writing models. </param>
+        protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)
+        {
             var format = options.Format == "W" ? ((IPersistableModel<SearchSku>)this).GetFormatFromOptions(options) : options.Format;
             if (format != "J")
             {
                 throw new FormatException($"The model {nameof(SearchSku)} does not support writing '{format}' format.");
             }
 
-            writer.WriteStartObject();
             if (Optional.IsDefined(Name))
             {
                 writer.WritePropertyName("name"u8);
-                writer.WriteStringValue(Name.Value.ToSerialString());
+                writer.WriteStringValue(Name.Value.ToString());
             }
             if (options.Format != "W" && _serializedAdditionalRawData != null)
             {
@@ -47,7 +55,6 @@ namespace Azure.ResourceManager.Search.Models
 #endif
                 }
             }
-            writer.WriteEndObject();
         }
 
         SearchSku IJsonModel<SearchSku>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options)
@@ -70,7 +77,7 @@ namespace Azure.ResourceManager.Search.Models
             {
                 return null;
             }
-            SearchSkuName? name = default;
+            SearchServiceSkuName? name = default;
             IDictionary<string, BinaryData> serializedAdditionalRawData = default;
             Dictionary<string, BinaryData> rawDataDictionary = new Dictionary<string, BinaryData>();
             foreach (var property in element.EnumerateObject())
@@ -81,7 +88,7 @@ namespace Azure.ResourceManager.Search.Models
                     {
                         continue;
                     }
-                    name = property.Value.GetString().ToSearchSkuName();
+                    name = new SearchServiceSkuName(property.Value.GetString());
                     continue;
                 }
                 if (options.Format != "W")
@@ -105,16 +112,17 @@ namespace Azure.ResourceManager.Search.Models
             builder.AppendLine("{");
 
             hasPropertyOverride = hasObjectOverride && propertyOverrides.TryGetValue(nameof(Name), out propertyOverride);
-            if (Optional.IsDefined(Name) || hasPropertyOverride)
+            if (hasPropertyOverride)
             {
                 builder.Append("  name: ");
-                if (hasPropertyOverride)
+                builder.AppendLine(propertyOverride);
+            }
+            else
+            {
+                if (Optional.IsDefined(Name))
                 {
-                    builder.AppendLine($"{propertyOverride}");
-                }
-                else
-                {
-                    builder.AppendLine($"'{Name.Value.ToSerialString()}'");
+                    builder.Append("  name: ");
+                    builder.AppendLine($"'{Name.Value.ToString()}'");
                 }
             }
 

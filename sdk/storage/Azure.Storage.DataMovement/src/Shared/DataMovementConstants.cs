@@ -1,25 +1,27 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 namespace Azure.Storage.DataMovement
 {
     internal class DataMovementConstants
     {
-        /// <summary>
-        /// Constants of the Data Movement library
-        /// </summary>
-        internal const int InitialMainPoolSize = 32;
-        internal const int InitialDownloadFileThreads = 32; // Max is 3000
-        internal const int CpuTuningMultiplier = 16;
-        internal const int MaxJobPartReaders = 64;
-        internal const int MaxJobChunkTasks = 3000;
-        internal const int StatusCheckInSec = 10;
-        internal const int DefaultArrayPoolArraySize = 4 * 1024;
-
+        internal const int DefaultStreamCopyBufferSize = 81920;  // Use the .NET default
         internal const long DefaultInitialTransferSize = 32 * Constants.MB;
         internal const long DefaultChunkSize = 4 * Constants.MB;
 
         public const char PathForwardSlashDelimiterChar = '/';
+
+        internal static class Channels
+        {
+            internal const int MaxJobPartReaders = 32;
+            internal static int MaxJobChunkReaders = Environment.ProcessorCount * 8;
+            internal const int JobPartCapacity = 1000;
+            internal const int JobChunkCapacity = 1000;
+            internal const int DownloadChunkCapacity = 16;
+            internal const int StageChunkCapacity = 1000;
+        }
 
         internal static class ConcurrencyTuner
         {
@@ -62,6 +64,8 @@ namespace Azure.Storage.DataMovement
         internal const int LongSizeInBytes = 8;
         internal const int IntSizeInBytes = 4;
         internal const int GuidSizeInBytes = 16;
+        internal const string StringTypeStr = "string";
+        internal const string StringArrayTypeStr = "string[]";
 
         /// <summary>
         /// Constants used for job plan files.
@@ -148,6 +152,7 @@ namespace Azure.Storage.DataMovement
             internal const string AccessTier = "AccessTier";
             internal const string BlobType = "BlobType";
             internal const string CreationTime = "CreationTime";
+            internal const string ChangedOnTime = "ChangedOnTime";
             internal const string ContentType = "ContentType";
             internal const string ContentHash = "ContentHash";
             internal const string ContentEncoding = "ContentEncoding";
@@ -156,7 +161,12 @@ namespace Azure.Storage.DataMovement
             internal const string CacheControl = "CacheControl";
             internal const string ETag = "ETag";
             internal const string LastModified = "LastModified";
+            internal const string LastWrittenOn = "LastWrittenOn";
             internal const string Metadata = "Metadata";
+            internal const string FileAttributes = "FileAttributes";
+            internal const string FilePermissions = "FilePermissions";
+            internal const string SourceFilePermissionKey = "SourceFilePermissionKey";
+            internal const string DestinationFilePermissionKey = "DestinationFilePermissionKey";
         }
     }
 }

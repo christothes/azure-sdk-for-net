@@ -62,9 +62,20 @@ var client = new MetricsClient(
 
 #### Configure client for Azure sovereign cloud
 
-By default, `LogsQueryClient` and `MetricsQueryClient` are configured to use the Azure Public Cloud. To use a sovereign cloud instead, set the `Audience` property on the `Options` class. For example:
+By default, `LogsQueryClient`, `MetricsQueryClient`, and `MetricsClient` are configured to use the Azure Public Cloud. To use a sovereign cloud instead, set the `Audience` property on the appropriate `Options`-suffixed class. For example:
 
 ```C# Snippet:CreateClientsWithOptions
+// MetricsClient
+var metricsClientOptions = new MetricsClientOptions
+{
+    Audience = MetricsClientAudience.AzureGovernment
+};
+var metricsClient = new MetricsClient(
+    new Uri("https://usgovvirginia.metrics.monitor.azure.us"),
+    new DefaultAzureCredential(),
+    metricsClientOptions);
+
+// MetricsQueryClient
 var metricsQueryClientOptions = new MetricsQueryClientOptions
 {
     Audience = MetricsQueryAudience.AzureGovernment
@@ -73,11 +84,16 @@ var metricsQueryClient = new MetricsQueryClient(
     new DefaultAzureCredential(),
     metricsQueryClientOptions);
 
+// LogsQueryClient - by default, Azure Public Cloud is used
+var logsQueryClient = new LogsQueryClient(
+    new DefaultAzureCredential());
+
+// LogsQueryClient With Audience Set
 var logsQueryClientOptions = new LogsQueryClientOptions
 {
     Audience = LogsQueryAudience.AzureChina
 };
-var logsQueryClient = new LogsQueryClient(
+var logsQueryClientChina = new LogsQueryClient(
     new DefaultAzureCredential(),
     logsQueryClientOptions);
 ```
@@ -688,6 +704,34 @@ var client = new MetricsClient(
     new DefaultAzureCredential());
 var options = new MetricsQueryResourcesOptions
 {
+    OrderBy = "sum asc",
+    Size = 10
+};
+
+Response<MetricsQueryResourcesResult> result = await client.QueryResourcesAsync(
+    resourceIds: new List<ResourceIdentifier> { new ResourceIdentifier(resourceId) },
+    metricNames: new List<string> { "Ingress" },
+    metricNamespace: "Microsoft.Storage/storageAccounts",
+    options).ConfigureAwait(false);
+
+MetricsQueryResourcesResult metricsQueryResults = result.Value;
+foreach (MetricsQueryResult value in metricsQueryResults.Values)
+{
+    Console.WriteLine(value.Metrics.Count);
+}
+```
+
+The `MetricsQueryResourcesOptions`-typed argument also has a `StartTime` and `EndTime` property to allow for querying a specific time range. If only the `StartTime` is set, the `EndTime` default becomes the current time. When the `EndTime` is specified, the `StartTime` is necessary as well. The following example demonstrates the use of these properties:
+```C# Snippet:QueryResourcesMetricsWithOptionsStartTimeEndTime
+string resourceId =
+    "/subscriptions/<id>/resourceGroups/<rg-name>/providers/<source>/storageAccounts/<resource-name-1>";
+var client = new MetricsClient(
+    new Uri("https://<region>.metrics.monitor.azure.com"),
+    new DefaultAzureCredential());
+var options = new MetricsQueryResourcesOptions
+{
+    StartTime = DateTimeOffset.Now.AddHours(-4),
+    EndTime = DateTimeOffset.Now.AddHours(-1),
     OrderBy = "sum asc",
     Size = 10
 };

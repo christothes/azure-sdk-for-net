@@ -84,11 +84,11 @@ To create a share `StorageResource`, use the methods `FromFile` or `FromDirector
 
 ```C# Snippet:ResourceConstruction_Shares
 StorageResource directory = shares.FromDirectory(
-    "http://myaccount.files.core.windows.net/share/path/to/directory");
+    new Uri("http://myaccount.files.core.windows.net/share/path/to/directory"));
 StorageResource rootDirectory = shares.FromDirectory(
-    "http://myaccount.files.core.windows.net/share");
+    new Uri("http://myaccount.files.core.windows.net/share"));
 StorageResource file = shares.FromFile(
-    "http://myaccount.files.core.windows.net/share/path/to/file.txt");
+    new Uri("http://myaccount.files.core.windows.net/share/path/to/file.txt"));
 ```
 
 Storage resources can also be initialized with the appropriate client object from Azure.Storage.Files.Shares. Since these resources will use the credential already present in the client object, no credential is required in the provider when using `FromClient()`. **However**, a `ShareFilesStorageResourceProvider` must still have a credential if it is to be used in `TransferManagerOptions` for resuming a transfer.
@@ -116,7 +116,7 @@ Upload a directory.
 
 ```C# Snippet:SimpleDirectoryUpload_Shares
 DataTransfer folderTransfer = await transferManager.StartTransferAsync(
-    sourceResource: files.FromFile(sourceLocalDirectory),
+    sourceResource: files.FromDirectory(sourceLocalDirectory),
     destinationResource: shares.FromDirectory(destinationFolderUri));
 await folderTransfer.WaitForCompletionAsync();
 ```
@@ -193,18 +193,18 @@ additional questions or comments.
 <!-- LINKS -->
 [source]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/storage/Azure.Storage.Common/src
 [package]: https://www.nuget.org/packages/Azure.Storage.Common/
-[docs]: https://docs.microsoft.com/dotnet/api/azure.storage
-[rest_docs]: https://docs.microsoft.com/rest/api/storageservices/
-[product_docs]: https://docs.microsoft.com/azure/storage/
+[docs]: https://learn.microsoft.com/dotnet/api/azure.storage
+[rest_docs]: https://learn.microsoft.com/rest/api/storageservices/
+[product_docs]: https://learn.microsoft.com/azure/storage/
 [nuget]: https://www.nuget.org/
-[storage_account_docs]: https://docs.microsoft.com/azure/storage/common/storage-account-overview
-[storage_account_create_ps]: https://docs.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-powershell
-[storage_account_create_cli]: https://docs.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-cli
-[storage_account_create_portal]: https://docs.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-portal
-[azure_cli]: https://docs.microsoft.com/cli/azure
+[storage_account_docs]: https://learn.microsoft.com/azure/storage/common/storage-account-overview
+[storage_account_create_ps]: https://learn.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-powershell
+[storage_account_create_cli]: https://learn.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-cli
+[storage_account_create_portal]: https://learn.microsoft.com/azure/storage/common/storage-quickstart-create-account?tabs=azure-portal
+[azure_cli]: https://learn.microsoft.com/cli/azure
 [azure_sub]: https://azure.microsoft.com/free/dotnet/
 [RequestFailedException]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/core/Azure.Core/src/RequestFailedException.cs
-[error_codes]: https://docs.microsoft.com/rest/api/storageservices/common-rest-api-error-codes
+[error_codes]: https://learn.microsoft.com/rest/api/storageservices/common-rest-api-error-codes
 [samples]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/storage/Azure.Storage.DataMovement.Files.Shares/samples
 [storage_contrib]: https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/storage/CONTRIBUTING.md
 [cla]: https://cla.microsoft.com

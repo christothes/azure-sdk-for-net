@@ -1,5 +1,50 @@
 # Release History
 
+## 1.10.0-beta.1 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 1.9.0 (2024-11-26)
+
+### Other Changes
+
+- Updated dependency `Microsoft.Extensions.DependencyInjection.Abstractions` to version `8.0.2`
+- Updated dependency `Microsoft.Bcl.AsyncInterfaces` to version `8.0.0`
+
+## 1.8.0 (2024-11-05)
+
+### Features Added
+
+- Added support for constructing a `ManagedIdentityCredential` from config by setting the `managedIdentityObjectId` key.
+
+### Other Changes
+
+- Updated dependency `Azure.Identity` to version `1.13.1`.
+
+## 1.7.6 (2024-10-04)
+
+### Other Changes
+
+- Improved the efficiency of `AzureEventSourceLogForwarder` by eliminating message formatting. ([#46202](https://github.com/Azure/azure-sdk-for-net/pull/46202))
+
+## 1.7.5 (2024-08-15)
+
+### Other Changes
+
+- Updated dependency `Azure.Core` to version `1.42.0`.
+
+## 1.7.4 (2024-06-13)
+
+### Other Changes
+
+- Updated dependency `Azure.Identity` to version `1.11.4`.
+
 ## 1.7.3 (2024-04-16)
 
 ### Other Changes

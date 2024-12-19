@@ -207,6 +207,12 @@ namespace Azure.Messaging.EventHubs.Primitives
         protected EventHubsRetryPolicy RetryPolicy { get; }
 
         /// <summary>
+        ///    The properties associated with the Event Hub being read from. This value is updated in each load balancing cycle.
+        /// </summary>
+        ///
+        protected EventHubProperties EventHubProperties { get; private set; }
+
+        /// <summary>
         ///   Indicates whether or not this event processor should instrument batch event processing calls with distributed tracing.
         ///   Implementations that instrument event processing themselves should set this to <c>false</c>.
         /// </summary>
@@ -589,6 +595,20 @@ namespace Azure.Messaging.EventHubs.Primitives
         public override string ToString() => $"Event Processor<{ typeof(TPartition).Name }>: { Identifier }";
 
         /// <summary>
+        ///   Creates a diagnostic scope associated with a checkpointing activity.
+        /// </summary>
+        ///
+        /// <returns>The diagnostic scope.  The caller is assumed to own the scope once returned and is responsible for disposing it.</returns>
+        ///
+        internal virtual DiagnosticScope StartUpdateCheckpointDiagnosticScope()
+        {
+            var scope = ClientDiagnostics.CreateScope(DiagnosticProperty.EventProcessorCheckpointActivityName, ActivityKind.Internal);
+            scope.Start();
+
+            return scope;
+        }
+
+        /// <summary>
         ///   Creates an <see cref="TransportConsumer" /> to use for processing.
         /// </summary>
         ///
@@ -751,7 +771,7 @@ namespace Azure.Messaging.EventHubs.Primitives
                 var checkpointLastModified = checkpointUsed ? checkpoint.LastModified : null;
                 var checkpointAuthor = checkpointUsed ? checkpoint.ClientIdentifier : null;
 
-                Logger.EventProcessorPartitionProcessingEventPositionDetermined(partition.PartitionId, Identifier, EventHubName, ConsumerGroup, startingPosition.ToString(), checkpointUsed, checkpointLastModified, checkpointAuthor);
+                Logger.EventProcessorPartitionProcessingEventPositionDetermined(Identifier, EventHubName, ConsumerGroup, partition.PartitionId, startingPosition.ToString(), checkpointUsed, checkpointAuthor, checkpointLastModified);
 
                 // Create the connection to be used for spawning consumers; if the creation
                 // fails, then consider the processing task to be failed.  The main processing
@@ -781,7 +801,7 @@ namespace Azure.Messaging.EventHubs.Primitives
                 {
                     try
                     {
-                        consumer = CreateConsumer(ConsumerGroup, partition.PartitionId, $"P{ partition.PartitionId }-{ Identifier }", startingPosition, connection, Options, true);
+                        consumer = CreateConsumer(ConsumerGroup, partition.PartitionId, $"P{ partition.PartitionId }-{ Identifier }", startingPosition, connection, Options, exclusive: true);
 
                         // Register for notification when the cancellation token is triggered.  Attempt to close the consumer
                         // in response to force-close the link and short-circuit any receive operation that is blocked and
@@ -815,9 +835,9 @@ namespace Azure.Messaging.EventHubs.Primitives
 
                                 lastEvent = (eventBatch != null && eventBatch.Count > 0) ? eventBatch[eventBatch.Count - 1] : null;
 
-                                if ((lastEvent != null) && (lastEvent.Offset != long.MinValue))
+                                if (!string.IsNullOrEmpty(lastEvent?.OffsetString))
                                 {
-                                    startingPosition = EventPosition.FromOffset(lastEvent.Offset, false);
+                                    startingPosition = EventPosition.FromOffset(lastEvent.OffsetString, false);
                                 }
 
                                 // If event batches are successfully processed, then the need for forward progress is
@@ -1074,6 +1094,8 @@ namespace Azure.Messaging.EventHubs.Primitives
         }
 
         /// <summary>
+        ///   Obsolete.
+        ///
         ///   Creates or updates a checkpoint for a specific partition, identifying a position in the partition's event stream
         ///   that an event processor should begin reading from.
         /// </summary>
@@ -1084,22 +1106,17 @@ namespace Azure.Messaging.EventHubs.Primitives
         /// <param name="cancellationToken">A <see cref="CancellationToken" /> instance to signal a request to cancel the operation.</param>
         ///
         /// <remarks>
-        ///   This overload exists to preserve backwards compatibility; it is highly recommended that <see cref="UpdateCheckpointAsync(string, CheckpointPosition, CancellationToken)" />
-        ///   be called instead.
+        ///   This method is obsolete and should no longer be used.  Please use <see cref="UpdateCheckpointAsync(string, CheckpointPosition, CancellationToken)" />
+        ///   instead.
         /// </remarks>
         ///
+        [Obsolete(AttributeMessageText.LongOffsetUpdateCheckpointObsolete, false)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         protected virtual Task UpdateCheckpointAsync(string partitionId,
                                                      long offset,
                                                      long? sequenceNumber,
-                                                     CancellationToken cancellationToken)
-        {
-            if (sequenceNumber.HasValue)
-            {
-                return UpdateCheckpointAsync(partitionId, new CheckpointPosition(sequenceNumber.Value), cancellationToken);
-            }
-
-            throw new NotImplementedException();
-        }
+                                                     CancellationToken cancellationToken) =>
+            UpdateCheckpointAsync(partitionId, new CheckpointPosition((offset != long.MinValue) ? offset.ToString(CultureInfo.InvariantCulture) : null, sequenceNumber.Value), cancellationToken);
 
         /// <summary>
         ///   Creates or updates a checkpoint for a specific partition, identifying a position in the partition's event stream
@@ -1295,9 +1312,11 @@ namespace Azure.Messaging.EventHubs.Primitives
         ///
         /// <returns>The set of identifiers for the Event Hub partitions.</returns>
         ///
-        protected virtual async Task<string[]> ListPartitionIdsAsync(EventHubConnection connection,
-                                                                     CancellationToken cancellationToken) =>
-            await connection.GetPartitionIdsAsync(RetryPolicy, cancellationToken).ConfigureAwait(false);
+        protected virtual Task<string[]> ListPartitionIdsAsync(EventHubConnection connection,
+                                                                     CancellationToken cancellationToken)
+        {
+            return Task.FromResult(EventHubProperties.PartitionIds);
+        }
 
         /// <summary>
         ///   Allows reporting that a partition was stolen by another event consumer causing ownership
@@ -1634,6 +1653,7 @@ namespace Azure.Messaging.EventHubs.Primitives
 
                     try
                     {
+                        EventHubProperties = await connection.GetPropertiesAsync(RetryPolicy, cancellationToken).ConfigureAwait(false);
                         partitionIds = await ListPartitionIdsAsync(connection, cancellationToken).ConfigureAwait(false);
                     }
                     catch (Exception ex) when (ex.IsNotType<TaskCanceledException>())
@@ -2189,9 +2209,19 @@ namespace Azure.Messaging.EventHubs.Primitives
             var partitionIndex = new Random().Next(0, (properties.PartitionIds.Length - 1));
 
             // To ensure validity of the requested consumer group and that at least one partition exists,
-            // attempt to read from a partition.
+            // attempt to read from a partition.  Create a new set of options that preserves the connection
+            // and retry configuration, but uses a minimal prefetch count to reduce the amount of data transferred.
 
-            var consumer = CreateConsumer(ConsumerGroup, properties.PartitionIds[partitionIndex], $"SV-{ Identifier }", EventPosition.Earliest, connection, Options, false);
+            var options = new EventProcessorOptions
+            {
+                PrefetchCount = 1,
+                Identifier = Identifier,
+                RetryOptions = Options.RetryOptions,
+                ConnectionOptions = Options.ConnectionOptions,
+                TrackLastEnqueuedEventProperties = false
+            };
+
+            var consumer = CreateConsumer(ConsumerGroup, properties.PartitionIds[partitionIndex], $"SV-{ Identifier }", EventPosition.Earliest, connection, options, exclusive: false);
 
             try
             {

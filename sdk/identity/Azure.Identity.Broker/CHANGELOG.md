@@ -1,6 +1,6 @@
 # Release History
 
-## 1.2.0-beta.1 (Unreleased)
+## 1.3.0-beta.1 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,18 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 1.2.0 (2024-11-18)
+
+### Other Changes
+
+- Support for Proof of Possession (PoP) tokens for `InteractiveBrowserCredential` has migrated out of Azure.Core.Experimental to Azure.Core. This feature is enabled via the `IsProofOfPossessionEnabled` property on `TokenRequestContext`.
+- Updating package dependencies.
+
+## 1.2.0-beta.1 (2024-04-24)
+
+### Breaking Changes
+- The `IsProofOfPossessionRequired` property on `InteractiveBrowserCredentialBrokerOptions` and `SharedTokenCacheCredentialBrokerOptions` has been removed. This property has moved to the experimental `PopTokenRequestContext` struct.
 
 ## 1.1.0 (2024-04-09)
 
@@ -51,9 +63,9 @@
 ## 1.0.0-beta.2 (2022-04-05)
 
 ### Features Added
-- Added `SharedTokenCacheCredentialBrokerOptions` to enable `SharedTokenCacheCredential` to use the authentication broker for silent authentication calls when this specicialized options type is used to construct the credential.
+- Added `SharedTokenCacheCredentialBrokerOptions` to enable `SharedTokenCacheCredential` to use the authentication broker for silent authentication calls when this specialized options type is used to construct the credential.
 
 ## 1.0.0-beta.1 (2022-02-23)
 
 ### Features Added
-- Added `InteractiveBrowserCredentialBrokerOptions` to enable `InteractiveBrowserCredential` to use the authentication broker when this specicialized options type is used to construct the credential.
+- Added `InteractiveBrowserCredentialBrokerOptions` to enable `InteractiveBrowserCredential` to use the authentication broker when this specialized options type is used to construct the credential.
