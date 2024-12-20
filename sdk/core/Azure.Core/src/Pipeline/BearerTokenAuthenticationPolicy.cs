@@ -10,7 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core.Diagnostics;
 
+#pragma warning disable AZC0001 // Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html): Azure.AI, Azure.Analytics, Azure.Communication, Azure.Compute, Azure.Containers, Azure.Core.Expressions, Azure.Data, Azure.Developer, Azure.DigitalTwins, Azure.Health, Azure.Identity, Azure.IoT, Azure.Maps, Azure.Media, Azure.Messaging, Azure.MixedReality, Azure.Monitor, Azure.ResourceManager, Azure.Search, Azure.Security, Azure.Storage, Azure.Verticals, Microsoft.Extensions.Azure
 namespace Azure.Core.Pipeline
+#pragma warning restore AZC0001 // Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html): Azure.AI, Azure.Analytics, Azure.Communication, Azure.Compute, Azure.Containers, Azure.Core.Expressions, Azure.Data, Azure.Developer, Azure.DigitalTwins, Azure.Health, Azure.Identity, Azure.IoT, Azure.Maps, Azure.Media, Azure.Messaging, Azure.MixedReality, Azure.Monitor, Azure.ResourceManager, Azure.Search, Azure.Security, Azure.Storage, Azure.Verticals, Microsoft.Extensions.Azure
 {
     /// <summary>
     /// A policy that sends an <see cref="AccessToken"/> provided by a <see cref="TokenCredential"/> as an Authentication header.
@@ -309,7 +311,7 @@ namespace Azure.Core.Pipeline
                     DateTimeOffset now = _timeProvider.GetUtcNow();
                     if (!localState.IsBackgroundTokenAvailable(now) && !localState.IsCurrentTokenTcsFailedOrExpired(now) && !localState.TokenNeedsBackgroundRefresh(now))
                     {
-                        // Console.WriteLine("__localState has valid token.");
+                        Console.WriteLine("__localState has valid token.");
                         // localState entity has a valid token, no need to enter lock.
                         updatedState = localState;
                         return false;
@@ -328,7 +330,7 @@ namespace Azure.Core.Pipeline
                     // Getting new access token is in progress, wait for it
                     if (!_state.CurrentTokenTcs.Task.IsCompleted)
                     {
-                        // Console.WriteLine("__wait for it");
+                        Console.WriteLine("__wait for it");
                         // Only create new TokenRequestState if necessary.
                         if (_state.BackgroundTokenUpdateTcs != null)
                         {
@@ -356,6 +358,7 @@ namespace Azure.Core.Pipeline
                     // Access token is still valid but is about to expire, try to get it in background
                     if (_state.TokenNeedsBackgroundRefresh(now))
                     {
+                        Console.WriteLine("__token about to expire");
                         _state = _state.WithNewBackroundUpdateTokenTcs();
                         updatedState = _state;
                         return true;
@@ -373,19 +376,22 @@ namespace Azure.Core.Pipeline
                 TokenRequestContext context,
                 bool async)
             {
-                // Console.WriteLine("__background");
-                var cts = new CancellationTokenSource(_tokenRefreshRetryDelay);
+                Console.WriteLine("__background");
+                var cts = _timeProvider.CreateCancellationTokenSource(_tokenRefreshRetryDelay);
                 try
                 {
                     await SetResultOnTcsFromCredentialAsync(context, backgroundUpdateTcs, async, cts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException oce) when (cts.IsCancellationRequested)
                 {
+                    Console.WriteLine("__background canceled");
                     backgroundUpdateTcs.SetResult(new AuthHeaderValueInfo(currentAuthHeaderInfo.HeaderValue, currentAuthHeaderInfo.ExpiresOn, _timeProvider.GetUtcNow()));
                     AzureCoreEventSource.Singleton.BackgroundRefreshFailed(context.ParentRequestId ?? string.Empty, oce.ToString());
+                    Console.WriteLine("__background canceled done");
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine("__background failed");
                     backgroundUpdateTcs.SetResult(new AuthHeaderValueInfo(currentAuthHeaderInfo.HeaderValue, currentAuthHeaderInfo.ExpiresOn, _timeProvider.GetUtcNow() + _tokenRefreshRetryDelay));
                     AzureCoreEventSource.Singleton.BackgroundRefreshFailed(context.ParentRequestId ?? string.Empty, e.ToString());
                 }
@@ -397,7 +403,6 @@ namespace Azure.Core.Pipeline
 
             private async ValueTask SetResultOnTcsFromCredentialAsync(TokenRequestContext context, TaskCompletionSource<AuthHeaderValueInfo> targetTcs, bool async, CancellationToken cancellationToken)
             {
-                // Console.WriteLine("GetHeaderValueFromCredentialAsync");
                 AccessToken token = async
                     ? await _credential.GetTokenAsync(context, cancellationToken).ConfigureAwait(false)
                     : _credential.GetToken(context, cancellationToken);
