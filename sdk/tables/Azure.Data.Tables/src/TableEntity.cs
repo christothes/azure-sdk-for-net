@@ -202,6 +202,10 @@ namespace Azure.Data.Tables
         private void SetValue(string key, object value)
         {
             Argument.AssertNotNullOrEmpty(key, nameof(key));
+            if (value is decimal && !TablesCompatSwitches.DisableThrowOnSetInvalidPropertyType)
+            {
+                throw new InvalidOperationException("Decimal type is not supported. Please use double for flaoating point values instead.");
+            }
 
             if (value != null && _properties.TryGetValue(key, out object existingValue) && existingValue != null)
             {
@@ -247,7 +251,7 @@ namespace Azure.Data.Tables
                 }
                 if (type == typeof(BinaryData) && value is byte[] byteArray)
                 {
-                     return new BinaryData(byteArray);
+                    return new BinaryData(byteArray);
                 }
                 EnforceType(type, valueType);
             }

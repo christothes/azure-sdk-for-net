@@ -2,14 +2,15 @@
 // Licensed under the MIT License.
 
 using System;
+using Azure.Core.TestFramework;
 using NUnit.Framework;
 
 namespace Azure.Data.Tables.Tests
 {
     public class TableEntityTests
     {
-        private TableEntity emptyEntity = new TableEntity { { "My value was nulled!", null } };
-        private TableEntity fullEntity = new TableEntity("partition", "row") {
+        private TableEntity GetEmptyEntity() => new TableEntity { { "My value was nulled!", null } };
+        private TableEntity GetFullEntity() => new TableEntity("partition", "row") {
             { TableConstants.PropertyNames.Timestamp, default(DateTimeOffset) },
             { "binary", new byte[] { 1, 2 }},
             { "binarydata", new BinaryData( new byte[] { 1, 2 })},
@@ -31,6 +32,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void ValidateDictionaryEntityGetTypes()
         {
+            var fullEntity = GetFullEntity();
             Assert.That(fullEntity.GetBinary("binary"), Is.InstanceOf(typeof(byte[])));
             Assert.That(fullEntity.GetBinaryData("binarydata"), Is.InstanceOf(typeof(BinaryData)));
             Assert.That(fullEntity.GetBoolean("boolean"), Is.InstanceOf(typeof(bool?)));
@@ -49,6 +51,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void DictionaryEntityGetWrongTypesThrows()
         {
+            var fullEntity = GetFullEntity();
             Assert.That(() => fullEntity.GetBinary("boolean"), Throws.InstanceOf<InvalidOperationException>(), "GetBinary should validate that the value for the inputted key is a Binary.");
             Assert.That(() => fullEntity.GetBinaryData("boolean"), Throws.InstanceOf<InvalidOperationException>(), "GetBinary should validate that the value for the inputted key is a BinaryData.");
             Assert.That(() => fullEntity.GetBoolean("datetime"), Throws.InstanceOf<InvalidOperationException>(), "GetBoolean should validate that the value for the inputted key is a Boolean.");
@@ -66,6 +69,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void ValidateDictionaryEntityGetTypeForNonexistentProperties()
         {
+            var fullEntity = GetFullEntity();
             Assert.That(fullEntity.GetBinary(nonexistentKey), Is.Null);
             Assert.That(fullEntity.GetBinaryData(nonexistentKey), Is.Null);
             Assert.That(fullEntity.GetBoolean(nonexistentKey), Is.Null);
@@ -84,6 +88,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void ValidateDictionaryEntityGetTypeForNulledProperties()
         {
+            var emptyEntity = GetEmptyEntity();
             Assert.That(emptyEntity.GetBinary(nulledPropertyKey), Is.Null);
             Assert.That(emptyEntity.GetBoolean(nulledPropertyKey), Is.Null);
             Assert.That(emptyEntity.GetDateTime(nulledPropertyKey), Is.Null);
@@ -101,6 +106,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void ValidateDictionaryEntityGetPropertiesWithIndexer()
         {
+            var fullEntity = GetFullEntity();
             Assert.That(fullEntity["binary"], Is.Not.Null);
             Assert.That(fullEntity["binary"], Is.InstanceOf(typeof(byte[])));
             Assert.That(fullEntity["boolean"], Is.Not.Null);
@@ -132,6 +138,7 @@ namespace Azure.Data.Tables.Tests
         [Test]
         public void DictionaryEntityGetNullOrNonexistentPropertiesWithIndexer()
         {
+            var emptyEntity = GetEmptyEntity();
             var nonexistentKey = "I was never set!";
 
             // Test getting nonexistent property works.
@@ -289,6 +296,44 @@ namespace Azure.Data.Tables.Tests
             te.Add("binarydata", array);
             byte[] roundTrip = te.GetBinaryData("binarydata").ToArray();
             CollectionAssert.AreEqual(array, roundTrip);
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void ThrowsOnInvalidPropertyTypes()
+        {
+            decimal d = 1.0M;
+            TableEntity te = new("a", "b");
+
+            Assert.Throws<InvalidOperationException>(() => te.Add("decimal", d));
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void DoesNotThrowsOnInvalidPropertyTypesWithCompatSwitch()
+        {
+            decimal d = 1.0M;
+
+            using var ctx = new TestAppContextSwitch(TableConstants.CompatSwitches.DisableThrowOnSetInvalidPropertyTypeSwitchName, true.ToString());
+
+            _ = new TableEntity("a", "b")
+            {
+                { "decimal", d }
+            };
+        }
+
+        [Test]
+        [NonParallelizable]
+        public void DoesNotThrowsOnInvalidPropertyTypesWithCompatSwitchEnv()
+        {
+            decimal d = 1.0M;
+
+            using var env = new TestEnvVar(TableConstants.CompatSwitches.DisableThrowOnSetInvalidPropertyTypeEnvVar, true.ToString());
+
+            _ = new TableEntity("a", "b")
+            {
+                { "decimal", d }
+            };
         }
     }
 }
