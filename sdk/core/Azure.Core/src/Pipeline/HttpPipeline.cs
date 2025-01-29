@@ -5,6 +5,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,6 +79,22 @@ namespace Azure.Core.Pipeline
             _perCallIndex = perCallIndex;
             _perRetryIndex = perRetryIndex;
             _internallyConstructed = true;
+        }
+
+        /// <summary>
+        /// Updates the current transport with the provided client certificate.
+        /// </summary>
+        /// <param name="certificate"></param>
+        /// <param name="options"></param>
+        public void UpdateTransportWithClientCertificate(X509Certificate2 certificate, HttpPipelineTransportOptions options)
+        {
+            var transportPolicy = _pipeline.Span[_pipeline.Length - 1] as HttpPipelineTransportPolicy;
+            if (transportPolicy == null)
+            {
+                throw new InvalidOperationException("Cannot update transport with client certificate if the transport policy is not of type HttpPipelineTransportPolicy.");
+            }
+            // TODO: we need to detect if the transport is not the default one and log.
+            transportPolicy.UpdateTransportWithClientCertificate(certificate, options);
         }
 
         /// <summary>

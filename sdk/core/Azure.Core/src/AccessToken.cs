@@ -52,6 +52,23 @@ namespace Azure.Core
         }
 
         /// <summary>
+        /// Creates a new instance of <see cref="AccessToken"/> using the provided <paramref name="accessToken"/> and <paramref name="expiresOn"/>.
+        /// </summary>
+        /// <param name="accessToken">The access token value.</param>
+        /// <param name="expiresOn">The access token expiry date.</param>
+        /// <param name="refreshOn">Specifies the time when the cached token should be proactively refreshed.</param>
+        /// <param name="tokenType">The access token type.</param>
+        /// <param name="boundTokenThumbprint">The thumbprint of the token bound to this token</param>
+        public AccessToken(string accessToken, DateTimeOffset expiresOn, DateTimeOffset? refreshOn, string tokenType, string boundTokenThumbprint)
+        {
+            Token = accessToken;
+            ExpiresOn = expiresOn;
+            RefreshOn = refreshOn;
+            TokenType = tokenType;
+            BoundTokenThumbprint = boundTokenThumbprint;
+        }
+
+        /// <summary>
         /// Get the access token value.
         /// </summary>
         public string Token { get; }
@@ -70,6 +87,12 @@ namespace Azure.Core
         /// Identifies the type of access token.
         /// </summary>
         public string TokenType { get; }
+
+        /// <summary>
+        /// If the token is bound to a specific certificate, this is the thumbprint of that certificate.
+        /// This will only be populated if the <see cref="TokenType"/> is "PoP".
+        /// </summary>
+        public string? BoundTokenThumbprint { get; }
 
         /// <inheritdoc />
         public override bool Equals(object? obj)
