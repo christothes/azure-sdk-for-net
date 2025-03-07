@@ -74,6 +74,19 @@ namespace Azure.Identity
         protected DefaultAzureCredential() : this(false) { }
 
         /// <summary>
+        /// Creates an instance of the <see cref="DefaultAzureCredential"/> class.
+        /// </summary>
+        /// <param name="brokerOptions"></param>
+        public DefaultAzureCredential(InteractiveBrowserCredentialOptions brokerOptions):
+            this(new DefaultAzureCredentialOptions
+            {
+                ExcludeInteractiveBrowserCredential = false,
+                InteractiveBrowserCredentialOptions = brokerOptions
+            })
+        {
+        }
+
+        /// <summary>
         /// Creates an instance of the DefaultAzureCredential class.
         /// </summary>
         /// <param name="includeInteractiveCredentials">Specifies whether credentials requiring user interaction will be included in the default authentication flow.</param>

@@ -285,6 +285,8 @@ namespace Azure.Identity
 
         internal bool IsForceRefreshEnabled { get; set; }
 
+        internal InteractiveBrowserCredentialOptions InteractiveBrowserCredentialOptions { get; set; }
+
         internal override T Clone<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>()
         {
             var clone = base.Clone<T>();

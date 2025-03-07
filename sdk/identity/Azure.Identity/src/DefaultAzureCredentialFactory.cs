@@ -22,7 +22,7 @@ namespace Azure.Identity
 
             _useDefaultCredentialChain = options == null;
 
-            Options = options?.Clone<DefaultAzureCredentialOptions>() ?? new DefaultAzureCredentialOptions();
+            Options = options ?? new DefaultAzureCredentialOptions();
         }
 
         public DefaultAzureCredentialOptions Options { get; }
@@ -52,35 +52,35 @@ namespace Azure.Identity
                 chain.Add(CreateManagedIdentityCredential());
             }
 
-            if (!Options.ExcludeSharedTokenCacheCredential)
-            {
-                chain.Add(CreateSharedTokenCacheCredential());
-            }
+            // if (!Options.ExcludeSharedTokenCacheCredential)
+            // {
+            //     chain.Add(CreateSharedTokenCacheCredential());
+            // }
 
-            if (!Options.ExcludeVisualStudioCredential)
-            {
-                chain.Add(CreateVisualStudioCredential());
-            }
+            // if (!Options.ExcludeVisualStudioCredential)
+            // {
+            //     chain.Add(CreateVisualStudioCredential());
+            // }
 
-            if (!Options.ExcludeVisualStudioCodeCredential)
-            {
-                chain.Add(CreateVisualStudioCodeCredential());
-            }
+            // if (!Options.ExcludeVisualStudioCodeCredential)
+            // {
+            //     chain.Add(CreateVisualStudioCodeCredential());
+            // }
 
-            if (!Options.ExcludeAzureCliCredential)
-            {
-                chain.Add(CreateAzureCliCredential());
-            }
+            // if (!Options.ExcludeAzureCliCredential)
+            // {
+            //     chain.Add(CreateAzureCliCredential());
+            // }
 
-            if (!Options.ExcludeAzurePowerShellCredential)
-            {
-                chain.Add(CreateAzurePowerShellCredential());
-            }
+            // if (!Options.ExcludeAzurePowerShellCredential)
+            // {
+            //     chain.Add(CreateAzurePowerShellCredential());
+            // }
 
-            if (!Options.ExcludeAzureDeveloperCliCredential)
-            {
-                chain.Add(CreateAzureDeveloperCliCredential());
-            }
+            // if (!Options.ExcludeAzureDeveloperCliCredential)
+            // {
+            //     chain.Add(CreateAzureDeveloperCliCredential());
+            // }
 
             if (!Options.ExcludeInteractiveBrowserCredential)
             {
@@ -167,17 +167,26 @@ namespace Azure.Identity
 
         public virtual TokenCredential CreateInteractiveBrowserCredential()
         {
-            var options = Options.Clone<InteractiveBrowserCredentialOptions>();
+            if (Options.InteractiveBrowserCredentialOptions == null)
+            {
+                Console.WriteLine("InteractiveBrowserCredentialOptions is null. Using default options.");
+                var options = Options.Clone<InteractiveBrowserCredentialOptions>();
 
-            options.TokenCachePersistenceOptions = new TokenCachePersistenceOptions();
+                options.TokenCachePersistenceOptions = new TokenCachePersistenceOptions();
 
-            options.TenantId = Options.InteractiveBrowserTenantId;
+                options.TenantId = Options.InteractiveBrowserTenantId;
 
-            return new InteractiveBrowserCredential(
-                Options.InteractiveBrowserTenantId,
-                Options.InteractiveBrowserCredentialClientId ?? Constants.DeveloperSignOnClientId,
-                options,
-                Pipeline);
+                return new InteractiveBrowserCredential(
+                    Options.InteractiveBrowserTenantId,
+                    Options.InteractiveBrowserCredentialClientId ?? Constants.DeveloperSignOnClientId,
+                    options,
+                    Pipeline);
+            }
+            else
+            {
+                Console.WriteLine("InteractiveBrowserCredentialOptions is not null. Using provided options.");
+                return new InteractiveBrowserCredential(Options.InteractiveBrowserCredentialOptions);
+            }
         }
 
         public virtual TokenCredential CreateAzureDeveloperCliCredential()
