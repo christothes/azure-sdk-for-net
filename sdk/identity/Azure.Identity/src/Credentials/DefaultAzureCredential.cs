@@ -90,8 +90,8 @@ namespace Azure.Identity
         /// Creates an instance of the DefaultAzureCredential class.
         /// </summary>
         /// <param name="includeInteractiveCredentials">Specifies whether credentials requiring user interaction will be included in the default authentication flow.</param>
-        public DefaultAzureCredential(bool includeInteractiveCredentials = false)
-            : this(includeInteractiveCredentials ? new DefaultAzureCredentialOptions { ExcludeInteractiveBrowserCredential = false } : null)
+        public DefaultAzureCredential(bool includeInteractiveCredentials = true)
+            : this(includeInteractiveCredentials ? new DefaultAzureCredentialOptions { ExcludeInteractiveBrowserCredential = false, InteractiveBrowserCredentialOptions = new DevelopmentBrokerOptions() } : null)
         {
         }
 

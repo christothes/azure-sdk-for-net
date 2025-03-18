@@ -5,7 +5,7 @@ using System;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 
-namespace Azure.Identity.Broker
+namespace Azure.Identity
 {
     /// <summary>
     /// Options to configure the <see cref="InteractiveBrowserCredential"/> to use the system authentication broker in lieu of an embedded web view or the system browser.
@@ -13,8 +13,6 @@ namespace Azure.Identity.Broker
     /// </summary>
     public class DevelopmentBrokerOptions : InteractiveBrowserCredentialOptions, IMsalPublicClientInitializerOptions
     {
-        private readonly IntPtr _parentWindowHandle;
-
         /// <summary>
         /// Gets or sets whether Microsoft Account (MSA) passthrough is enabled.
         /// </summary>
@@ -30,14 +28,13 @@ namespace Azure.Identity.Broker
         /// </summary>
         public DevelopmentBrokerOptions() : base()
         {
-            _parentWindowHandle = IntPtr.Zero;
         }
 
         Action<PublicClientApplicationBuilder> IMsalPublicClientInitializerOptions.BeforeBuildClient => AddBroker;
 
         private void AddBroker(PublicClientApplicationBuilder builder)
         {
-            builder.WithParentActivityOrWindow(() => _parentWindowHandle);
+            builder.WithParentActivityOrWindow(() => IntPtr.Zero);
             var options = new BrokerOptions(BrokerOptions.OperatingSystems.Windows);
             if (IsLegacyMsaPassthroughEnabled.HasValue)
             {
