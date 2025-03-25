@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.ComponentModel;
 using Azure.AI.OpenAI;
 using Azure.Projects;
 using Azure.Projects.OpenAI;
@@ -25,27 +26,20 @@ ChatProcessor processor = new(
     tools
 );
 
+// await tools.AddMcpServerAsync(new("http://localhost:3001/sse"));
+
+conversation.Add(new SystemChatMessage("When you make a tool call, DO NOT guess the values of required parameters. " +
+    "Instead, ask the user for the values of the required parameters. " +
+    "If there is a tool call available that seems capable of providing the value of a required parameter, " +
+    "call that tool to get the value and ask the user, if necessary for the parameter values it requires. "));
+
 while (true)
 {
     Console.Write("> ");
     string prompt = Console.ReadLine();
     if (string.IsNullOrEmpty(prompt))
         continue;
-    if (string.Equals(prompt, "bye", StringComparison.OrdinalIgnoreCase))
-        break;
-    if (prompt.StartsWith("fact:", StringComparison.OrdinalIgnoreCase))
-    {
-        string fact = prompt[5..].Trim();
-        processor.VectorDb.Add(fact);
-        continue;
-    }
-    if (prompt.StartsWith("addmcp:", StringComparison.OrdinalIgnoreCase))
-    {
-        string mcp = prompt[7..].Trim();
-        Console.WriteLine($"Adding MCP server {mcp}");
-        await tools.AddMcpServerAsync(new Uri(mcp)).ConfigureAwait(false);
-        continue;
-    }
+
     ChatCompletion completion = await processor.TakeTurnAsync(conversation, prompt).ConfigureAwait(false);
 
     Console.WriteLine(completion.AsText());
@@ -54,4 +48,17 @@ while (true)
 class Tools
 {
     public static string GetCurrentTime() => DateTime.Now.ToString("T");
+
+    public static string GetUriForStorageBlob(string storageAccountName, string containerName)
+    {
+        Console.WriteLine($"* tool call: GetUriForStorageAccount({storageAccountName}, {containerName})");
+        // Simulate getting a URI for the storage account
+        return $"https://{storageAccountName}.blob.core.windows.net/{containerName}";
+    }
+    public static string UploadFile([Description("ask for this")] string uriForStorageAccount, string filePath)
+    {
+        // Simulate file upload
+        Console.WriteLine($"* Construct a BlobClient with the uri {uriForStorageAccount} to upload File {filePath}.");
+        return $"Uploading file {filePath} to {uriForStorageAccount}...";
+    }
 }
