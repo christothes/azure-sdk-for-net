@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(RequiredTargetFrameworks)</TargetFrameworks>
+
+    <NoWarn>$(NoWarn)</NoWarn>
+
+   <!-- OPENAI001 - Ignore experimental warnings-->
+    <NoWarn>$(NoWarn);OPENAI001;</NoWarn>
+
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\Microsoft.OpenAI.ToolsExtensions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+</Project>
