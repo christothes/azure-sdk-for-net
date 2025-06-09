@@ -101,9 +101,11 @@
     <PackageReference Update="System.Text.Json" Version="8.0.5" />
     <PackageReference Update="System.Text.Encodings.Web" Version="8.0.0" />
     <PackageReference Update="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="9.0.5" />
     <PackageReference Update="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3"/>
+    <PackageReference Update="Microsoft.Extensions.Options" Version="9.0.5" />
+    <PackageReference Update="Microsoft.Extensions.Configuration" Version="9.0.5" />
 
     <!-- Azure SDK packages -->
     <PackageReference Update="Azure.AI.Inference" Version="1.0.0-beta.4" />
@@ -386,7 +388,7 @@
     <PackageReference Update="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Logging.Configuration" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="8.0.1"/>
-    <PackageReference Update="Microsoft.Extensions.Primitives" Version="8.0.0"/>
+    <PackageReference Update="Microsoft.Extensions.Primitives" Version="9.0.5"/>
     <PackageReference Update="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Update="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
     <PackageReference Update="Microsoft.Graph" Version="5.77.0" />
