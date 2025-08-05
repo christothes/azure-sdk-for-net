@@ -197,39 +197,51 @@ namespace Azure.Identity.Tests
         }
 
         [Test]
-        public void VerifyAllowedTenantEnforcementCredentials()
+        public async Task VerifyAllowedTenantEnforcementCredentials()
         {
+            // Skip test if the credential does not support disabling instance discovery
+            if (!typeof(ISupportsAdditionallyAllowedTenants).IsAssignableFrom(typeof(TCredOptions)))
+            {
+                Assert.Ignore($"{typeof(TCredOptions).Name} does not implement {nameof(ISupportsAdditionallyAllowedTenants)}");
+            }
             // Configure the transport
             var token = Guid.NewGuid().ToString();
-            string resolvedTenantId = TenantId;
+            string alternativeTenantId = Guid.NewGuid().ToString();
             TransportConfig transportConfig = new()
             {
-                TokenFactory = req => token
+                TokenFactory = req =>
+                {
+                    Assert.That(req.Uri.Path, Does.Contain(alternativeTenantId), "Request should be made to the alternative tenant");
+                    return token;
+                }
             };
             var factory = MockTokenTransportFactory(transportConfig);
             var mockTransport = new MockTransport(factory);
 
-            var mockResolver = new Mock<TenantIdResolverBase>() { CallBase = true };
+            var mockResolver = new MockTenantIdResolver((tenantId, context, additionalTenants, result) =>
+            {
+                // Assert that Resolver is called and that the resolved tenant is the expected tenant
+                Assert.AreEqual(context.TenantId, result);
+            });
             var config = new CommonCredentialTestConfig()
             {
                 TransportConfig = transportConfig,
                 Transport = mockTransport,
                 TenantId = TenantId,
-                RequestContext = new TokenRequestContext(MockScopes.Default, tenantId: Guid.NewGuid().ToString()),
-                AdditionallyAllowedTenants = new List<string> { Guid.NewGuid().ToString() },
-                TestTentantIdResolver = mockResolver.Object
+                RequestContext = new TokenRequestContext(MockScopes.Default, tenantId: alternativeTenantId),
+                AdditionallyAllowedTenants = new List<string> { alternativeTenantId },
+                TestTentantIdResolver = mockResolver
             };
             var credential = GetTokenCredential(config);
+            if (!CredentialTestHelpers.IsMsalCredential(credential))
+            {
+                Assert.Ignore("VerifyAllowedTenantEnforcementCredentials tests do not apply to the non-MSAL credentials.");
+            }
 
             transportConfig.IsPubClient = CredentialTestHelpers.IsCredentialTypePubClient(credential);
 
-            // Assert that Resolver is called and that the resolved tenant is the expected tenant
-            mockResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<TokenRequestContext>(), It.IsAny<string[]>())).Callback<string, TokenRequestContext, IList<string>>((tenantId, context, additionalTenants) =>
-            {
-                Assert.AreEqual(config.TenantId, tenantId);
-                Assert.AreEqual(config.RequestContext.TenantId, context.TenantId);
-                Assert.AreEqual(config.AdditionallyAllowedTenants, additionalTenants);
-            }).Returns(resolvedTenantId);
+            AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default, null, tenantId: alternativeTenantId), default);
+            Assert.AreEqual(token, actualToken.Token);
         }
 
         [Test]
@@ -914,6 +926,28 @@ namespace Azure.Identity.Tests
         {
             public bool essential { get; set; }
             public string value { get; set; }
+        }
+
+        internal class MockTenantIdResolver : TenantIdResolver
+        {
+            private Action<string, TokenRequestContext, string[], string> _onResolve;
+
+            public MockTenantIdResolver(Action<string, TokenRequestContext, string[], string> onResolve)
+            {
+                _onResolve = onResolve;
+            }
+
+            public override string Resolve(string explicitTenantId, TokenRequestContext context, string[] additionallyAllowedTenantIds)
+            {
+                var result = base.Resolve(explicitTenantId, context, additionallyAllowedTenantIds);
+                _onResolve?.Invoke(explicitTenantId, context, additionallyAllowedTenantIds, result);
+                return result;
+            }
+
+            public override string[] ResolveAddionallyAllowedTenantIds(IList<string> additionallyAllowedTenants)
+            {
+                return base.ResolveAddionallyAllowedTenantIds(additionallyAllowedTenants);
+            }
         }
     }
 }

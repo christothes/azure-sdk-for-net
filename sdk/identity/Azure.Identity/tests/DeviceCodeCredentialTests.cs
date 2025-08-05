@@ -66,6 +66,7 @@ namespace Azure.Identity.Tests
                 DisableInstanceDiscovery = config.DisableInstanceDiscovery,
                 IsUnsafeSupportLoggingEnabled = config.IsUnsafeSupportLoggingEnabled,
                 AuthorityHost = config.AuthorityHost,
+                TenantIdResolver = config.TestTentantIdResolver ?? TenantIdResolverBase.Default,
             };
             if (config.Transport != null)
             {

@@ -31,6 +31,7 @@ namespace Azure.Identity.Tests
                 AdditionallyAllowedTenants = config.AdditionallyAllowedTenants,
                 IsUnsafeSupportLoggingEnabled = config.IsUnsafeSupportLoggingEnabled,
                 AuthorityHost = config.AuthorityHost,
+                TenantIdResolver = config.TestTentantIdResolver ?? TenantIdResolverBase.Default,
             };
             if (config.Transport != null)
             {
