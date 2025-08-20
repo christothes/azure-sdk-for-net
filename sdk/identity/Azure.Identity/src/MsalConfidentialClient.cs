@@ -75,6 +75,8 @@ namespace Azure.Identity
                 .WithHttpClientFactory(new HttpPipelineClientFactory(Pipeline.HttpPipeline))
                 .WithLogging(AzureIdentityEventSource.Singleton, enablePiiLogging: IsSupportLoggingEnabled);
 
+            AzureIdentityEventSource.Singleton.ProcessRunnerInformational($"*** DEBUG *** WithAuthority called with AuthorityHost: {AuthorityHost.AbsoluteUri} and tenant ID '{TenantId}'.");
+
             // Special case for using appTokenProviderCallback, authority validation and instance metadata discovery should be disabled since we're not calling the STS
             // The authority matches the one configured in the CredentialOptions.
             if (_appTokenProviderCallback != null)
@@ -170,6 +172,7 @@ namespace Azure.Identity
             if (!string.IsNullOrEmpty(tenantId))
             {
                 UriBuilder uriBuilder = BuildTenantIdWithAuthorityHost(tenantId);
+                AzureIdentityEventSource.Singleton.ProcessRunnerInformational($"*** DEBUG *** Using tenant ID '{tenantId}' for AcquireTokenForClientAsync.");
                 builder.WithTenantIdFromAuthority(uriBuilder.Uri);
             }
             if (!string.IsNullOrEmpty(claims))
