@@ -21,6 +21,7 @@ namespace System.ClientModel.Primitives;
 /// </summary>
 public sealed partial class ClientPipeline
 {
+    private static readonly AsyncLocal<PipelineMessageRequestOptionsScope?> CurrentPipelineMessageRequestOptionsScope = new AsyncLocal<PipelineMessageRequestOptionsScope?>();
     internal static TimeSpan DefaultNetworkTimeout { get; } = TimeSpan.FromSeconds(100);
 
     private readonly int _perCallIndex;
@@ -236,6 +237,7 @@ public sealed partial class ClientPipeline
         Argument.AssertNotNull(message, nameof(message));
         message.Request.ClientRequestId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
 
+        AddPipelineMessageRequestOptions(message);
         IReadOnlyList<PipelinePolicy> policies = GetProcessor(message);
 
         policies[0].Process(message, policies, 0);
@@ -259,9 +261,30 @@ public sealed partial class ClientPipeline
         Argument.AssertNotNull(message, nameof(message));
         message.Request.ClientRequestId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
 
+        AddPipelineMessageRequestOptions(message);
         IReadOnlyList<PipelinePolicy> policies = GetProcessor(message);
 
         await policies[0].ProcessAsync(message, policies, 0).ConfigureAwait(false);
+    }
+
+    /// <summary>
+        /// Creates a scope in which all <see cref="PipelineMessage"/>s would have provided options.
+        /// </summary>
+        /// <param name="requestOptions">The <see cref="RequestOptions"/> to be used for the scope.</param>
+        /// <returns>The <see cref="IDisposable"/> instance that needs to be disposed when properties shouldn't be used anymore.</returns>
+        public static IDisposable CreateRequestOptionsScope(RequestOptions requestOptions)
+        {
+            Argument.AssertNotNull(requestOptions, nameof(requestOptions));
+            CurrentPipelineMessageRequestOptionsScope.Value = new PipelineMessageRequestOptionsScope(requestOptions, CurrentPipelineMessageRequestOptionsScope.Value);
+            return CurrentPipelineMessageRequestOptionsScope.Value;
+        }
+
+    private static void AddPipelineMessageRequestOptions(PipelineMessage message)
+    {
+        if (CurrentPipelineMessageRequestOptionsScope.Value != null)
+        {
+            message.Apply(CurrentPipelineMessageRequestOptionsScope.Value.RequestOptions);
+        }
     }
 
     private IReadOnlyList<PipelinePolicy> GetProcessor(PipelineMessage message)
@@ -330,5 +353,38 @@ public sealed partial class ClientPipeline
         public void Reset() => _current = -1;
 
         public void Dispose() { }
+    }
+
+    internal class PipelineMessageRequestOptionsScope : IDisposable
+    {
+        private readonly PipelineMessageRequestOptionsScope? _parent;
+        private bool _disposed;
+
+        internal PipelineMessageRequestOptionsScope(RequestOptions requestOptions, PipelineMessageRequestOptionsScope? parent)
+        {
+            if (parent != null)
+            {
+                //TODO: merge options
+                //RequestOptions.Merge(requestOptions);
+                RequestOptions = requestOptions;
+            }
+            else
+            {
+                RequestOptions = requestOptions;
+            }
+            _parent = parent;
+        }
+
+        public RequestOptions RequestOptions { get; }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            CurrentPipelineMessageRequestOptionsScope.Value = _parent;
+            _disposed = true;
+        }
     }
 }

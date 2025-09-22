@@ -23,6 +23,7 @@ public class RequestOptions
     private PipelinePolicy[]? _beforeTransportPolicies;
 
     private List<HeadersUpdate>? _headersUpdates;
+    internal const string RequestOptionsKey = "RequestOptionsProperty";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestOptions"/> class

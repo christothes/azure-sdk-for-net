@@ -70,6 +70,49 @@ public class ClientPipelineTests : SyncAsyncTestBase
     }
 
     [Test]
+    public async Task CanCreateWithPerCallPoliciesUsingScope()
+    {
+        ClientPipelineOptions options = new()
+        {
+            RetryPolicy = new ObservablePolicy("RetryPolicy"),
+            Transport = new ObservableTransport("Transport")
+        };
+
+        PipelinePolicy[] perCallPolicies = new PipelinePolicy[]
+        {
+            new ObservablePolicy("PerCallPolicyA"),
+            new ObservablePolicy("PerCallPolicyB"),
+        };
+
+        ClientPipeline pipeline = ClientPipeline.Create(options,
+            perCallPolicies: ReadOnlySpan<PipelinePolicy>.Empty,
+            perTryPolicies: ReadOnlySpan<PipelinePolicy>.Empty,
+            beforeTransportPolicies: ReadOnlySpan<PipelinePolicy>.Empty);
+
+        var requestOptions = new RequestOptions();
+        requestOptions.AddPolicy(perCallPolicies[0], PipelinePosition.PerCall);
+        requestOptions.AddPolicy(perCallPolicies[1], PipelinePosition.PerCall);
+
+        PipelineMessage message = pipeline.CreateMessage();
+        using (ClientPipeline.CreateRequestOptionsScope (requestOptions))
+        {
+            await pipeline.SendSyncOrAsync(message, IsAsync);
+        }
+
+        List<string> observations = ObservablePolicy.GetData(message);
+
+        int index = 0;
+        Assert.AreEqual(7, observations.Count);
+        Assert.AreEqual("Request:PerCallPolicyA", observations[index++]);
+        Assert.AreEqual("Request:PerCallPolicyB", observations[index++]);
+        Assert.AreEqual("Request:RetryPolicy", observations[index++]);
+        Assert.AreEqual("Transport:Transport", observations[index++]);
+        Assert.AreEqual("Response:RetryPolicy", observations[index++]);
+        Assert.AreEqual("Response:PerCallPolicyB", observations[index++]);
+        Assert.AreEqual("Response:PerCallPolicyA", observations[index++]);
+    }
+
+    [Test]
     public async Task CanCreateWithPerTryPolicies()
     {
         ClientPipelineOptions options = new()
@@ -332,7 +375,7 @@ public class ClientPipelineTests : SyncAsyncTestBase
         Assert.AreEqual("Response:A", observations[index++]);
     }
 
-        [Test]
+    [Test]
     public void CreateMessageWithUriMethodAndClassifierSetsProperties()
     {
         ClientPipeline pipeline = ClientPipeline.Create();
