@@ -204,6 +204,22 @@ public class CollectionResultFromPagesTests
     }
 
     [Test]
+    public async Task AsyncCollectionContinuationTokenIsNullForSinglePage()
+    {
+        var pages = new[]
+        {
+            new[] { 1 }
+        };
+
+        AsyncCollectionResult<int> collection = AsyncCollectionResult<int>.FromPages(pages);
+
+        List<ClientResult> rawPages = await ToListAsync(collection.GetRawPagesAsync());
+
+        Assert.AreEqual(1, rawPages.Count);
+        Assert.IsNull(collection.GetContinuationToken(rawPages[0]));
+    }
+
+    [Test]
     public void AsyncFromPagesThrowsOnNull()
     {
         Assert.Throws<ArgumentNullException>(() =>

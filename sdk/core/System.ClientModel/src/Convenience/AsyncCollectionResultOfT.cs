@@ -81,8 +81,7 @@ public abstract class AsyncCollectionResult<T> : AsyncCollectionResult, IAsyncEn
         {
             for (int i = 0; i < _pages.Count; i++)
             {
-                BinaryData content = BinaryData.FromString(i.ToString());
-                PipelineResponse response = new StaticPipelineResponse(content);
+                PipelineResponse response = new StaticPipelineResponse(pageIndex: i);
                 yield return ClientResult.FromResponse(response);
             }
         }
@@ -115,8 +114,7 @@ public abstract class AsyncCollectionResult<T> : AsyncCollectionResult, IAsyncEn
 
         private static int GetPageIndex(ClientResult page)
         {
-            BinaryData content = page.GetRawResponse().Content;
-            return int.Parse(content.ToString());
+            return ((StaticPipelineResponse)page.GetRawResponse()).PageIndex;
         }
     }
 }

@@ -20,10 +20,13 @@ internal class StaticPipelineResponse : PipelineResponse
     private Stream? _contentStream;
     private bool _disposed;
 
-    public StaticPipelineResponse(BinaryData? content = null)
+    public StaticPipelineResponse(BinaryData? content = null, int pageIndex = 0)
     {
         _content = content ?? new BinaryData(Array.Empty<byte>());
+        PageIndex = pageIndex;
     }
+
+    internal int PageIndex { get; }
 
     public override int Status => 200;
 
