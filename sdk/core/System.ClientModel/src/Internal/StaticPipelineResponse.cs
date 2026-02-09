@@ -35,11 +35,7 @@ internal class StaticPipelineResponse : PipelineResponse
     public override Stream? ContentStream
     {
         get => _contentStream ??= _content.ToStream();
-        set
-        {
-            _contentStream?.Dispose();
-            _contentStream = value;
-        }
+        set => throw new NotSupportedException("StaticPipelineResponse is immutable; ContentStream cannot be set.");
     }
 
     public override BinaryData Content => _content;

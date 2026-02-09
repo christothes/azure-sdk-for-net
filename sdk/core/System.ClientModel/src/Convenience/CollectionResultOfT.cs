@@ -31,6 +31,23 @@ public abstract class CollectionResult<T> : CollectionResult, IEnumerable<T>
     /// Each element in <paramref name="pages"/> represents a single page of
     /// values.</param>
     /// <returns>A new instance of <see cref="CollectionResult{T}"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// This factory method eagerly materializes all of the provided pages by
+    /// buffering their contents into in-memory lists. As a result, the entire
+    /// sequence of values will be loaded into memory up-front. This behavior
+    /// makes the method suitable for testing or mocking scenarios, or for
+    /// small data sets where the additional memory usage is acceptable.
+    /// </para>
+    /// <para>
+    /// The raw pages returned by <see cref="GetRawPages"/> and the
+    /// <see cref="ContinuationToken"/> instances returned by
+    /// <see cref="GetContinuationToken(ClientResult)"/> are synthetic and are
+    /// not derived from real service responses. They are constructed from
+    /// in-memory data solely to provide a paged-programming model over the
+    /// supplied values.
+    /// </para>
+    /// </remarks>
 #pragma warning disable CA1000 // Do not declare static members on generic types
     public static CollectionResult<T> FromPages(IEnumerable<IEnumerable<T>> pages)
 #pragma warning restore CA1000 // Do not declare static members on generic types
