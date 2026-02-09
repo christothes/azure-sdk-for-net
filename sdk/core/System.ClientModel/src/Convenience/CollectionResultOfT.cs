@@ -40,9 +40,9 @@ public abstract class CollectionResult<T> : CollectionResult, IEnumerable<T>
     /// small data sets where the additional memory usage is acceptable.
     /// </para>
     /// <para>
-    /// The raw pages returned by <see cref="GetRawPages"/> and the
+    /// The raw pages returned by <see cref="CollectionResult.GetRawPages"/> and the
     /// <see cref="ContinuationToken"/> instances returned by
-    /// <see cref="GetContinuationToken(ClientResult)"/> are synthetic and are
+    /// <see cref="CollectionResult.GetContinuationToken(ClientResult)"/> are synthetic and are
     /// not derived from real service responses. They are constructed from
     /// in-memory data solely to provide a paged-programming model over the
     /// supplied values.
