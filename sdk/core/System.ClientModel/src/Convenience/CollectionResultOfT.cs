@@ -1,9 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.ClientModel.Internal;
 using System.ClientModel.Primitives;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace System.ClientModel;
@@ -19,6 +21,23 @@ public abstract class CollectionResult<T> : CollectionResult, IEnumerable<T>
     /// </summary>
     protected internal CollectionResult()
     {
+    }
+
+    /// <summary>
+    /// Creates an instance of <see cref="CollectionResult{T}"/> using the
+    /// provided pages of values.
+    /// </summary>
+    /// <param name="pages">The pages of values to include in the collection.
+    /// Each element in <paramref name="pages"/> represents a single page of
+    /// values.</param>
+    /// <returns>A new instance of <see cref="CollectionResult{T}"/>.</returns>
+#pragma warning disable CA1000 // Do not declare static members on generic types
+    public static CollectionResult<T> FromPages(IEnumerable<IEnumerable<T>> pages)
+#pragma warning restore CA1000 // Do not declare static members on generic types
+    {
+        Argument.AssertNotNull(pages, nameof(pages));
+
+        return new StaticCollectionResult(pages);
     }
 
     /// <inheritdoc/>
@@ -47,5 +66,50 @@ public abstract class CollectionResult<T> : CollectionResult, IEnumerable<T>
     protected abstract IEnumerable<T> GetValuesFromPage(ClientResult page);
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private class StaticCollectionResult : CollectionResult<T>
+    {
+        private readonly IReadOnlyList<IReadOnlyList<T>> _pages;
+
+        public StaticCollectionResult(IEnumerable<IEnumerable<T>> pages)
+        {
+            _pages = pages.Select(p => (IReadOnlyList<T>)p.ToList()).ToList();
+        }
+
+        public override IEnumerable<ClientResult> GetRawPages()
+        {
+            for (int i = 0; i < _pages.Count; i++)
+            {
+                BinaryData content = BinaryData.FromString(i.ToString());
+                PipelineResponse response = new StaticPipelineResponse(content);
+                yield return ClientResult.FromResponse(response);
+            }
+        }
+
+        public override ContinuationToken? GetContinuationToken(ClientResult page)
+        {
+            int pageIndex = GetPageIndex(page);
+
+            if (pageIndex < _pages.Count - 1)
+            {
+                BinaryData tokenData = BinaryData.FromString(
+                    (pageIndex + 1).ToString());
+                return ContinuationToken.FromBytes(tokenData);
+            }
+
+            return null;
+        }
+
+        protected override IEnumerable<T> GetValuesFromPage(ClientResult page)
+        {
+            int pageIndex = GetPageIndex(page);
+            return _pages[pageIndex];
+        }
+
+        private static int GetPageIndex(ClientResult page)
+        {
+            BinaryData content = page.GetRawResponse().Content;
+            return int.Parse(content.ToString());
+        }
+    }
 }
-#pragma warning restore CS1591 // public XML comments
