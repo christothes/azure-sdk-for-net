@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core.TestFramework;
 using Azure.Data.Tables.Models;
@@ -373,6 +375,139 @@ namespace Azure.Data.Tables.Tests
                 Assert.AreEqual(expectedRule.AllowedOrigins, actualRule.AllowedOrigins);
                 Assert.AreEqual(expectedRule.MaxAgeInSeconds, actualRule.MaxAgeInSeconds);
                 Assert.AreEqual(expectedRule.ExposedHeaders, actualRule.ExposedHeaders);
+            }
+        }
+
+        /// <summary>
+        /// Reproduces the issue described in https://github.com/Azure/azure-sdk-for-net/issues/55632
+        /// where QueryAsync throws JsonException when Cosmos DB returns an empty response body
+        /// during concurrent table creation/deletion operations.
+        /// </summary>
+        [LiveOnly]
+        [Test]
+        public async Task QueryAsyncDoesNotThrowJsonExceptionUnderConcurrentCosmosLoad()
+        {
+            if (_endpointType != TableEndpointType.CosmosTable)
+            {
+                Assert.Ignore("This test only applies to Cosmos DB endpoints.");
+            }
+
+            var createdTables = new List<string>();
+            var jsonExceptionOccurred = false;
+            Exception caughtJsonException = null;
+
+            try
+            {
+                // Create many tables rapidly without throttle wrapper to generate load.
+                var createTasks = new List<Task>();
+                for (int i = 0; i < 20; i++)
+                {
+                    var table = $"loadtest{Guid.NewGuid():N}".Substring(0, 20);
+                    createdTables.Add(table);
+                    createTasks.Add(Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await service.CreateTableAsync(table).ConfigureAwait(false);
+                        }
+                        catch (RequestFailedException)
+                        {
+                            // Expected - throttling may occur
+                        }
+                    }));
+                }
+
+                // Concurrently query the table catalog while tables are being created.
+                var queryTasks = new List<Task>();
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+                for (int i = 0; i < 10; i++)
+                {
+                    queryTasks.Add(Task.Run(async () =>
+                    {
+                        while (!cts.Token.IsCancellationRequested)
+                        {
+                            try
+                            {
+                                await foreach (var page in service.QueryAsync(cancellationToken: cts.Token).AsPages())
+                                {
+                                    // Just iterate through pages
+                                }
+                            }
+                            catch (JsonException ex)
+                            {
+                                // This is the bug - JsonException should not leak to the caller.
+                                jsonExceptionOccurred = true;
+                                caughtJsonException = ex;
+                                return;
+                            }
+                            catch (RequestFailedException)
+                            {
+                                // This is expected behavior for throttling
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                return;
+                            }
+                        }
+                    }));
+                }
+
+                // Also delete and recreate some tables to increase churn
+                var churnTasks = new List<Task>();
+                for (int i = 0; i < 5; i++)
+                {
+                    int index = i;
+                    churnTasks.Add(Task.Run(async () =>
+                    {
+                        for (int j = 0; j < 5 && !cts.Token.IsCancellationRequested; j++)
+                        {
+                            try
+                            {
+                                var churnTable = $"churn{Guid.NewGuid():N}".Substring(0, 20);
+                                createdTables.Add(churnTable);
+                                await service.CreateTableAsync(churnTable).ConfigureAwait(false);
+                                await service.DeleteTableAsync(churnTable).ConfigureAwait(false);
+                            }
+                            catch (RequestFailedException)
+                            {
+                                // Expected - throttling may occur
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                return;
+                            }
+                        }
+                    }));
+                }
+
+                await Task.WhenAll(createTasks).ConfigureAwait(false);
+                await Task.WhenAll(churnTasks).ConfigureAwait(false);
+                cts.Cancel();
+                await Task.WhenAll(queryTasks).ConfigureAwait(false);
+
+                // If we caught a JsonException, the bug is reproduced.
+                if (jsonExceptionOccurred)
+                {
+                    Assert.Fail(
+                        $"QueryAsync threw a JsonException instead of RequestFailedException. " +
+                        $"This reproduces issue #55632. Exception: {caughtJsonException.Message}");
+                }
+            }
+            finally
+            {
+                // Clean up all created tables, ignoring errors.
+                foreach (var table in createdTables.Distinct())
+                {
+                    try
+                    {
+                        await service.DeleteTableAsync(table);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
             }
         }
     }

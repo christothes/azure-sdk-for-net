@@ -228,6 +228,7 @@ namespace Azure.Data.Tables
                 RequestFailedDetailsParser = new TablesRequestFailedDetailsParser()
             };
             ((List<HttpPipelinePolicy>)pipelineOptions.PerCallPolicies).AddRange(perCallPolicies);
+            pipelineOptions.PerCallPolicies.Add(new EmptyBodyResponseHandlingPolicy());
 
             _pipeline = HttpPipelineBuilder.Build(pipelineOptions);
 
@@ -281,6 +282,7 @@ namespace Azure.Data.Tables
                 RequestFailedDetailsParser = new TablesRequestFailedDetailsParser()
             };
             ((List<HttpPipelinePolicy>)pipelineOptions.PerCallPolicies).AddRange(perCallPolicies);
+            pipelineOptions.PerCallPolicies.Add(new EmptyBodyResponseHandlingPolicy());
 
             _pipeline = HttpPipelineBuilder.Build(pipelineOptions);
 
@@ -333,6 +335,7 @@ namespace Azure.Data.Tables
                 RequestFailedDetailsParser = new TablesRequestFailedDetailsParser()
             };
             ((List<HttpPipelinePolicy>)pipelineOptions.PerCallPolicies).AddRange(perCallPolicies);
+            pipelineOptions.PerCallPolicies.Add(new EmptyBodyResponseHandlingPolicy());
             _pipeline = HttpPipelineBuilder.Build(pipelineOptions);
 
             _version = options.VersionString;

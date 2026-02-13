@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core.TestFramework;
 using Azure.Data.Tables.Models;
@@ -315,5 +317,23 @@ namespace Azure.Data.Tables.Tests
                     null,
                     "bad Uri",
                     null));
+
+        /// <summary>
+        /// Validates that QueryAsync throws a RequestFailedException (not JsonException) when the server
+        /// returns a 200 response with an empty body. This is the fix for the issue described in
+        /// https://github.com/Azure/azure-sdk-for-net/issues/55632.
+        /// </summary>
+        [Test]
+        public void QueryAsyncThrowsRequestFailedExceptionForEmptyResponseBody()
+        {
+            var response = new MockResponse(200);
+            // Set empty content to simulate what Cosmos DB returns under load
+            response.SetContent(string.Empty);
+            response.AddHeader("Content-Length", "0");
+            var mockTransport = new MockTransport(response);
+            var service = InstrumentClient(new TableServiceClient(_url, new AzureSasCredential("sig"), new TableClientOptions { Transport = mockTransport }));
+
+            Assert.ThrowsAsync<RequestFailedException>(async () => await service.QueryAsync().ToEnumerableAsync());
+        }
     }
 }
