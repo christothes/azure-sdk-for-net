@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Fixed challenge-based authentication to correctly parse tenant ID from DSTSv2 authority URIs.
+- Fixed challenge-based authentication to correctly parse tenant ID from DSTSv2 authority URIs. 
 
 ### Other Changes
 
