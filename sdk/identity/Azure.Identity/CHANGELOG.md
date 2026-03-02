@@ -12,6 +12,8 @@
 
 ### Other Changes
 
+- Updated `Microsoft.Identity.Client` and `Microsoft.Identity.Client.Extensions.Msal` dependencies to version 4.82.1.
+
 ## 1.18.0 (2026-02-25)
 
 ### Features Added
