@@ -18,6 +18,23 @@ var certificate = new X509Certificate2("./certs/cert-password-protected.pfx", "p
 var credential = new ClientCertificateCredential(tenantId, clientId, certificate);
 ```
 
+## Loading certificates from the platform certificate store
+
+On Windows and macOS, the `ClientCertificateCredential` supports loading a certificate directly from the platform certificate store by specifying a path in the form `cert:/StoreLocation/StoreName/Thumbprint`. This is a simpler alternative to manually opening an `X509Store`.
+
+```C# Snippet:Identity_CertificateCredential_CreateWithStorePath
+// Load a certificate from the platform certificate store (Windows Certificate Store or macOS Keychain)
+// by specifying the path in the format: cert:/StoreLocation/StoreName/Thumbprint
+var credential = new ClientCertificateCredential(
+    tenantId,
+    clientId,
+    "cert:/CurrentUser/My/E661583E8FABEF4C0BEF694CBC41C28FB81CD870");
+```
+
+Windows-style backslash separators are also supported: `cert:\CurrentUser\My\<Thumbprint>`.
+
+> **Note:** Password-protected certificates cannot be loaded from the certificate store using this method.
+
 ## Loading certificates from an X509Store
 
 Applications running on platforms which provide a secure certificate store might prefer to store and retrieve certificates from there. While the `ClientCertificateCredential` doesn't directly provide a mechanism for this, the application can retrieve the appropriate certificate from the store and use it to construct the `ClientCertificateCredential`.
