@@ -15,7 +15,7 @@ namespace Azure.Identity
     /// Simplifies authentication while developing apps that deploy to Azure by combining credentials used in Azure
     /// hosting environments with credentials used in local development. In production, it's better to use something
     /// else. See <see href="https://aka.ms/azsdk/net/identity/credential-chains#usage-guidance-for-defaultazurecredential">Usage guidance for DefaultAzureCredential</see>.
-    /// 
+    ///
     /// Attempts to authenticate with each of these credentials, in the following order, stopping when one provides
     /// a token:
     /// <list type="bullet">
