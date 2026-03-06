@@ -55,7 +55,7 @@ namespace Azure.Identity.Tests
             //First request uses a 1 second timeout and no retries
             await cred.GetTokenAsync(new(new[] { "test" }));
 
-            var expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null, null };
+            var expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null };
             CollectionAssert.AreEqual(expectedTimeouts, networkTimeouts);
             networkTimeouts.Clear();
 
@@ -218,7 +218,7 @@ namespace Azure.Identity.Tests
             // Second request gets the expected probe response and should use the probe timeout on first request and default timeout on the retry
             await cred.GetTokenAsync(new(new[] { "test" }));
 
-            expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null, null };
+            expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null };
             CollectionAssert.AreEqual(expectedTimeouts, networkTimeouts);
         }
 
@@ -255,7 +255,7 @@ namespace Azure.Identity.Tests
 
             Assert.ThrowsAsync<CredentialUnavailableException>(async () => await cred.GetTokenAsync(new(new[] { "test" })));
 
-            var expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null, null, null, null, null, null, null, null, null };
+            var expectedTimeouts = new TimeSpan?[] { TimeSpan.FromSeconds(1), null, null, null, null, null, null, null, null };
             CollectionAssert.AreEqual(expectedTimeouts, networkTimeouts);
         }
 

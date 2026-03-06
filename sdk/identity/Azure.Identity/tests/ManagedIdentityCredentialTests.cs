@@ -615,7 +615,7 @@ namespace Azure.Identity.Tests
 
             MockRequest request = mockTransport.SingleRequest;
 
-            Assert.IsTrue(request.Uri.ToString().StartsWith("https://mock.podid.endpoint" + ImdsManagedIdentityProbeSource.imddsTokenPath));
+            Assert.IsTrue(request.Uri.ToString().StartsWith("https://mock.podid.endpoint" + ImdsManagedIdentityProbeSource.imddsTokenPath), $"Unexpected Uri: {request.Uri}");
 
             string query = request.Uri.Query;
 
