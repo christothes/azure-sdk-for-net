@@ -38,7 +38,7 @@ timeout-minutes: 10
 
 You're a triage assistant for GitHub issues. Your task is to analyze issue #${{ github.event.issue.number }} and perform some initial triage tasks related to that issue.
 
-1. Select appropriate labels for the issue from the provided list.
+1. Select appropriate labels for the issue from the available labels for the repo.
    - All issues should have a label of the color #ffeb77 which will be either "Client", "Service", or "Mgmt". Client issues are dealing with client side issues relevant to the SDK code or behavior itself. Service issues are relevant to issues with the REST API itself or the behavior of the service which are outside the control of the client SDK. "Mgmt" issues are those that are relevant to SDKs that start with the name "Azure.ResourceManager"
    - All issues should have a label of the color #e99695 which describe the service that is relevant to the issue. This is typically very similar to the service directory in which the SDK for that service can be found. For example the lable for an issue with the Azure.Storage.Blobs SDK which lives in the folder /sdk/storage would have the service label `Storage`. Another example is if an issue is concerning the Azure.Identity library, it should be tagged with the `Azure.Identity` label
    - Some issue are not related to an Azure service. For example, issues relating to the engineering systems such as scripts, workflows, or pipelines that live in the /eng folder would be tagged with the `Central-EngSys` label.
@@ -65,12 +65,11 @@ You're a triage assistant for GitHub issues. Your task is to analyze issue #${{ 
 
 5. Write notes, ideas, nudges, resource links, debugging strategies and/or reproduction steps for the team to consider relevant to the issue.
 
-6. Select appropriate labels from the available labels list provided above:
+6. Select appropriate labels from the available labels available in the repo:
 
    - Choose labels that accurately reflect the issue's nature
    - Be specific but comprehensive
    - Search for similar issues, and if you find similar issues consider using a "duplicate" label if appropriate. Only do so if the issue is a duplicate of another OPEN issue.
-   - Only select labels from the provided list above
    - It's okay to not add any labels if none are clearly applicable
 
 7. Apply the selected labels:
