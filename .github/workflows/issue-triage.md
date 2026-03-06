@@ -44,7 +44,7 @@ You're a triage assistant for GitHub issues. Your task is to analyze issue #${{ 
    - Some issues are not related to an Azure service. For example, issues relating to the engineering systems such as scripts, workflows, or pipelines that live in the /eng folder would be tagged with the `Central-EngSys` label.
    - Issues that are created by users that do not have write access to the repo should be tagged with the `customer-reported` label. These issues should also be tagged with the `needs-team-attention` label
    - Issues that are not bug reports or feature requests but are asking a question should be tagged with the `question` label
-   - If we can't apply exactly one #ffeb77 colored lable and one #e99695 colored lable, apply only the `needs-triage` lablel
+   - If we can't apply exactly one #ffeb77 colored label and one #e99695 colored label, apply only the `needs-triage` label
    - Add the `needs-team-triage` label if we add labels but don't have `Service Attention` or a person assigned.
    - Use CODEOWNERS to assign the "AzureSdkOwners" for the label combination, if present.
    - If there are no "AzureSdkOwners" in CODEOWNERS then add "Service Attention"
