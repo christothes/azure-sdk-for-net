@@ -166,6 +166,12 @@ namespace Azure.Identity.Tests
 
         #endregion
 
+        [SetUp]
+        public void Setup()
+        {
+            ApplicationBase.ResetStateForTest();
+        }
+
         [NonParallelizable]
         [Test]
         public async Task VerifyImdsRequestWithClientIdMock()
@@ -603,10 +609,12 @@ namespace Azure.Identity.Tests
         [Test]
         public async Task VerifyIMDSRequestWithPodIdentityEnvVarResourceIdMock()
         {
-            using var environment = new TestEnvVar(new() { { "MSI_ENDPOINT", null }, { "MSI_SECRET", null }, { "IDENTITY_ENDPOINT", null }, { "IDENTITY_HEADER", null }, { "AZURE_POD_IDENTITY_AUTHORITY_HOST", "https://mock.podid.endpoint/" } });
+            using var environment = new TestEnvVar(new() { { "MSI_ENDPOINT", null }, { "MSI_SECRET", null }, { "IDENTITY_ENDPOINT", null }, { "IDENTITY_HEADER", null }, { "AZURE_POD_IDENTITY_AUTHORITY_HOST", /*"https://mock.podid.endpoint/"*/ null } });
 
             var response = CreateSuccessResponse(ExpectedToken);
-            var mockTransport = new MockTransport(response);
+            var mockTransport = new MockTransport(req => {
+                return response;
+            });
             var credential = CreateCredentialForImdsWithResourceId(mockTransport, new ResourceIdentifier(_expectedResourceId));
 
             AccessToken actualToken = await credential.GetTokenAsync(new TokenRequestContext(MockScopes.Default), default);
