@@ -609,7 +609,7 @@ namespace Azure.Identity.Tests
         [Test]
         public async Task VerifyIMDSRequestWithPodIdentityEnvVarResourceIdMock()
         {
-            using var environment = new TestEnvVar(new() { { "MSI_ENDPOINT", null }, { "MSI_SECRET", null }, { "IDENTITY_ENDPOINT", null }, { "IDENTITY_HEADER", null }, { "AZURE_POD_IDENTITY_AUTHORITY_HOST", /*"https://mock.podid.endpoint/"*/ null } });
+            using var environment = new TestEnvVar(new() { { "MSI_ENDPOINT", null }, { "MSI_SECRET", null }, { "IDENTITY_ENDPOINT", null }, { "IDENTITY_HEADER", null }, { "AZURE_POD_IDENTITY_AUTHORITY_HOST", "https://mock.podid.endpoint/" } });
 
             var response = CreateSuccessResponse(ExpectedToken);
             var mockTransport = new MockTransport(req => {
