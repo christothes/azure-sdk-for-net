@@ -80,7 +80,7 @@ Documentation‑as‑Code, transparency, single source of truth, continuous impr
        - For example, code in the test file should be wrapped in snippet syntax like the following:
             
             #region Snippet:<snippetName>
-            // some samole code here
+            // some sample code here
             #endregion
 
        - Markdown files that incorporate these code samples should just have the snippet placeholder and will be filled in with the code when the update following script is run `eng/scripts/Update-Snippets.ps1`.
@@ -113,7 +113,7 @@ Markdown files that incorporate these code samples should just have the snippet 
 
 ### Error Handling
 
-- If running the Update-Snippets script produces errors, ensure that there are no duplicate snippet names, no orphaned snippet blocks in markdown with no correponsing snippet blocks in code, and that there are no snippet blocks in code that are no represented in markdown files
+- If running the Update-Snippets script produces errors, ensure that there are no duplicate snippet names, no orphaned snippet blocks in markdown with no corresponding snippet blocks in code, and that there are no snippet blocks in code that are no represented in markdown files
 
 ### Exit Conditions
 
