@@ -27,14 +27,13 @@
 # reproduction steps, and resource links. Helps maintainers quickly understand and
 # prioritize incoming issues.
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"d7bf418616847a3c3d7cc9874d1d5e045c70a4b193753b00722f67dc3d91dae2","compiler_version":"v0.53.4"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"1b536e4707a9239f9074b0ed478973f76e99ff68ca0ab32bff0ffac0a2a1757a","compiler_version":"v0.53.4"}
 
 name: "Agentic Triage"
 "on":
   issues:
     types:
     - opened
-    - reopened
 
 permissions: {}
 
@@ -45,6 +44,8 @@ run-name: "Agentic Triage"
 
 jobs:
   activation:
+    needs: pre_activation
+    if: needs.pre_activation.outputs.activated == 'true'
     runs-on: ubuntu-slim
     permissions:
       contents: read
