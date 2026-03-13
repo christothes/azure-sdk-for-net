@@ -98,6 +98,7 @@ Documentation‑as‑Code, transparency, single source of truth, continuous impr
 ### Output Requirements
 
 - **Create Draft Pull Requests**: When documentation needs updates, create focused draft pull requests with clear descriptions
+- Assign the PR to the contacts asociated with the sdk/<servicename> entry in the /.github/CODEOWNERS file 
 
 ### Technical Implementation
 
