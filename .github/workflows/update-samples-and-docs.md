@@ -57,7 +57,7 @@ Documentation‑as‑Code, transparency, single source of truth, continuous impr
    - Look for new APIs, methods, classes, environment variables, or significant code changes
    - Check existing documentation for accuracy and completeness.
    - Identify documentation gaps like failing tests: a "red build" until fixed
-   - Limit the scope of documentation and samples to the same service directory as the changes in the PR that was pushed. For example, if the PR only changes files in the `/sdk/identity` folder, limit documentation and samples changes to those in that folder
+   - Limit the scope of documentation and samples to the same service and package family as the changed code. Use package associations in `ci.yml` to map the changed package name to its owning service directory and package type (`management`, `data`, or `functions`), and only update docs/samples in that exact scope. For example, if changes are in a `management` package under `/sdk/identity`, only update docs/samples for `management` under `/sdk/identity`.
 
 2. **Documentation Assessment**
    
@@ -76,7 +76,7 @@ Documentation‑as‑Code, transparency, single source of truth, continuous impr
 4. **Documentation Structure & Organization**
    
    - Follow existing styling found in current documentation or samples
-   - Utilize snippets to have code found in documentation backed by actual tests that run during CIs or unit tests.
+   - Utilize snippets to have code found in documentation backed by actual tests that run during CIs or unit tests. See the following documentation about how snippets work - https://github.com/Azure/azure-sdk-for-net/blob/f595330a9801b827e54042302efa01337f3e49f6/CONTRIBUTING.md#updating-sample-snippets
        - For example, code in the test file should be wrapped in snippet syntax like the following:
             
             #region Snippet:<snippetName>
@@ -89,6 +89,44 @@ Documentation‑as‑Code, transparency, single source of truth, continuous impr
              ```C# Snippet:snippetName
                 // some code sample here
              ``` 
+
+   - Use this high-quality README pattern as a concrete template (adapt structure and tone; do not copy service-specific details blindly). Source: `sdk/keyvault/Azure.Security.KeyVault.Secrets/README.md`.
+
+     ## Getting started
+
+     ### Install the package
+
+     Install the Azure Key Vault secrets client library for .NET with NuGet:
+
+     ```dotnetcli
+     dotnet add package Azure.Security.KeyVault.Secrets
+     ```
+
+     ### Prerequisites
+
+     * An Azure subscription.
+     * An existing Azure Key Vault.
+     * Authorization to an existing Azure Key Vault using either RBAC (recommended) or access control.
+
+     ### Authenticate the client
+
+     The examples shown below use `DefaultAzureCredential`, which is appropriate for most scenarios including local development and production environments.
+
+     ```dotnetcli
+     dotnet add package Azure.Identity
+     ```
+
+     ```C# Snippet:CreateSecretClient
+     var client = new SecretClient(vaultUri: new Uri(vaultUrl), credential: new DefaultAzureCredential());
+     KeyVaultSecret secret = client.SetSecret("secret-name", "secret-value");
+     secret = client.GetSecret("secret-name");
+     ```
+
+   - What makes this example high quality:
+     - Progressive disclosure: setup first, then auth, then runnable code.
+     - Actionable prerequisites with concrete setup guidance.
+     - Minimal but complete code that demonstrates a real user outcome.
+     - Uses snippet-backed code blocks that can be validated by CI.
 
 5. **Quality Assurance**
    
