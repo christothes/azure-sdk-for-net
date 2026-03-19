@@ -131,10 +131,6 @@ namespace Azure.Core.Pipeline
                             {
                                 currentRequest.Headers.Host = stringValue;
                             }
-                            else if (headerName == HttpHeader.Names.UserAgent)
-                            {
-                                currentRequest.Headers.UserAgent.ParseAdd(stringValue);
-                            }
                             else if (!currentRequest.Headers.TryAddWithoutValidation(headerName, stringValue))
                             {
                                 if (currentContent != null && !currentContent.Headers.TryAddWithoutValidation(headerName, stringValue))
