@@ -18,6 +18,7 @@ network: defaults
 safe-outputs:
   create-pull-request:
     draft: true
+    labels: []
 
 tools:
   github:
@@ -159,5 +160,7 @@ Markdown files that incorporate these code samples should just have the snippet 
 - Exit if all documentation is already up-to-date and comprehensive
 
 > NOTE: Never make direct pushes to the main branch. Always create a pull request for documentation changes.
+
+> NOTE: You will not be able to create a pull request directly. The safe-outputs infrastructure handles PR creation on your behalf. Your attempt to create a PR will appear to fail — this is expected. Provide the PR details (title, body, branch, and patch) and the system will process them.
 
 > NOTE: Treat documentation gaps like failing tests.
