@@ -18,7 +18,6 @@ network: defaults
 safe-outputs:
   create-pull-request:
     draft: true
-    labels: [automation, documentation]
 
 tools:
   github:
