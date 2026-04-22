@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(RequiredTargetFrameworks)</TargetFrameworks>
+    <IsSamplesProject>true</IsSamplesProject>
+    <IsPackable>false</IsPackable>
+    <IsShippingLibrary>false</IsShippingLibrary>
   </PropertyGroup>
 
   <ItemGroup>
