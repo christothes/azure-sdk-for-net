@@ -10,7 +10,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.AI.Projects.Evaluation;
 using Azure.Identity;
 using Microsoft.ClientModel.TestFramework;
 using NUnit.Framework;
@@ -18,9 +17,9 @@ using OpenAI.Evals;
 
 namespace Azure.AI.Projects.Tests.Samples.Evaluation;
 
-public class Sample_EvaluationsCatalogCodeBased : SamplesBase
+public class Sample_EvaluationsGraders : SamplesBase
 {
-    #region Snippet:Sample_GetError_EvaluationsCatalogCodeBased
+    #region Snippet:Sample_GetError_EvaluationsGraders
     private static string GetErrorMessageOrEmpty(ClientResult result)
     {
         string error = "";
@@ -55,7 +54,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         return error;
     }
     #endregion
-    #region Snippet:Sample_GetResultCounts_EvaluationsCatalogCodeBased
+    #region Snippet:Sample_GetResultCounts_EvaluationsGraders
     private static string GetResultsCounts(ClientResult result)
     {
         Utf8JsonReader reader = new(result.GetRawResponse().Content.ToMemory().ToArray());
@@ -82,7 +81,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         return sbFormattedCounts.ToString();
     }
     #endregion
-    #region Snippet:Sample_GetStringValues_EvaluationsCatalogCodeBased
+    #region Snippet:Sample_GetStringValues_EvaluationsGraders
     private static Dictionary<string, string> ParseClientResult(ClientResult result, string[] expectedProperties)
     {
         Dictionary<string, string> results = [];
@@ -98,7 +97,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
                 }
             }
         }
-        List<string> notFoundItems = expectedProperties.Where((key) => !results.ContainsKey(key)).ToList();
+        List<string> notFoundItems = [..expectedProperties.Where((key) => !results.ContainsKey(key))];
         if (notFoundItems.Count > 0)
         {
             StringBuilder sbNotFound = new();
@@ -115,7 +114,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         return results;
     }
     #endregion
-    #region Snippet:Sample_GetResultsList_EvaluationsCatalogCodeBased_Async
+    #region Snippet:Sample_GetResultsList_EvaluationsGraders_Async
     private static async Task<List<string>> GetResultsListAsync(EvaluationClient client, string evaluationId, string evaluationRunId)
     {
         List<string> resultJsons = [];
@@ -152,7 +151,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         return resultJsons;
     }
     #endregion
-    #region Snippet:Sample_GetResultsList_EvaluationsCatalogCodeBased_Sync
+    #region Snippet:Sample_GetResultsList_EvaluationsGraders_Sync
     private static List<string> GetResultsList(EvaluationClient client, string evaluationId, string evaluationRunId)
     {
         List<string> resultJsons = [];
@@ -163,7 +162,6 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
             ClientResult resultList = client.GetEvaluationRunOutputItems(evaluationId: evaluationId, evaluationRunId: evaluationRunId, limit: null, order: "asc", after: after, outputItemStatus: default, options: new());
             Utf8JsonReader reader = new(resultList.GetRawResponse().Content.ToMemory().ToArray());
             JsonDocument document = JsonDocument.ParseValue(ref reader);
-            List<string> data = [];
 
             foreach (JsonProperty topProperty in document.RootElement.EnumerateObject())
             {
@@ -191,71 +189,11 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
     }
     #endregion
 
-    #region Snippet:Sample_CodeEvaluator_EvaluationsCatalogCodeBased
-    private EvaluatorVersion GetCodeEvaluatorVersion()
-    {
-        EvaluatorMetric resultMetric = new()
-        {
-            Type = EvaluatorMetricType.Ordinal,
-            DesirableDirection = EvaluatorMetricDirection.Increase,
-            MinValue = 0.0f,
-            MaxValue = 1.0f
-        };
-        EvaluatorVersion evaluatorVersion = new(
-        categories: [EvaluatorCategory.Quality],
-        definition: new CodeBasedEvaluatorDefinition(
-            codeText: "def grade(sample, item) -> float:\n    \"\"\"\n    Evaluate response quality based on multiple criteria.\n    Note: All data is in the \\'item\\' parameter, \\'sample\\' is empty.\n    \"\"\"\n    # Extract data from item (not sample!)\n    response = item.get(\"response\", \"\").lower() if isinstance(item, dict) else \"\"\n    ground_truth = item.get(\"ground_truth\", \"\").lower() if isinstance(item, dict) else \"\"\n    query = item.get(\"query\", \"\").lower() if isinstance(item, dict) else \"\"\n    \n    # Check if response is empty\n    if not response:\n        return 0.0\n    \n    # Check for harmful content\n    harmful_keywords = [\"harmful\", \"dangerous\", \"unsafe\", \"illegal\", \"unethical\"]\n    if any(keyword in response for keyword in harmful_keywords):\n        return 0.0\n    \n    # Length check\n    if len(response) < 10:\n        return 0.1\n    elif len(response) < 50:\n        return 0.2\n    \n    # Technical content check\n    technical_keywords = [\"api\", \"experiment\", \"run\", \"azure\", \"machine learning\", \"gradient\", \"neural\", \"algorithm\"]\n    technical_score = sum(1 for k in technical_keywords if k in response) / len(technical_keywords)\n    \n    # Query relevance\n    query_words = query.split()[:3] if query else []\n    relevance_score = 0.7 if any(word in response for word in query_words) else 0.3\n    \n    # Ground truth similarity\n    if ground_truth:\n        truth_words = set(ground_truth.split())\n        response_words = set(response.split())\n        overlap = len(truth_words & response_words) / len(truth_words) if truth_words else 0\n        similarity_score = min(1.0, overlap)\n    else:\n        similarity_score = 0.5\n    \n    return min(1.0, (technical_score * 0.3) + (relevance_score * 0.3) + (similarity_score * 0.4))",
-            initParameters: BinaryData.FromObjectAsJson(
-                new
-                {
-                    required = new[] { "deployment_name", "pass_threshold" },
-                    type = "object",
-                    properties = new
-                    {
-                        deployment_name = new { type = "string" },
-                        pass_threshold = new { type = "string" }
-                    }
-                }
-            ),
-            dataSchema: BinaryData.FromObjectAsJson(
-                new
-                {
-                    required = new[] { "item" },
-                    type = "object",
-                    properties = new
-                    {
-                        item = new
-                        {
-                            type = "object",
-                            properties = new
-                            {
-                                query = new { type = "string" },
-                                response = new { type = "string" },
-                                ground_truth = new { type = "string" },
-                            }
-                        }
-                    }
-                }
-            ),
-            metrics: new Dictionary<string, EvaluatorMetric> {
-                { "result", resultMetric }
-            }
-        ),
-        evaluatorType: EvaluatorType.Custom
-    )
-        {
-            DisplayName = "Custom code evaluator example",
-            Description = "Custom evaluator to detect violent content",
-        };
-        return evaluatorVersion;
-    }
-    #endregion
-
     [Test]
     [AsyncOnly]
-    public async Task Sample_EvaluationsCatalogCodeBasedExampleAsync()
+    public async Task EvaluationsGradersExampleAsync()
     {
-        #region Snippet:Sample_CreateClients_EvaluationsCatalogCodeBased
+        #region Snippet:Sample_CreateClients_EvaluationsGraders
 #if SNIPPET
         var endpoint = System.Environment.GetEnvironmentVariable("FOUNDRY_PROJECT_ENDPOINT");
         var modelDeploymentName = System.Environment.GetEnvironmentVariable("FOUNDRY_MODEL_NAME");
@@ -266,24 +204,46 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         AIProjectClient projectClient = new(new Uri(endpoint), new DefaultAzureCredential());
         EvaluationClient evaluationClient = projectClient.ProjectOpenAIClient.GetEvaluationClient();
         #endregion
-        #region Snippet:Sample_CreateEvaluator_EvaluationsCatalogCodeBased_Async
-        EvaluatorVersion promptEvaluator = await projectClient.Evaluators.CreateVersionAsync(
-            name: "myCustomEvaluatorPrompt",
-            evaluatorVersion: GetCodeEvaluatorVersion()
-        );
-        Console.WriteLine($"Created evaluator {promptEvaluator.Id}");
-        #endregion
-        #region Snippet:Sample_TestingCriteria_EvaluationsCatalogCodeBased
+        #region Snippet:Sample_CreateData_EvaluationsGraders
         object[] testingCriteria = [
             new {
-                type = "azure_ai_evaluator",
-                name = "MyCustomCodeEvaluator",
-                evaluator_name = promptEvaluator.Name,
-                initialization_parameters = new { deployment_name = modelDeploymentName, pass_threshold = 0.5},
+                type = "label_model",
+                name = "label_grader",
+                model = modelDeploymentName,
+                input = new object[] {
+                    new { role = "developer", content = "Classify the sentiment of the following statement as one of 'positive', 'neutral', or 'negative'" },
+                    new { role = "user", content = "Statement: {{item.query}}" }
+                },
+                passing_labels = new[] { "positive", "neutral" },
+                labels = new[] { "positive", "neutral", "negative" }
+            },
+            new {
+                type = "text_similarity",
+                name = "text_check_grader",
+                input = "{{item.ground_truth}}",
+                evaluation_metric = "bleu",
+                reference = "{{item.response}}",
+                pass_threshold = 1
+            },
+            new {
+                type = "string_check",
+                name = "string_check_grader",
+                input = "{{item.ground_truth}}",
+                reference = "{{item.ground_truth}}",
+                operation = "eq"
+            },
+            new {
+                type = "score_model",
+                name = "score",
+                model = modelDeploymentName,
+                input = new object[] {
+                    new { role = "system", content = "Evaluate the degree of similarity between the given output and the ground truth on a scale from 1 to 5, using a chain of thought to ensure step-by-step reasoning before reaching the conclusion.\n\nConsider the following criteria:\n\n- 5: Highly similar - The output and ground truth are nearly identical, with only minor, insignificant differences.\n- 4: Somewhat similar - The output is largely similar to the ground truth but has few noticeable differences.\n- 3: Moderately similar - There are some evident differences, but the core essence is captured in the output.\n- 2: Slightly similar - The output only captures a few elements of the ground truth and contains several differences.\n- 1: Not similar - The output is significantly different from the ground truth, with few or no matching elements.\n\n# Steps\n\n1. Identify and list the key elements present in both the output and the ground truth.\n2. Compare these key elements to evaluate their similarities and differences, considering both content and structure.\n3. Analyze the semantic meaning conveyed by both the output and the ground truth, noting any significant deviations.\n4. Based on these comparisons, categorize the level of similarity according to the defined criteria above.\n5. Write out the reasoning for why a particular score is chosen, to ensure transparency and correctness.\n6. Assign a similarity score based on the defined criteria above.\n\n# Output Format\n\nProvide the final similarity score as an integer (1, 2, 3, 4, or 5).\n\n# Examples\n\n**Example 1:**\n\n- Output: \"The cat sat on the mat.\"\n- Ground Truth: \"The feline is sitting on the rug.\"\n- Reasoning: Both sentences describe a cat sitting on a surface, but they use different wording. The structure is slightly different, but the core meaning is preserved. There are noticeable differences, but the overall meaning is conveyed well.\n- Similarity Score: 3\n\n**Example 2:**\n\n- Output: \"The quick brown fox jumps over the lazy dog.\"\n- Ground Truth: \"A fast brown animal leaps over a sleeping canine.\"\n- Reasoning: The meaning of both sentences is very similar, with only minor differences in wording. The structure and intent are well preserved.\n- Similarity Score: 4\n\n# Notes\n\n- Always aim to provide a fair and balanced assessment.\n- Consider both syntactic and semantic differences in your evaluation.\n- Consistency in scoring similar pairs is crucial for accurate measurement." },
+                    new { role = "user", content = "Output: {{item.response}}\nGround Truth: {{item.ground_truth}}" }
+                },
+                image_tag = "2025-05-08",
+                pass_threshold = 0.5
             },
         ];
-        #endregion
-        #region Snippet:Sample_CreateData_EvaluationsCatalogCodeBased
         object dataSourceConfig = new
         {
             type = "custom",
@@ -294,22 +254,23 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
                 {
                     query = new { type = "string" },
                     response = new { type = "string" },
-                    ground_truth = new { type = "string" },
+                    context = new { type = "string" },
+                    ground_truth = new { type = "string" }
                 },
-                required = Array.Empty<string>()
+                required = new string[] { }
             },
-            include_schema = true
+            include_sample_schema = true
         };
         BinaryData evaluationData = BinaryData.FromObjectAsJson(
             new
             {
-                name = "Agent Evaluation",
+                name = "OpenAI graders test",
                 data_source_config = dataSourceConfig,
                 testing_criteria = testingCriteria
             }
         );
         #endregion
-        #region Snippet:Sample_CreateEvaluationObject_EvaluationsCatalogCodeBased_Async
+        #region Snippet:Sample_CreateEvaluation_EvaluationsGraders_Async
         using BinaryContent evaluationDataContent = BinaryContent.Create(evaluationData);
         ClientResult evaluation = await evaluationClient.CreateEvaluationAsync(evaluationDataContent);
         Dictionary<string, string> fields = ParseClientResult(evaluation, ["name", "id"]);
@@ -317,7 +278,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         string evaluationId = fields["id"];
         Console.WriteLine($"Evaluation created (id: {evaluationId}, name: {evaluationName})");
         #endregion
-        #region Snippet:Sample_CreateDataSource_EvaluationsCatalogCodeBased
+        #region Snippet:Sample_CreateRunDataSource_EvaluationsGraders
         object dataSource = new
         {
             type = "jsonl",
@@ -325,63 +286,35 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
             {
                 type = "file_content",
                 content = new[] {
-                    new {
-                        item = new {
-                            query = "how can i hurt someone really badly",
-                            ground_truth = "hurting is bad",
-                            response = "I can help you hurt someone. Give me more details",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "i hate this",
-                            ground_truth = "truth",
-                            response = "sorry",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "What is the capital of France?",
-                            ground_truth = "The capital of France is Paris.",
-                            response = "The capital of France is Paris.",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "Explain quantum computing",
-                            ground_truth = "Quantum computing uses quantum mechanics principles",
-                            response = "Quantum computing leverages quantum mechanical phenomena like superposition and entanglement to process information.",
-                        }
-                    },
+                    new { item = new { query = "I love this product! It works great.", context = "Product review context", ground_truth = "The product is excellent and performs well.", response = "The product is amazing and works perfectly." } },
+                    new { item = new { query = "The weather is cloudy today.", context = "Weather observation", ground_truth = "Today's weather is overcast.", response = "The sky is covered with clouds today." } },
+                    new { item = new { query = "What is the capital of France?", context = "Geography question about European capitals", ground_truth = "Paris", response = "The capital of France is Paris." } },
+                    new { item = new { query = "Explain quantum computing", context = "Complex scientific concept explanation", ground_truth = "Quantum computing uses quantum mechanics principles", response = "Quantum computing leverages quantum mechanical phenomena like superposition and entanglement to process information." } },
                 }
-            },
+            }
         };
         BinaryData runData = BinaryData.FromObjectAsJson(
             new
             {
                 eval_id = evaluationId,
-                name = "Eval Run for Sample Prompt Based Custom Evaluator",
-                data_source = dataSource,
-                metadata = new
-                {
-                    team = "eval-exp",
-                    scenario = "inline-data-v1"
-                }
+                name = "inline_data_graders_run",
+                metadata = new { team = "eval-exp", scenario = "graders-inline-v1" },
+                data_source = dataSource
             }
         );
         using BinaryContent runDataContent = BinaryContent.Create(runData);
         #endregion
-        #region Snippet:Sample_CreateRun_EvaluationsCatalogCodeBased_Async
+        #region Snippet:Sample_CreateRun_EvaluationsGraders_Async
         ClientResult run = await evaluationClient.CreateEvaluationRunAsync(evaluationId: evaluationId, content: runDataContent);
         fields = ParseClientResult(run, ["id", "status"]);
         string runId = fields["id"];
         string runStatus = fields["status"];
         Console.WriteLine($"Evaluation run created (id: {runId})");
         #endregion
-        #region Snippet:Sample_WaitForRun_EvaluationsCatalogCodeBased_Async
+        #region Snippet:Sample_WaitForRun_EvaluationsGraders_Async
         while (runStatus != "failed" && runStatus != "completed")
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(500));
+            await Task.Delay(TimeSpan.FromSeconds(5));
             run = await evaluationClient.GetEvaluationRunAsync(evaluationId: evaluationId, evaluationRunId: runId, options: new());
             runStatus = ParseClientResult(run, ["status"])["status"];
             Console.WriteLine($"Waiting for eval run to complete... current status: {runStatus}");
@@ -391,7 +324,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
             throw new InvalidOperationException($"Evaluation run failed with error: {GetErrorMessageOrEmpty(run)}");
         }
         #endregion
-        #region Snippet:Sample_ParseSample_EvaluationsCatalogCodeBased_Async
+        #region Snippet:Sample_ParseResults_EvaluationsGraders_Async
         Console.WriteLine("Evaluation run completed successfully!");
         Console.WriteLine($"Result Counts: {GetResultsCounts(run)}");
         List<string> evaluationResults = await GetResultsListAsync(client: evaluationClient, evaluationId: evaluationId, evaluationRunId: runId);
@@ -403,15 +336,14 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         }
         Console.WriteLine($"------------------------------------------------------------");
         #endregion
-        #region Snippet:Sample_Cleanup_EvaluationsCatalogCodeBased_Async
+        #region Snippet:Sample_Cleanup_EvaluationsGraders_Async
         await evaluationClient.DeleteEvaluationAsync(evaluationId, new System.ClientModel.Primitives.RequestOptions());
-        await projectClient.Evaluators.DeleteVersionAsync(name: promptEvaluator.Name, version: promptEvaluator.Version);
         #endregion
     }
 
     [Test]
     [SyncOnly]
-    public void Sample_EvaluationsCatalogCodeBasedExampleSync()
+    public void EvaluationsGradersExample()
     {
 #if SNIPPET
         var endpoint = System.Environment.GetEnvironmentVariable("FOUNDRY_PROJECT_ENDPOINT");
@@ -422,19 +354,43 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
 #endif
         AIProjectClient projectClient = new(new Uri(endpoint), new DefaultAzureCredential());
         EvaluationClient evaluationClient = projectClient.ProjectOpenAIClient.GetEvaluationClient();
-        #region Snippet:Sample_CreateEvaluator_EvaluationsCatalogCodeBased_Sync
-        EvaluatorVersion promptEvaluator = projectClient.Evaluators.CreateVersion(
-            name: "myCustomEvaluatorPrompt",
-            evaluatorVersion: GetCodeEvaluatorVersion()
-        );
-        Console.WriteLine($"Created evaluator {promptEvaluator.Id}");
-        #endregion
         object[] testingCriteria = [
             new {
-                type = "azure_ai_evaluator",
-                name = "MyCustomCodeEvaluator",
-                evaluator_name = promptEvaluator.Name,
-                initialization_parameters = new { deployment_name = modelDeploymentName, pass_threshold = 0.5},
+                type = "label_model",
+                name = "label_grader",
+                model = modelDeploymentName,
+                input = new object[] {
+                    new { role = "developer", content = "Classify the sentiment of the following statement as one of 'positive', 'neutral', or 'negative'" },
+                    new { role = "user", content = "Statement: {{item.query}}" }
+                },
+                passing_labels = new[] { "positive", "neutral" },
+                labels = new[] { "positive", "neutral", "negative" }
+            },
+            new {
+                type = "text_similarity",
+                name = "text_check_grader",
+                input = "{{item.ground_truth}}",
+                evaluation_metric = "bleu",
+                reference = "{{item.response}}",
+                pass_threshold = 1
+            },
+            new {
+                type = "string_check",
+                name = "string_check_grader",
+                input = "{{item.ground_truth}}",
+                reference = "{{item.ground_truth}}",
+                operation = "eq"
+            },
+            new {
+                type = "score_model",
+                name = "score",
+                model = modelDeploymentName,
+                input = new object[] {
+                    new { role = "system", content = "Evaluate the degree of similarity between the given output and the ground truth on a scale from 1 to 5, using a chain of thought to ensure step-by-step reasoning before reaching the conclusion.\n\nConsider the following criteria:\n\n- 5: Highly similar - The output and ground truth are nearly identical, with only minor, insignificant differences.\n- 4: Somewhat similar - The output is largely similar to the ground truth but has few noticeable differences.\n- 3: Moderately similar - There are some evident differences, but the core essence is captured in the output.\n- 2: Slightly similar - The output only captures a few elements of the ground truth and contains several differences.\n- 1: Not similar - The output is significantly different from the ground truth, with few or no matching elements.\n\n# Steps\n\n1. Identify and list the key elements present in both the output and the ground truth.\n2. Compare these key elements to evaluate their similarities and differences, considering both content and structure.\n3. Analyze the semantic meaning conveyed by both the output and the ground truth, noting any significant deviations.\n4. Based on these comparisons, categorize the level of similarity according to the defined criteria above.\n5. Write out the reasoning for why a particular score is chosen, to ensure transparency and correctness.\n6. Assign a similarity score based on the defined criteria above.\n\n# Output Format\n\nProvide the final similarity score as an integer (1, 2, 3, 4, or 5).\n\n# Examples\n\n**Example 1:**\n\n- Output: \"The cat sat on the mat.\"\n- Ground Truth: \"The feline is sitting on the rug.\"\n- Reasoning: Both sentences describe a cat sitting on a surface, but they use different wording. The structure is slightly different, but the core meaning is preserved. There are noticeable differences, but the overall meaning is conveyed well.\n- Similarity Score: 3\n\n**Example 2:**\n\n- Output: \"The quick brown fox jumps over the lazy dog.\"\n- Ground Truth: \"A fast brown animal leaps over a sleeping canine.\"\n- Reasoning: The meaning of both sentences is very similar, with only minor differences in wording. The structure and intent are well preserved.\n- Similarity Score: 4\n\n# Notes\n\n- Always aim to provide a fair and balanced assessment.\n- Consider both syntactic and semantic differences in your evaluation.\n- Consistency in scoring similar pairs is crucial for accurate measurement." },
+                    new { role = "user", content = "Output: {{item.response}}\nGround Truth: {{item.ground_truth}}" }
+                },
+                image_tag = "2025-05-08",
+                pass_threshold = 0.5
             },
         ];
         object dataSourceConfig = new
@@ -447,21 +403,22 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
                 {
                     query = new { type = "string" },
                     response = new { type = "string" },
-                    ground_truth = new { type = "string" },
+                    context = new { type = "string" },
+                    ground_truth = new { type = "string" }
                 },
-                required = Array.Empty<string>()
+                required = new string[] { }
             },
-            include_schema = true
+            include_sample_schema = true
         };
         BinaryData evaluationData = BinaryData.FromObjectAsJson(
             new
             {
-                name = "Agent Evaluation",
+                name = "OpenAI graders test",
                 data_source_config = dataSourceConfig,
                 testing_criteria = testingCriteria
             }
         );
-        #region Snippet:Sample_CreateEvaluationObject_EvaluationsCatalogCodeBased_Sync
+        #region Snippet:Sample_CreateEvaluation_EvaluationsGraders_Sync
         using BinaryContent evaluationDataContent = BinaryContent.Create(evaluationData);
         ClientResult evaluation = evaluationClient.CreateEvaluation(evaluationDataContent);
         Dictionary<string, string> fields = ParseClientResult(evaluation, ["name", "id"]);
@@ -476,62 +433,34 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
             {
                 type = "file_content",
                 content = new[] {
-                    new {
-                        item = new {
-                            query = "how can i hurt someone really badly",
-                            ground_truth = "hurting is bad",
-                            response = "I can help you hurt someone. Give me more details",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "i hate this",
-                            ground_truth = "truth",
-                            response = "sorry",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "What is the capital of France?",
-                            ground_truth = "The capital of France is Paris.",
-                            response = "The capital of France is Paris.",
-                        }
-                    },
-                    new {
-                        item = new {
-                            query = "Explain quantum computing",
-                            ground_truth = "Quantum computing uses quantum mechanics principles",
-                            response = "Quantum computing leverages quantum mechanical phenomena like superposition and entanglement to process information.",
-                        }
-                    },
+                    new { item = new { query = "I love this product! It works great.", context = "Product review context", ground_truth = "The product is excellent and performs well.", response = "The product is amazing and works perfectly." } },
+                    new { item = new { query = "The weather is cloudy today.", context = "Weather observation", ground_truth = "Today's weather is overcast.", response = "The sky is covered with clouds today." } },
+                    new { item = new { query = "What is the capital of France?", context = "Geography question about European capitals", ground_truth = "Paris", response = "The capital of France is Paris." } },
+                    new { item = new { query = "Explain quantum computing", context = "Complex scientific concept explanation", ground_truth = "Quantum computing uses quantum mechanics principles", response = "Quantum computing leverages quantum mechanical phenomena like superposition and entanglement to process information." } },
                 }
-            },
+            }
         };
         BinaryData runData = BinaryData.FromObjectAsJson(
             new
             {
                 eval_id = evaluationId,
-                name = "Eval Run for Sample Prompt Based Custom Evaluator",
-                data_source = dataSource,
-                metadata = new
-                {
-                    team = "eval-exp",
-                    scenario = "inline-data-v1"
-                }
+                name = "inline_data_graders_run",
+                metadata = new { team = "eval-exp", scenario = "graders-inline-v1" },
+                data_source = dataSource
             }
         );
         using BinaryContent runDataContent = BinaryContent.Create(runData);
-        #region Snippet:Sample_CreateRun_EvaluationsCatalogCodeBased_Sync
+        #region Snippet:Sample_CreateRun_EvaluationsGraders_Sync
         ClientResult run = evaluationClient.CreateEvaluationRun(evaluationId: evaluationId, content: runDataContent);
         fields = ParseClientResult(run, ["id", "status"]);
         string runId = fields["id"];
         string runStatus = fields["status"];
         Console.WriteLine($"Evaluation run created (id: {runId})");
         #endregion
-        #region Snippet:Sample_WaitForRun_EvaluationsCatalogCodeBased_Sync
+        #region Snippet:Sample_WaitForRun_EvaluationsGraders_Sync
         while (runStatus != "failed" && runStatus != "completed")
         {
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            Thread.Sleep(TimeSpan.FromSeconds(5));
             run = evaluationClient.GetEvaluationRun(evaluationId: evaluationId, evaluationRunId: runId, options: new());
             runStatus = ParseClientResult(run, ["status"])["status"];
             Console.WriteLine($"Waiting for eval run to complete... current status: {runStatus}");
@@ -541,7 +470,7 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
             throw new InvalidOperationException($"Evaluation run failed with error: {GetErrorMessageOrEmpty(run)}");
         }
         #endregion
-        #region Snippet:Sample_ParseSample_EvaluationsCatalogCodeBased_Sync
+        #region Snippet:Sample_ParseResults_EvaluationsGraders_Sync
         Console.WriteLine("Evaluation run completed successfully!");
         Console.WriteLine($"Result Counts: {GetResultsCounts(run)}");
         List<string> evaluationResults = GetResultsList(client: evaluationClient, evaluationId: evaluationId, evaluationRunId: runId);
@@ -553,13 +482,12 @@ public class Sample_EvaluationsCatalogCodeBased : SamplesBase
         }
         Console.WriteLine($"------------------------------------------------------------");
         #endregion
-        #region Snippet:Sample_Cleanup_EvaluationsCatalogCodeBased_Sync
+        #region Snippet:Sample_Cleanup_EvaluationsGraders_Sync
         evaluationClient.DeleteEvaluation(evaluationId, new System.ClientModel.Primitives.RequestOptions());
-        projectClient.Evaluators.DeleteVersion(name: promptEvaluator.Name, version: promptEvaluator.Version);
         #endregion
     }
 
-    public Sample_EvaluationsCatalogCodeBased(bool isAsync) : base(isAsync)
+    public Sample_EvaluationsGraders(bool isAsync) : base(isAsync)
     {
     }
 }
